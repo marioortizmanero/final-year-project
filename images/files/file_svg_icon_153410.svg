@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="67.125954"
+   height="83.90744"
+   viewBox="0 0 67.125953 83.90744"
+   fill="none"
+   version="1.1"
+   id="svg4"
+   sodipodi:docname="file_svg_icon_153410.svg"
+   inkscape:version="1.1.1 (3bf5ae0d25, 2021-09-20, custom)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs8" />
+  <sodipodi:namedview
+     id="namedview6"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     showgrid="false"
+     inkscape:zoom="3.0052038"
+     inkscape:cx="42.592785"
+     inkscape:cy="60.062482"
+     inkscape:window-width="1920"
+     inkscape:window-height="1047"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg4" />
+  <path
+     fill-rule="evenodd"
+     clip-rule="evenodd"
+     d="m 66.861645,28.025085 -0.03943,-0.117631 c -0.03021,-0.09323 -0.06042,-0.184974 -0.099,-0.276728 -0.205573,-0.44471 -0.461491,-0.868443 -0.822292,-1.229244 L 40.728673,1.229244 C 40.36787,0.86844206 39.944137,0.61252441 39.499429,0.40695105 39.412581,0.36650818 39.321957,0.33797952 39.230086,0.30907327 39.18855,0.29601906 39.147014,0.28285157 39.105064,0.26850453 38.752653,0.15103339 38.39185,0.07551679 38.018462,0.05453979 37.97609,0.05068017 37.936233,0.03880714 37.896797,0.02714412 37.851066,0.01342515 37.805757,0 37.758349,0 H 8.3907441 C 3.7632487,0 0,3.7632487 0,8.3907441 V 75.516697 c 0,4.627497 3.7632487,8.390744 8.3907441,8.390744 H 58.735209 c 4.627497,0 8.390744,-3.763247 8.390744,-8.390744 V 29.367604 c 0,-0.04752 -0.01349,-0.09264 -0.02728,-0.138579 -0.01169,-0.03924 -0.0235,-0.07905 -0.02728,-0.121534 -0.02098,-0.369193 -0.0923,-0.729994 -0.209768,-1.082406 z M 37.758349,8.3907441 V 29.367604 h 20.97686 z"
+     fill="#000000"
+     id="path2"
+     sodipodi:nodetypes="cccsscccccssssssssccccccc"
+     style="stroke-width:4.19538" />
+  <text
+     xml:space="preserve"
+     style="font-weight:bold;font-size:7.67667px;line-height:0.45;font-family:Inconsolata;-inkscape-font-specification:'Inconsolata Bold';letter-spacing:0px;word-spacing:0px;stroke-width:1.43938"
+     x="3.0085168"
+     y="40.813408"
+     id="text3152"><tspan
+       sodipodi:role="line"
+       x="3.0085168"
+       y="40.546524"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.67667px;font-family:Inter;-inkscape-font-specification:Inter;fill:#ffffff;stroke-width:1.43938"
+       id="tspan26662">· Onramps</tspan><tspan
+       sodipodi:role="line"
+       x="3.0085168"
+       y="44.454788"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.67667px;font-family:Inter;-inkscape-font-specification:Inter;fill:#ffffff;stroke-width:1.43938"
+       id="tspan26672" /><tspan
+       sodipodi:role="line"
+       x="3.0085168"
+       y="52.27132"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.67667px;font-family:Inter;-inkscape-font-specification:Inter;fill:#ffffff;stroke-width:1.43938"
+       id="tspan26678">· Offramps</tspan><tspan
+       sodipodi:role="line"
+       x="3.0085168"
+       y="60.087852"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.67667px;font-family:Inter;-inkscape-font-specification:Inter;fill:#ffffff;stroke-width:1.43938"
+       id="tspan55528">· Processing</tspan><tspan
+       sodipodi:role="line"
+       x="3.0085168"
+       y="67.904381"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.67667px;font-family:Inter;-inkscape-font-specification:Inter;fill:#ffffff;stroke-width:1.43938"
+       id="tspan26680">· Pipeline mgmt</tspan><tspan
+       sodipodi:role="line"
+       x="3.0085168"
+       y="75.720917"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.67667px;font-family:Inter;-inkscape-font-specification:Inter;fill:#ffffff;stroke-width:1.43938"
+       id="tspan58366">· CLI parsing</tspan><tspan
+       sodipodi:role="line"
+       x="3.0085168"
+       y="79.629181"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.67667px;font-family:Inter;-inkscape-font-specification:Inter;fill:#ffffff;stroke-width:1.43938"
+       id="tspan26682" /></text>
+</svg>
