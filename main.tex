@@ -22,6 +22,33 @@
 \usepackage{xcolor}
 \usepackage{adjustbox}
 
+% Easier to read font
+\usepackage{fourier}
+
+% Code syntax highlighting
+\usepackage{minted}
+\usepackage{xcolor}
+\usemintedstyle{vs}
+\definecolor{bg}{HTML}{f8f8f8}
+\setminted{
+    frame=lines,
+    framesep=2mm,
+    bgcolor=bg,
+    fontsize=\footnotesize,
+    linenos
+}
+
+% Command for inline code
+\newcommand{\code}[1] {\mintinline{text}{#1}}
+\newcommand{\image}[1] {
+  \begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{#1}
+  \end{figure}
+}
+% Shortcuts
+\newcommand{\cpp}{C\texttt{++}}
+
 %	CONFIGURACIÓN DE PÁGINA
 
 \setlength{\paperwidth}{21cm}          % Ancho de página
