@@ -5,6 +5,7 @@
 
 \section{Contexto}
 
+% TODO: quizá algunos footnotes podrían cambiarse por referencias aquí
 Este proyecto se ha realizado en colaboración con
 \emph{Tremor}\footnote{\url{https://tremor.rs}}, un sistema de procesado de
 eventos de alto rendimiento, escrito en el lenguaje de programación
@@ -16,8 +17,13 @@ Foundation~(LFX)}\footnote{\url{https://www.linuxfoundation.org/}}.
 
 Formalmente, el trabajo se ha llevado a cabo gracias a la iniciativa \emph{LFX
 Mentorship}, con el título ``CNCF - Tremor: Add plugin support for tremor
-(PDK)''\footnote{\url{https://mentorship.lfx.linuxfoundation.org/project/b90f7174-fc53-40bc-b9e2-9905f88c38ff}}.
-Esta iniciativa promueve el aprendizaje de desarrolladores de código abierto,
+(PDK)''\footnote{Página oficial de la iniciativa:
+\url{https://mentorship.lfx.linuxfoundation.org/project/b90f7174-fc53-40bc-b9e2-9905f88c38ff}}\footnote{\emph{Tracking
+issue} en GitHub:
+\url{https://github.com/tremor-rs/tremor-runtime/issues/791}}\footnote{RFC en la
+documentación de Tremor:
+\url{https://www.tremor.rs/rfc/accepted/plugin-development-kit/}}. Esta
+iniciativa promueve el aprendizaje de desarrolladores de código abierto,
 proporcionando una plataforma transparente y facilitando un sistema de pagos.
 
 Finalmente, \emph{Wayfair} es una empresa estadounidense de comercio digital de
@@ -117,30 +123,32 @@ GitHub\footnote{\url{https://github.com/marioortizmanero/tremor-runtime/projects
 Para reducir el coste de desarrollo y asegurarse de que el proceso sea
 completamente seguro (en memoria y concurrencia), el sistema de plugins
 aprovecha librerías existentes en Rust y herramientas como macros procedurales.
-El sistema de compilación es TODO por la solución oficial de Rust: Cargo, que
-también incluye un \emph{formatter}, \emph{linter}, y extensiones instalables
-creadas por la comunidad. Adicionalmente, existe una gran cantidad de tests y
+El sistema de compilación usado es solución oficial de Rust: Cargo, que también
+incluye un \emph{formatter}, \emph{linter}, y extensiones instalables creadas
+por la comunidad. Adicionalmente, existe una gran cantidad de tests y
 \emph{benchmarks} que se han de tener en cuenta para mantener el \emph{Code
 Coverage} (la cantidad de código cubierta por los tests) y el rendimiento.
 
 \subsection{Recursos públicos}
 
-Completamente todo en lo que se ha trabajado para este trabajo está disponible
-públicamente:
+% TODO: actualizar '5' cuando suba el nuevo
+% TODO: actualizar minutos de lectura
+Este trabajo está disponible públicamente al completo. Además, a medida que he
+investigado e implementado el sistema de plugins, he ido escribiendo todo en mi
+blog personal, \emph{NullDeref}; gran parte de los contenidos de este documento
+se han obtenido de ahí. Tiene una serie con un total de 5 artículos, donde entro
+en gran detalle y suma unas 2 horas adicionales de lectura.
 
 \begin{itemize}
-    \item El repositorio:
+    \item El repositorio de GitHub para el binario de Tremor:\\
         \url{https://github.com/tremor-rs/tremor-runtime}
-    \item Mi \emph{fork}:
+    \item Mi \emph{fork}, con ramas adicionales usadas durante el desarrollo:\\
         \url{https://github.com/marioortizmanero/tremor-runtime}
-    \item Mi blog personal, en el que :
+    \item Mi repositorio con experimentos antes de implementar la versión
+        definitiva:\\
+        \url{https://github.com/marioortizmanero/pdk-experiments}
+    \item La serie de artículos en mi blog personal:\\
         \url{https://nullderef.com/series/rust-plugins/}.
-
-        % TODO: actualizar '5' cuando suba el nuevo
-        % TODO: actualizar minutos de lectura
-        Para saber más información es altamente recomendado leer los 5 artículos
-        en esa página web, que entran en gran detalle y suman 127 minutos de
-        lectura.
 \end{itemize}
 
 % TODO: debería ser más específico sobre las horas? Mucha cuenta no he llevado
