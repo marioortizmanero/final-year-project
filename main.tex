@@ -38,6 +38,9 @@
 \usepackage{adjustbox}
 \usepackage{hyperref}
 
+\setlength{\parskip}{\baselineskip}%
+\setlength{\parindent}{0pt}%
+
 % Bibtex for the bibliography
 \usepackage[
     backend=bibtex,
@@ -168,7 +171,7 @@ Junio 2022\\
 \author{Mario Ortiz Manero}
 
 \pagebreak
-\cleardoublepage
+\cleardoublepage%
 \baselineskip 19pt
 
 \renewcommand{\labelitemi}{$-$}
@@ -182,19 +185,19 @@ Junio 2022\\
 \pagenumbering{Roman}
 
 \newpage
-\cleardoublepage
+\cleardoublepage%
 \input{Capitulos/Agradecimientos}
 
 \newpage
-\cleardoublepage
+\cleardoublepage%
 \input{Capitulos/Resumen}
 
 \newpage
-\cleardoublepage
+\cleardoublepage%
 \input{Capitulos/Abstract}
 
 \newpage
-\cleardoublepage
+\cleardoublepage%
 \renewcommand{\contentsname}{Índice}
 \tableofcontents
 
@@ -208,7 +211,7 @@ Junio 2022\\
 
 % BIBLIOGRAFÍA Y REFERENCIAS
 
-\printbibliography
+\printbibliography%
 \nocite{*} % Include all the entries in the bibliography, even if not mentioned
 
 \newpage
@@ -219,19 +222,14 @@ Junio 2022\\
 \renewcommand\listtablename{Lista de Tablas}
 \listoftables
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%		ANEXOS
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% ANEXOS
 
 \newpage
 \appendix
 \clearpage
-\addappheadtotoc
-\appendixpage
+\addappheadtotoc%
+\appendixpage%
 \input{Anexos/Anexo1.tex}
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 \end{document}
