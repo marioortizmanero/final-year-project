@@ -1,3 +1,5 @@
+% vim: spelllang=es
+
 \documentclass[a4paper,12pt,twoside,hidelinks,openright]{book}
 
 % \usepackage[T1]{fontenc}
@@ -11,6 +13,7 @@
 \usepackage{graphics}
 \usepackage{appendix}
 \usepackage[nottoc,numbib]{tocbibind}
+\usepackage[backend=bibtex,block=space,language=spanish]{biblatex}
 
 \usepackage{tikz}
 \usetikzlibrary{shapes,arrows}
@@ -21,11 +24,13 @@
 \usepackage[none]{hyphenat} \sloppy
 \usepackage{xcolor}
 \usepackage{adjustbox}
+\usepackage{url}
 
 % Easier to read font
 \usepackage{fourier} % For math
 \usepackage{fontspec}
 \setmainfont{Heuristica} % For the text
+\setmonofont{Liberation Mono} % For the code
 
 % Code syntax highlighting
 \usepackage{minted}
@@ -96,9 +101,9 @@
 
 \fontsize{22pt}{22pt}\selectfont
 \begin{center}
-\textsc{\textcolor{unizarblue}{Dynamic loading of plugins in Rust \\
+\textsc{Dynamic loading of plugins in Rust \\
 in the absence of a stable \\
-Application Binary Interface}}
+Application Binary Interface}
 \end{center}
 
 \vspace*{1cm} 
@@ -140,8 +145,8 @@ Junio 2022\\
 \newpage
 
 
-\title{Título del trabajo final de máster}
-\author{Autor Apellido Apellido}
+\title{Dynamic loading of plugins in Rust in the absence of a stable Application Binary Interface}
+\author{Mario Ortiz Manero}
 
 \pagebreak
 \cleardoublepage
@@ -184,9 +189,9 @@ Junio 2022\\
 
 % BIBLIOGRAFÍA Y REFERENCIAS
 
-\bibliographystyle{unsrt} %plaindin
+% \bibliographystyle{unsrt} %plaindin
 \bibliography{Bibliografia_TFM}
-\nocite{*} 
+\nocite{*} % Include all the entries in the bibliography, even if not mentioned
 
 \newpage
 \renewcommand\listfigurename{Lista de Figuras}

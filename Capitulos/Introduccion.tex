@@ -1,4 +1,91 @@
-\chapter{Introducción y objetivos}
+% vim: spelllang=es
 
+\chapter{Introducción}
 \pagenumbering{arabic}
-Y, viéndole don Quijote de aquella manera, con muestras de tanta tristeza, le dijo: Sábete, Sancho, que no es un hombre más que otro si no hace más que otro. Todas estas borrascas que nos suceden son señales de que presto ha de serenar el tiempo y han de sucedernos bien las cosas; porque no es posible que el mal ni el bien sean durables, y de aquí se sigue que, habiendo durado mucho el mal, el bien está ya cerca. Así que, no debes congojarte por las desgracias que a mí me suceden, pues a ti no te cabe parte dellas.Y, viéndole don Quijote de aquella manera, con muestras de tanta tristeza, le dijo: Sábete, Sancho, que no es un hombre más que otro si no hace más que otro. Todas estas borrascas que nos suceden son señales de que presto ha de serenar el tiempo y han de sucedernos bien las cosas; porque no es posible que el mal ni el bien sean durables, y de aquí se sigue que, habiendo durado mucho el mal, el bien está ya cerca. Así que, no debes congojarte por las desgracias que a mí me suceden, pues a ti no
+
+\section{Contexto}
+
+Este proyecto se ha realizado en colaboración con
+\emph{Tremor}\footnote{\url{https://tremor.rs}}, un sistema de procesado de
+eventos de alto rendimiento, escrito en el lenguaje de programación
+\emph{Rust}\footnote{\url{https://www.rust-lang.org}}. Tremor es un programa de
+código abierto bajo la fundación \emph{Cloud Native Computing
+Foundation~(CNCF)}\footnote{\url{https://www.cncf.io/}}, que es también parte de
+la organización \emph{Linux
+Foundation~(LFX)}\footnote{\url{https://www.linuxfoundation.org/}}.
+
+Formalmente, el trabajo se ha llevado a cabo gracias a la iniciativa \emph{LFX
+Mentorship}, con el título ``CNCF - Tremor: Add plugin support for tremor
+(PDK)''\footnote{\url{https://mentorship.lfx.linuxfoundation.org/project/b90f7174-fc53-40bc-b9e2-9905f88c38ff}}.
+Esta iniciativa promueve el aprendizaje de desarrolladores de código abierto,
+proporcionando una plataforma transparente, y facilitando un sistema de pagos.
+
+Finalmente, \emph{Wayfair} es una empresa estadounidense de comercio digital de
+muebles y artículos del hogar\footnote{\url{https://www.wayfair.com/}}.
+Actualmente, ofrece 14 millones de ítems de más de 11.000 proveedores
+globales~\cite{wayfairItems}, y es el principal financiador tanto de Tremor como
+de este proyecto.
+
+\section{Objetivo}
+
+La tarea a llevar a cabo es la implementación de un sistema de plugins para la
+base de código ya existente, lo cual es una tarea no-trivial, dado que Rust no
+tiene un \emph{Application Binary Interface~(ABI)} estable.
+
+% TODO: debería mencionar que explicaré luego qué es el ABI?
+
+\section{Motivación}
+
+\subsection{Tiempos de compilación}
+
+% TODO: incluir modo release?
+Actualmente, el problema más importante en Tremor es sus tiempos de compilación.
+En un ordenador de gama media de \~{}600 € como el Dell Vostro 5481, compilar el
+binario \code{tremor} desde cero requiere de más de 7 minutos en modo debug.
+Incluso en el caso de cambios incrementales (una vez las dependencias ya han
+sido compiladas), hay que esperar unos 10 segundos. Esto no es una buena
+experiencia de desarrollo y previene que nuevos ingenieros se unan a la
+comunidad de Tremor.
+
+Debido a la naturaleza del programa, este problema solo podrá empeorar con el
+tiempo. Tremor debe tener soporte para un gran número de protocolos (e.g., TCP
+o UDP), software (e.g., Kafka o PostgreSQL), y codecs (e.g., JSON o YAML). El
+número de dependencias continuará incrementando hasta que impida la creación de
+nuevas prestaciones en Tremor.
+
+Los problemas relacionados con tiempos de compilación excesivamente largos no se
+limitan a Tremor. Es uno de las mayores críticas que recibe Rust, y un 61\% de
+sus usuarios declaran que aún se necesita trabajo para mejorar la situación
+\cite{rustsurvey}.
+
+\subsection{Modularidad}
+
+Otra ventaja que provee un sistema de plugins es modularidad; ser capaz de
+tratar la \emph{runtime} y los \emph{plugins} de forma separada suele resultar
+en una arquitectura más limpia \cite{baldwin2000design}.
+
+También hace posible el desacoplamiento del ejecutable y sus componentes.
+Algunas dependencias tienen un ciclo de versiones más rápido que otras, y
+generalmente es más conveniente actualizar únicamente un plugin, en lugar de el
+programa por completo.
+
+\subsection{Aprender de otros}
+
+Otros proyectos maduros con características similares a las de Tremor, como
+\textcite{nginx} o \textcite{apachehttpserver}, han estado aprovechando las
+ventajas de un sistema de plugins desde hace mucho. Informan mejorías en
+flexibilidad, extensibilidad, y facilidad de
+desarrollo~\cite{nginxPluginsAdvantages}\cite{apachePluginsAdvantages}. Aunque
+las desventajas también mencionen un pequeño impacto en el rendimiento, y la
+posibilidad de caer en un \emph{dependency hell}, sigue siendo una buena idea al
+menos considerarlo para Tremor.
+
+\section{Metodología}
+
+El proyecto ha tenido una duración de unos 10 meses, comenzando en agosto de
+2021, y terminando en mayo/junio de 2022. Su realización ha sido completamente
+remota y con horarios muy flexibles.
+
+% TODO: debería ser más específico sobre las horas? Mucha cuenta no he llevado
+% pero vamos sí que estoy segurísimo de que han sido 300 horas, y mucho más
+% también.
