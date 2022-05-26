@@ -1,6 +1,6 @@
 \documentclass[a4paper,12pt,twoside,hidelinks,openright]{book}
 
-\usepackage[T1]{fontenc} 
+% \usepackage[T1]{fontenc}
 \usepackage[spanish]{babel}
 \usepackage[utf8]{inputenc}
 
@@ -23,7 +23,9 @@
 \usepackage{adjustbox}
 
 % Easier to read font
-\usepackage{fourier}
+\usepackage{fourier} % For math
+\usepackage{fontspec}
+\setmainfont{Heuristica} % For the text
 
 % Code syntax highlighting
 \usepackage{minted}
@@ -155,33 +157,24 @@ Junio 2022\\
 
 \pagenumbering{Roman}
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%		Declaración de autoría y originalidad
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-\includepdf[pagecommand={}]{Impreso}
-\cleardoublepage
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%		Resumen
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 \newpage
-
+\cleardoublepage
 \input{Capitulos/Agradecimientos}
+
 \newpage
 \cleardoublepage
 \input{Capitulos/Resumen}
-\newpage
 
+\newpage
+\cleardoublepage
+\input{Capitulos/Abstract}
+
+\newpage
 \cleardoublepage
 \renewcommand{\contentsname}{Índice}
 \tableofcontents
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%		Capitulos
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Capitulos
 
 \input{Capitulos/Introduccion.tex}
 \input{Capitulos/Capitulo1.tex}
@@ -189,10 +182,7 @@ Junio 2022\\
 \input{Capitulos/Capitulo3.tex}
 \input{Capitulos/Conclusion.tex}
 
-%Puedes añadir más capítulos
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%		BIBLIOGRAFÍA Y REFERENCIAS
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% BIBLIOGRAFÍA Y REFERENCIAS
 
 \bibliographystyle{unsrt} %plaindin
 \bibliography{Bibliografia_TFM}
