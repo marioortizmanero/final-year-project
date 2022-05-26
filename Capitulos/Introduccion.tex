@@ -18,21 +18,32 @@ Formalmente, el trabajo se ha llevado a cabo gracias a la iniciativa \emph{LFX
 Mentorship}, con el título ``CNCF - Tremor: Add plugin support for tremor
 (PDK)''\footnote{\url{https://mentorship.lfx.linuxfoundation.org/project/b90f7174-fc53-40bc-b9e2-9905f88c38ff}}.
 Esta iniciativa promueve el aprendizaje de desarrolladores de código abierto,
-proporcionando una plataforma transparente, y facilitando un sistema de pagos.
+proporcionando una plataforma transparente y facilitando un sistema de pagos.
 
 Finalmente, \emph{Wayfair} es una empresa estadounidense de comercio digital de
 muebles y artículos del hogar\footnote{\url{https://www.wayfair.com/}}.
 Actualmente, ofrece 14 millones de ítems de más de 11.000 proveedores
-globales~\cite{wayfairItems}, y es el principal financiador tanto de Tremor como
+globales~\cite{wayfairItems} y es el principal financiador tanto de Tremor como
 de este proyecto.
 
 \section{Objetivo}
 
-La tarea a llevar a cabo es la implementación de un sistema de plugins para la
-base de código ya existente, lo cual es una tarea no-trivial, dado que Rust no
-tiene un \emph{Application Binary Interface~(ABI)} estable.
+La tarea a llevar a cabo es la implementación de un sistema de plugins,
+denominado \emph{Plugin Development Kit~(PDK)}, para la base de código ya
+existente en Tremor.
 
-% TODO: debería mencionar que explicaré luego qué es el ABI?
+Esto es una tarea no-trivial, dado que Rust no tiene un \emph{Application Binary
+Interface~(ABI)} estable. Es decir, que si se compila la \emph{runtime} (el
+binario principal encargado de cargar funcionalidad externa) y los
+\emph{plugins} (los binarios individuales con la funcionalidad) de forma
+separada, no hay garantía de que la representación binaria de los datos o la
+convención de llamada a funciones --- entre otros --- sea la misma.
+
+Esto implica que \emph{dynamic loading} es imposible de forma segura puramente
+con Rust, debiéndose recurrir a otro ABI que sí sea estable, como el del
+lenguaje de programación C. Por tanto, se deben escribir \emph{bindings} (la
+definición de la interfaz compartida entre runtime y plugins) completas en C y
+transformar tipos de Rust a C y viceversa cuando se interactúe con plugins.
 
 \section{Motivación}
 
@@ -44,48 +55,97 @@ En un ordenador de gama media de \~{}600 € como el Dell Vostro 5481, compilar 
 binario \code{tremor} desde cero requiere de más de 7 minutos en modo debug.
 Incluso en el caso de cambios incrementales (una vez las dependencias ya han
 sido compiladas), hay que esperar unos 10 segundos. Esto no es una buena
-experiencia de desarrollo y previene que nuevos ingenieros se unan a la
+experiencia de desarrollo e impide que nuevos programadores se unan a la
 comunidad de Tremor.
 
-Debido a la naturaleza del programa, este problema solo podrá empeorar con el
-tiempo. Tremor debe tener soporte para un gran número de protocolos (e.g., TCP
-o UDP), software (e.g., Kafka o PostgreSQL), y codecs (e.g., JSON o YAML). El
-número de dependencias continuará incrementando hasta que impida la creación de
+Debido a la naturaleza del programa, este problema solo empeorará con el tiempo.
+Tremor debe tener soporte para un gran número de protocolos (e.g., TCP o UDP),
+software (e.g., Kafka o PostgreSQL) y codecs (e.g., JSON o YAML). El número de
+dependencias continuará incrementando hasta que imposibilite la creación de
 nuevas prestaciones en Tremor.
 
 Los problemas relacionados con tiempos de compilación excesivamente largos no se
-limitan a Tremor. Es uno de las mayores críticas que recibe Rust, y un 61\% de
+limitan a Tremor. Es uno de las mayores críticas que recibe Rust y un 61\% de
 sus usuarios declaran que aún se necesita trabajo para mejorar la situación
 \cite{rustsurvey}.
 
 \subsection{Modularidad}
 
 Otra ventaja que provee un sistema de plugins es modularidad; ser capaz de
-tratar la \emph{runtime} y los \emph{plugins} de forma separada suele resultar
-en una arquitectura más limpia \cite{baldwin2000design}.
-
-También hace posible el desacoplamiento del ejecutable y sus componentes.
-Algunas dependencias tienen un ciclo de versiones más rápido que otras, y
-generalmente es más conveniente actualizar únicamente un plugin, en lugar de el
-programa por completo.
+tratar la runtime y los plugins de forma separada suele resultar en una
+arquitectura más limpia \cite{baldwin2000design}. También hace posible el
+desacoplamiento del ejecutable y sus componentes; algunas dependencias tienen un
+ciclo de versionado más rápido que otras y generalmente es más conveniente
+actualizar únicamente un plugin, en lugar del programa por completo.
 
 \subsection{Aprender de otros}
 
 Otros proyectos maduros con características similares a las de Tremor, como
-\textcite{nginx} o \textcite{apachehttpserver}, han estado aprovechando las
-ventajas de un sistema de plugins desde hace mucho. Informan mejorías en
-flexibilidad, extensibilidad, y facilidad de
+\textcite{nginx} o \textcite{apachehttpserver}, llevan beneficiándose de un
+sistema de plugins desde hace mucho. Informan mejorías en flexibilidad,
+extensibilidad y facilidad de
 desarrollo~\cite{nginxPluginsAdvantages}\cite{apachePluginsAdvantages}. Aunque
-las desventajas también mencionen un pequeño impacto en el rendimiento, y la
+las desventajas también mencionen un pequeño impacto en el rendimiento y la
 posibilidad de caer en un \emph{dependency hell}, sigue siendo una buena idea al
 menos considerarlo para Tremor.
 
 \section{Metodología}
 
+\subsection{Organización}
+
 El proyecto ha tenido una duración de unos 10 meses, comenzando en agosto de
-2021, y terminando en mayo/junio de 2022. Su realización ha sido completamente
-remota y con horarios muy flexibles.
+2021 y terminando en mayo/junio de 2022. Su realización ha sido completamente
+remota y con horarios muy flexibles. Se usó el servidor de Discord de
+Tremor\footnote{\url{https://discord.com/invite/Wjqu5H9rhQ}} como plataforma
+principal para comunicarse, tanto por texto como por videollamada. Se programó
+una llamada por semana, en la que explicaba mi progreso y recibía ayuda de mis
+mentores en caso de que me hubiera quedado atascado en algún momento.
+
+% TODO: update Matthias' title
+Disponía de tres mentores, que me guiaban en el proceso de desarrollo: Darach
+Ennis (\emph{Principal Engineer and Director of Tremor Project}), Matthias Wahl
+(\emph{Staff Engineer}) y Heinz N. Gies (\emph{Senior Staff Engineer}), todos
+empleados por Wayfair.
+
+La organización de forma más estructurada para las tareas que tenía pendientes,
+en las que estaba trabajando en ese momento, y las que ya había realizado, se
+basó principalmente en un Kanban en
+GitHub\footnote{\url{https://github.com/marioortizmanero/tremor-runtime/projects/1}}.
+
+\subsection{Desarrollo}
+
+Para reducir el coste de desarrollo y asegurarse de que el proceso sea
+completamente seguro (en memoria y concurrencia), el sistema de plugins
+aprovecha librerías existentes en Rust y herramientas como macros procedurales.
+El sistema de compilación es TODO por la solución oficial de Rust: Cargo, que
+también incluye un \emph{formatter}, \emph{linter}, y extensiones instalables
+creadas por la comunidad. Adicionalmente, existe una gran cantidad de tests y
+\emph{benchmarks} que se han de tener en cuenta para mantener el \emph{Code
+Coverage} (la cantidad de código cubierta por los tests) y el rendimiento.
+
+\subsection{Recursos públicos}
+
+Completamente todo en lo que se ha trabajado para este trabajo está disponible
+públicamente:
+
+\begin{itemize}
+    \item El repositorio:
+        \url{https://github.com/tremor-rs/tremor-runtime}
+    \item Mi \emph{fork}:
+        \url{https://github.com/marioortizmanero/tremor-runtime}
+    \item Mi blog personal, en el que :
+        \url{https://nullderef.com/series/rust-plugins/}.
+
+        % TODO: actualizar '5' cuando suba el nuevo
+        % TODO: actualizar minutos de lectura
+        Para saber más información es altamente recomendado leer los 5 artículos
+        en esa página web, que entran en gran detalle y suman 127 minutos de
+        lectura.
+\end{itemize}
 
 % TODO: debería ser más específico sobre las horas? Mucha cuenta no he llevado
-% pero vamos sí que estoy segurísimo de que han sido 300 horas, y mucho más
+% pero vamos sí que estoy segurísimo de que han sido 300 horas y mucho más
 % también.
+
+% TODO: debería incluir que atendí a KubeCon 2022 gracias a Tremor, explicándolo
+% un poco en un anexo?

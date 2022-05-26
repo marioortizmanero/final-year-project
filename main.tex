@@ -1,5 +1,17 @@
 % vim: spelllang=es
 
+% Instrucciones:
+% https://eina.unizar.es/sites/eina.unizar.es/files/archivos/secretaria/20210706_instrucciones_tfg_tfm.pdf
+%
+% TFGs previos:
+% https://zaguan.unizar.es/search?ln=en&cc=trabajos-fin-grado&sc=1&p=inform%C3%A1tica&f=Departamento&action_search=Search
+%
+% Blog:
+% https://nullderef.com/series/rust-plugins/
+%
+% NOTES:
+% * Count words with `:TexWordCount`
+
 \documentclass[a4paper,12pt,twoside,hidelinks,openright]{book}
 
 % \usepackage[T1]{fontenc}
@@ -13,7 +25,6 @@
 \usepackage{graphics}
 \usepackage{appendix}
 \usepackage[nottoc,numbib]{tocbibind}
-\usepackage[backend=bibtex,block=space,language=spanish]{biblatex}
 
 \usepackage{tikz}
 \usetikzlibrary{shapes,arrows}
@@ -24,7 +35,16 @@
 \usepackage[none]{hyphenat} \sloppy
 \usepackage{xcolor}
 \usepackage{adjustbox}
-\usepackage{url}
+\usepackage{hyperref}
+
+% Bibtex for the bibliography
+\usepackage[
+    backend=bibtex,
+    block=space,
+    language=spanish,
+    sorting=none % Sort by appearance in the document
+]{biblatex}
+\bibliography{Bibliografia_TFG}
 
 % Easier to read font
 \usepackage{fourier} % For math
@@ -72,12 +92,10 @@
 \index{key}
 \newcommand{\myref}[1]{\color{red}\bf(\ref{#1})}
 
+
 \begin{document}
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%		PORTADA
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+% PORTADA
 \begin{titlepage}
 
 \definecolor{unizarblue}{RGB}{0, 86, 153}
@@ -189,8 +207,7 @@ Junio 2022\\
 
 % BIBLIOGRAFÍA Y REFERENCIAS
 
-% \bibliographystyle{unsrt} %plaindin
-\bibliography{Bibliografia_TFM}
+\printbibliography
 \nocite{*} % Include all the entries in the bibliography, even if not mentioned
 
 \newpage
