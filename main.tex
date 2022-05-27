@@ -186,10 +186,6 @@ Junio 2022\\
 \cleardoublepage%
 \baselineskip 19pt
 
-% Párrafos de forma más convencional, me parece más fácil leerlo así.
-\setlength{\parskip}{\baselineskip}%
-\setlength{\parindent}{0pt}%
-
 \renewcommand{\labelitemi}{$-$}
 \renewcommand{\tablename}{Tabla}
 
@@ -199,6 +195,11 @@ Junio 2022\\
 
 
 \pagenumbering{Roman}
+
+% Párrafos de forma más convencional, me parece más fácil leerlo así.
+\begingroup
+\setlength{\parskip}{\baselineskip}%
+\setlength{\parindent}{0pt}%
 
 \newpage
 \cleardoublepage%
@@ -211,6 +212,7 @@ Junio 2022\\
 \newpage
 \cleardoublepage%
 \input{Capitulos/Abstract}
+\endgroup
 
 \newpage
 \cleardoublepage%
@@ -218,6 +220,10 @@ Junio 2022\\
 \tableofcontents
 
 % Capitulos
+
+% Vuelta a configurar los párrafos para que no afecte al índice
+\setlength{\parskip}{\baselineskip}%
+\setlength{\parindent}{0pt}%
 
 \input{Capitulos/Introduccion.tex}
 \input{Capitulos/Capitulo1.tex}
