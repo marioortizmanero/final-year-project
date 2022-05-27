@@ -26,6 +26,7 @@
 \usepackage{graphics}
 \usepackage{appendix}
 \usepackage[nottoc,numbib]{tocbibind}
+\usepackage{xspace}
 
 \usepackage{tikz}
 \usetikzlibrary{shapes,arrows}
@@ -37,9 +38,6 @@
 \usepackage{xcolor}
 \usepackage{adjustbox}
 \usepackage{hyperref}
-
-\setlength{\parskip}{\baselineskip}%
-\setlength{\parindent}{0pt}%
 
 % Bibtex for the bibliography
 \usepackage[
@@ -79,6 +77,20 @@
 }
 % Shortcuts
 \newcommand{\cpp}{C\texttt{++}}
+% Gracias unizar por no evolucionar y solo permitir memorias en castellano...
+\newcommand{\onramp}{\emph{onramp}\xspace}
+\newcommand{\onramps}{\emph{onramps}\xspace}
+\newcommand{\offramp}{\emph{offramp}\xspace}
+\newcommand{\offramps}{\emph{offramps}\xspace}
+\newcommand{\pipeline}{\emph{pipeline}\xspace}
+\newcommand{\pipelines}{\emph{pipelines}\xspace}
+\newcommand{\connector}{\emph{connector}\xspace}
+\newcommand{\connectors}{\emph{connectors}\xspace}
+\newcommand{\lifetime}{\emph{lifetime}\xspace}
+\newcommand{\lifetimes}{\emph{lifetimes}\xspace}
+\newcommand{\websockets}{\emph{websockets}\xspace}
+\newcommand{\trait}{\emph{trait}\xspace}
+\newcommand{\traits}{\emph{traits}\xspace}
 
 %	CONFIGURACIÓN DE PÁGINA
 
@@ -173,6 +185,10 @@ Junio 2022\\
 \pagebreak
 \cleardoublepage%
 \baselineskip 19pt
+
+% Párrafos de forma más convencional, me parece más fácil leerlo así.
+\setlength{\parskip}{\baselineskip}%
+\setlength{\parindent}{0pt}%
 
 \renewcommand{\labelitemi}{$-$}
 \renewcommand{\tablename}{Tabla}
