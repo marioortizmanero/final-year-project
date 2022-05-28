@@ -156,7 +156,7 @@ introduce sus conceptos más básicos y sus posibles usos --- o cuándo \emph{no
 usarlo, en \textcite{tremorconstraints}. \textcite{tremorrecipes} lista un total
 de 32 ejemplos de cómo configurar y emplear el software.
 
-\section{Connectors}
+\section{Conectores}
 
 Sin embargo, es posible que algunas \onramps no solo quieran recibir de sistemas
 externos, sino también responderles directamente, actuando como una \offramp y
@@ -166,25 +166,25 @@ usando la misma conexión. En la versión 0.11 --- la presente cuando me uní al
 proyecto --- este problema se solucionaba con el concepto de \emph{linked
 transports}.
 
-El término \connector se introdujo en mayo de 2022 con la versión 0.12.
+El término \emph{conector} se introdujo en mayo de 2022 con la versión 0.12.
 Solucionan el problema desde el inicio, abstrayendo tanto los \onramps como los
 \offramps bajo el mismo concepto, incluyendo los \emph{linked transports}. Dado
 que estos ya estaban siendo desarrollados mientras 0.11 era la última versión,
-el sistema de plugins se enfocó a \connectors desde el principio, en lugar de
+el sistema de plugins se enfocó a conectores desde el principio, en lugar de
 \onramps u \offramps, que actualmente están en desuso.
 
-A nivel de implementación, los \connector se definen con el \trait
+A nivel de implementación, los conectores se definen con el \trait
 \code{Connector}, incluido en la figura \ref{fig:tremor_connector_trait}.
-Esencialmente, los plugins de tipo \connector exportarán públicamente esta
+Esencialmente, los plugins de tipo conector exportarán públicamente esta
 interfaz en su binario, y la runtime deberá ser capaz de cargarlo dinámicamente.
-Actualmente, todos los \connectors disponibles se listan y cargan de forma
+Actualmente, todos los conectores disponibles se listan y cargan de forma
 estática al inicio del programa.
 
 \begin{figure}[h]
     \centering
     \begin{minted}{rust}
 pub trait Connector {
-    /// Crea la parte "source" del connector, si es aplicable.
+    /// Crea la parte "source" del conector, si es aplicable.
     async fn create_source(
         &mut self,
         _source_context: SourceContext,
@@ -193,7 +193,7 @@ pub trait Connector {
         Ok(None)
     }
 
-    /// Crea la parte "sink" del connector, si es aplicable.
+    /// Crea la parte "sink" del conector, si es aplicable.
     async fn create_sink(
         &mut self,
         _sink_context: SinkContext,
@@ -212,24 +212,24 @@ pub trait Connector {
         Ok(true)
     }
 
-    /// Llamado una vez cuando el connector inicia.
+    /// Llamado una vez cuando el conector inicia.
     async fn on_start(&mut self, _ctx: &ConnectorContext) -> Result<()> {
         Ok(())
     }
-    /// Llamado cuando el connector pausa.
+    /// Llamado cuando el conector pausa.
     async fn on_pause(&mut self, _ctx: &ConnectorContext) -> Result<()> {
         Ok(())
     }
-    /// Llamado cuando el connector continúa.
+    /// Llamado cuando el conector continúa.
     async fn on_resume(&mut self, _ctx: &ConnectorContext) -> Result<()> {
         Ok(())
     }
     /// Llamado ante un evento de "drain", que se asegura de que no
-    /// lleguen más eventos a este connector.
+    /// lleguen más eventos a este conector.
     async fn on_drain(&mut self, _ctx: &ConnectorContext) -> Result<()> {
         Ok(())
     }
-    /// Llamado cuando el connector para.
+    /// Llamado cuando el conector para.
     async fn on_stop(&mut self, _ctx: &ConnectorContext) -> Result<()> {
         Ok(())
     }
@@ -300,20 +300,20 @@ hay un gestor por cada tipo de artefacto para ayudar con su inicialización, y
 también un gestor por cada instancia que se esté ejecutando, para controlar su
 comunicación.
 
-Notar que la inicialización de los \connectors ocurre en dos pasos: primero se
+Notar que la inicialización de los conectores ocurre en dos pasos: primero se
 \emph{registran}, es decir, indica que está disponible para cargarlo (y se añade
-al repositorio). El \connector no empieza a ejecutarse hasta que se conecte con
+al repositorio). El conector no empieza a ejecutarse hasta que se conecte con
 otro artefacto con \code{launch_binding}, lo cual lo movería del repositorio al
 registro, con el resto de artefactos ejecutándose.
 
 A continuación se muestran los pasos que Tremor sigue para iniciar la ejecución
-de un \connector, comenzando por su registro en la
+de un conector, comenzando por su registro en la
 Figura~\ref{fig:tremor_registering}.
 
 \begin{figure}
     \centering
     \includegraphics[width=\textwidth]{./Imagenes/registering.pdf}
-    \caption{Registro de un \connector en el programa}%
+    \caption{Registro de un conector en el programa}%
     \label{fig:tremor_registering}
 \end{figure}
 
@@ -325,24 +325,24 @@ configurado, e intentaría registrar todos los plugins que encuentre. En una
 futura versión, el usuario podría solicitar el cargado de un plugin nuevo
 mientras se está ejecutando Tremor.
 
-\code{connectors::Manager} contiene todos los \connectors ejecutándose en
-Tremor, que se muestra en la Figura \ref{fig:tremor_initializing}.
+\code{connectors::Manager} contiene todos los conectores ejecutándose en Tremor,
+que se muestra en la Figura \ref{fig:tremor_initializing}.
 
 \begin{figure}
     \centering
     \includegraphics[width=\textwidth]{./Imagenes/initializing.pdf}
-    \caption{Inicialización de un \connector en el programa}%
+    \caption{Inicialización de un conector en el programa}%
     \label{fig:tremor_initializing}
 \end{figure}
 
 Ya que es un proceso en múltiples pasos (en la implementación es más complicado
 que registro + creación), la primera parte provee las herramientas para
-inicializar el \connector (el \emph{builder}). Cuando el \connector necesite
+inicializar el conector (el \emph{builder}). Cuando el conector necesite
 comenzar a ejecutarse porque se haya añadido a una \pipeline, el \builder ayuda
 a construir y configurarlo de forma genérica. Finalmente, se añade a una tarea
 propia para que se pueda comunicar con otras partes de Tremor.
 
-Ahora que tenemos un \connector corriendo, visualizaremos cómo se divide en una
+Ahora que tenemos un conector corriendo, visualizaremos cómo se divide en una
 parte \sink y otra \source. De forma similar, un \builder se usa para
 inicializar su \sink, \source, o ambos y posteriormente se inicia una nueva
 tarea para ellos, como se puede observar en la Figura
@@ -351,7 +351,7 @@ tarea para ellos, como se puede observar en la Figura
 \begin{figure}
     \centering
     \includegraphics[width=\textwidth]{./Imagenes/setting-up.pdf}
-    \caption{Configuración de un \connector en el programa}%
+    \caption{Configuración de un conector en el programa}%
     \label{fig:tremor_setting_up}
 \end{figure}
 
@@ -366,11 +366,11 @@ este último también puede responder a mensajes usando la misma conexión. Esto
 fallado (\code{Fail} para un evento específico, \code{CircuitBreaker}) para
 dejar de recibir datos por completo.
 
-Algunos \connectors se basan en \emph{flujos}. Son equivalentes a los flujos de
+Algunos conectores se basan en \emph{flujos}. Son equivalentes a los flujos de
 TCP, que ayudan a agrupar mensajes para evitar mezclarlos. Se inician y
 finalizan mediante mensajes, y el gestor se guarda su estado actual en un campo
 llamado \code{states} (ya que, por ejemplo, algunos preprocesadores puedan
-querer guardar un estado). Si un \connector no necesita flujos, como
+querer guardar un estado). Si un conector no necesita flujos, como
 \code{metronome}, puede especificar su ID como \code{DEFAULT_STREAM_ID} siempre.
 
 Los códecs y preprocesadores se involucran aquí tanto a nivel de \source como de
@@ -380,8 +380,8 @@ se sigue el proceso inverso: los datos se codifican primero a bytes con el
 códec, y posteriormente una serie de postprocesadores se aplican a los datos
 binarios.
 
-Después de implementar la interfaz de los \connectors para el sistema de
-plugins, podría escribir los siguientes plugins:
+Después de implementar la interfaz de los conectores para el sistema de plugins,
+podría escribir los siguientes plugins:
 
 \begin{itemize}
     \item \emph{Blackhole}, usado para medir el rendimiento. Realiza mediciones
@@ -393,6 +393,6 @@ plugins, podría escribir los siguientes plugins:
 
 \end{itemize}
 
-Ambos \connectors son relativamente simples y serán de gran ayuda para realizar
+Ambos conectores son relativamente simples y serán de gran ayuda para realizar
 \emph{benchmarks} para el PDK después. Sin embargo, lo más importante al
 principio es que funcione, y después me encargaré del rendimiento.
