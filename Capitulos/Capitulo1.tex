@@ -2,81 +2,187 @@
 
 \chapter{Entendiendo Tremor}\label{ch:tremor}
 
-\section{Sistemas de Procesado de Eventos}
+\section{Procesado de Eventos}
 
 Tremor es un \emph{Sistema de Procesado de Eventos}, que consiste en ``el
 monitorizado y análisis (procesado) de flujos de información (datos) sobre cosas
 que pasan (eventos)''~\cite{luckham2011event}. Tremor fue creado como una
 alternativa de alto rendimiento a herramientas como \textcite{logstash} o
 \textcite{telegraf}, pero ha evolucionado para soportar casos de uso más
-complejos. Al contrario que esas piezas de software, Tremor también tiene
-soporte para \emph{agregación} y \emph{rollups}, e incluye un lenguaje \emph{ad
-hoc} para \emph{Extract, Transform, and Load (ETL)} y consultas.
+complejos. Al contrario que esos programas, Tremor también tiene soporte para
+\emph{agregación} y \emph{rollups}, e incluye un lenguaje \emph{ad hoc} para
+\emph{Extract, Transform, and Load} (ETL).
 
-Para más información sobre Tremor se puede consultar \textcite{tremorintro}, que
-contiene una explicación de sus conceptos más básicos y sus posibles usos --- o
-cuándo \emph{no} usarlo, en \textcite{tremorconstraints}.
-\textcite{tremorrecipes} lista un total de 32 ejemplos de cómo configurar y
-emplear el software.
+% TODO: hace falta esto?
+\textcite{robins2010complex} y \textcite{cugola2012processing} introducen en
+detalle los dos campos contenidos en Procesado de Eventos: \emph{Procesado de
+Eventos Complejos} y \emph{Procesado de Flujos de
+Eventos}\footnote{\emph{Complex Event Processing} y \emph{Event Stream
+Processing} respectivamente, siguiendo la terminología anglosajona.}, ambos
+relevantes a Tremor. \textcite{dayarathna2018recent} y
+\textcite{tawsif2018review} resumen los avances más recientes en el campo,
+analizan su evolución, y clasifican sus subáreas. La mayoría de la información
+teórica en esta sección se extrae de estas fuentes.
+
+\section{Casos de uso}
 
 La Figura~\ref{fig:tremor_example} ilustra uno de los casos de uso más básicos
 de Tremor:
 
 \begin{enumerate}
-    \item Recibir \emph{logs} de varias aplicaciones en diferentes protocolos o
-        formatos.
-    \item Filtrar los casos redundantes, añadir campos y eliminar algunos
-        innecesarios y transformar todo a un mismo formato.
+    \item Recibir \emph{logs} (eventos) de aplicaciones en diferentes protocolos
+        o formatos. Es posible que esta heterogeneidad se deba a que algunas
+        aplicaciones son legadas y no se puedan reducir a un único protocolo o
+        formato, o que esta tarea es demasiado compleja como para gestionarse a
+        nivel de aplicación.
+
+    \item Filtrar los eventos redundantes, añadir campos nuevos o eliminar
+        aquellos innecesarios y transformar todo a un mismo formato. El uso de
+        una herramienta ineficiente o \emph{ad hoc} por la empresa podría ser
+        inviable dada una cantidad de datos suficientemente grande o demasiados
+        protocolos y formatos como para implementarlos todos.
+
     \item Enviar todos los logs estructurados a una base de datos para
         analizarlos posteriormente.
+
 \end{enumerate}
 
-\begin{figure}
+\begin{figure}[h]
     \centering
     \includegraphics[width=\textwidth]{./Imagenes/example.pdf}
-    \caption{Ejemplo de uso de Tremor}%
+    \caption{Ejemplo de uso básico de Tremor}%
     \label{fig:tremor_example}
 \end{figure}
 
-Esto se basa en el concepto de \emph{onramps o sources} y \emph{offramps o
-sinks}:
+Sin embargo, este caso subestima el potencial de Tremor. La entrada y salida del
+sistema se pueden abstraer más, por ejemplo implementando un chatbot que
+reproduce música. Este podría tomar mensajes de Discord como su entrada, y
+enviar comandos con el API de Spotify como salida.
+
+\section{Conceptos básicos}
+
+Tremor se basa en los términos de \onramps o \sources y \offramps o \sinks:
 
 \begin{itemize}
     \item Una \onramp especifica cómo Tremor se conecta con el mundo exterior (o
-        una \pipeline) para \textbf{recibir} de sistemas externos, como TCP,
-        periódicamente, o PostgreSQL~\cite{tremoronramps}.
+        una \pipeline) para \textbf{recibir} de sistemas externos. Por ejemplo
+        TCP, periódicamente o PostgreSQL~\cite{tremoronramps}.
 
     \item Una \offramp especifica cómo Tremor se conecta con el mundo exterior
-        (o una \pipeline) para \textbf{enviar} a sistemas externos, como
-        \emph{stdout}, Kafka, o ElasticSearch~\cite{tremorofframps}.
+        (o una \pipeline) para \textbf{enviar} a sistemas externos. Por ejemplo,
+        \emph{stdout}, Kafka o ElasticSearch~\cite{tremorofframps}.
 
     \item Una \pipeline es una lista de operaciones (transformación, agregación,
         eliminación, etc) a través de la cual se pueden encaminar los
-        eventos~\cite{tremorpipelines}.
+        eventos~\cite{tremorpipelines}. La Figura \ref{fig:tremor_pipeline}
+        muestra un ejemplo de una \pipeline, definida con Troy, su propio
+        lenguaje inspirado en SQL.
+
+\end{itemize}
+
+\begin{figure}[h]
+    \centering
+    \begin{minted}[escapeinside=||]{mysql}
+|\textcolor{blue}{define pipeline}| main
+# The exit port is not a default port, so we have to overwrite the
+# built-in port selection
+into |out, exit|
+|\textcolor{blue}{pipeline}|
+  # Use the `std::string` module
+  use std::|string|;
+  use lib::scripts;
+
+  # Create our script
+  create |\textcolor{blue}{script}| punctuate from scripts::punctuate;
+
+  # Filter any event that just is `"exit"` and send it to the exit port
+  select {"graceful": false} from |in| where event == "exit" into |exit|;
+
+  # Wire our capitailized text to the script
+  select |string|::capitalize(event) from |in| where event != "exit"
+    into punctuate;
+  # Wire our script to the output
+  select event from punctuate into |out|;
+end;
+    \end{minted}
+    \caption{Ejemplo de una \pipeline definida para Tremor}%
+    \label{fig:tremor_pipeline}
+\end{figure}
+
+Estos \onramps u \offramps suelen contener una cantidad de información que es
+demasiado grande como para guardarla y debería tratarse en tiempo real. Su
+procesado se basa en las siguientes operaciones:
+
+\begin{itemize}
+    \item \emph{Filtros}: descarte de eventos completos a partir de reglas
+        configuradas, con el objetivo de eliminar información de la \pipeline
+        que no se considera relevante.
+
+    \item \emph{Transformaciones}: conversión de los datos de un formato a otro,
+        así como incrementar un campo con un contador, reemplazar valores, o
+        reorganizar su estructura.
+
+    \item \emph{Matching}: búsqueda de partes de los eventos que siguen un
+        patrón en específico (e.g., un campo \code{"id"} con un valor númerico)
+        para transformarlo o descartarlo.
+
+    \item \emph{Agregación} o \emph{rollups}: recolección de múltiples eventos
+        para producir otros nuevos (e.g., la media o máximo de un campo), de
+        forma que la información útil se reduzca en tamaño.
+
+\end{itemize}
+
+Finalmente, otros términos misceláneos sobre Tremor:
+
+\begin{itemize}
+    \item \emph{Códec}: describen cómo decodificar los datos del flujo y como
+        volverlos a codificar. Por ejemplo, si los eventos de entrada usan JSON,
+        tendrá que especificarse ese códec para que lo pueda entender Tremor.
+
+    \item \emph{Preprocesador} o \emph{postprocesador}: operadores sobre flujos
+        de datos brutos. Un preprocesador aplicará esta operación antes del
+        códec y un postprocesador después. Por ejemplo, \code{base64} codifica o
+        decodifica la información con ese protocolo.
+
+    \item \emph{Artefacto}: término genérico para hablar de \sinks, \sources,
+        códecs, preprocesadores y postprocesadores.
 
 \end{itemize}
 
 % TODO: explain 'artefacts', 'pre/postprocessors', 'codecs', 'operators'
 
-Sin embargo, es posible que algunas \onramps no solo quieran recibir de sistemas
-externos, sino también responderles directamente, actuando como una \offramp, y
-viceversa. En la versión 0.11 --- la presente cuando me uní al proyecto --- este
-problema se solucionaba con el concepto de \emph{linked transports}. Estos son
-especialmente útiles para \onramps y \offramps como REST y \websockets, donde el
-protocolo da la posibilidad de responder a eventos usando la misma conexión, por
-ejemplo con un ACK.
+Para más información sobre Tremor se puede consultar \textcite{tremorintro}, que
+introduce sus conceptos más básicos y sus posibles usos --- o cuándo \emph{no}
+usarlo, en \textcite{tremorconstraints}. \textcite{tremorrecipes} lista un total
+de 32 ejemplos de cómo configurar y emplear el software.
 
-El término \connector se introdujo en mayo con la versión 0.12. Solucionan el
-problema desde el inicio, abstrayendo tanto los \onramps como los \offramps bajo
-el mismo concepto, incluyendo los \emph{linked transports}. Dado que estos
-estaban siendo desarrollados mientras 0.11 era la última versión, el sistema de
-plugins se enfocó a \connectors, en lugar de \onramps u \offramps, que ahora
-están en desuso.
+\section{Connectors}
+
+Sin embargo, es posible que algunas \onramps no solo quieran recibir de sistemas
+externos, sino también responderles directamente, actuando como una \offramp y
+viceversa. Esto es especialmente útil para casos como REST y \websockets, donde
+el protocolo da la posibilidad de responder a eventos, por ejemplo con un ACK,
+usando la misma conexión. En la versión 0.11 --- la presente cuando me uní al
+proyecto --- este problema se solucionaba con el concepto de \emph{linked
+transports}.
+
+El término \connector se introdujo en mayo de 2022 con la versión 0.12.
+Solucionan el problema desde el inicio, abstrayendo tanto los \onramps como los
+\offramps bajo el mismo concepto, incluyendo los \emph{linked transports}. Dado
+que estos ya estaban siendo desarrollados mientras 0.11 era la última versión,
+el sistema de plugins se enfocó a \connectors desde el principio, en lugar de
+\onramps u \offramps, que actualmente están en desuso.
 
 A nivel de implementación, los \connector se definen con el \trait
-\code{Connector}, que se puede simplificar a:
+\code{Connector}, incluido en la figura \ref{fig:tremor_connector_trait}.
+Esencialmente, los plugins de tipo \connector exportarán públicamente esta
+interfaz en su binario, y la runtime deberá ser capaz de cargarlo dinámicamente.
+Actualmente, todos los \connectors disponibles se listan y cargan de forma
+estática al inicio del programa.
 
-\begin{minted}{rust}
+\begin{figure}[h]
+    \centering
+    \begin{minted}{rust}
 pub trait Connector {
     /// Crea la parte "source" del conector, si es aplicable.
     async fn create_source(
@@ -128,25 +234,23 @@ pub trait Connector {
         Ok(())
     }
 }
-\end{minted}
-
-Esencialmente, los plugins de tipo \connector exportarán esta interfaz de forma
-pública en su binario, y la runtime deberá ser capaz de cargarlo de forma
-dinámica. Actualmente, todos los \connectors disponibles se listan y cargan de
-forma estática al inicio del programa.
+    \end{minted}
+    \caption{Simplificación del \trait \code{Connector}}%
+    \label{fig:tremor_connector_trait}
+\end{figure}
 
 Por tanto, es importante mantener la interfaz de plugins lo más simple posible.
 Los detalles de comunicación deberían dejarse a la runtime, de forma que los
-plugins se limiten a exportar una lista de funciones síncronas. De esta forma se
-podrá evitar pasar tipos complejos (\code{async}, canales de comunicación, etc)
-entre la runtime y los plugins, que implicaría una carga de trabajo mucho más
-alta.
+plugins se limiten a exportar una lista de funciones síncronas. De esta forma,
+se podrá evitar pasar tipos complejos (\code{async}, canales de comunicación,
+etc) entre la runtime y los plugins, que implicaría una carga de trabajo mucho
+más alta.
 
-Una vez esta interfaz de bajo nivel se defina, podemos crear un \emph{wrapper}
-en la runtime de más alto nivel (un \emph{manager}, en términos de Tremor) que
-se encargue de la comunicación. Esto mismo lo hacen otras \crates como
-\cratelink{rdkafka}, que implementa una capa de abstracción asíncrona sobre la
-traducción directa de C en \cratelink{rdkafka-sys}.
+Una vez esta interfaz de bajo nivel se defina, se puede crear un \emph{wrapper}
+de más alto nivel en la runtime que se encargue de la comunicación y de mejorar
+su usabilidad dentro de Tremor. Esto mismo lo hacen otras \crates como
+\cratelink{rdkafka}, que implementa una capa de abstracción asíncrona sobre su
+interfaz de C en \cratelink{rdkafka-sys}.
 
 \section{Funcionamiento interno}
 
@@ -167,9 +271,9 @@ lock-based synchronization).''
 No usa un lenguaje (e.g., Erlang) o framework (e.g., \cratelink{bastion}, quizá
 en el futuro) que siga estrictamente este modelo, pero re-implementa los mismos
 patrones frecuentemente de forma manual. Tremor se basa en \emph{programación
-asíncrona}, es decir, que en vez de hilos trabajaremos con \emph{tareas}, un
-concepto de nivel más alto. De la documentación de \cratelink{async-std}, la
-runtime asíncrona que usa Tremor:
+asíncrona}, es decir, que en vez de hilos trabaja con \emph{tareas}, un concepto
+de nivel más alto y especializado para entrada/salida. De la documentación de
+\cratelink{async-std}, la runtime asíncrona que usa Tremor:
 
 % TODO: faltaría referenciar
 % https://docs.rs/async-std/1.10.0/async_std/task/index.html
@@ -180,18 +284,19 @@ synchronization.''
 
 Podríamos resumir su arquitectura con la frase ``Tremor se basa en actores
 corriendo en tareas diferentes, que se comunican asíncronamente con canales''.
+
 El actor principal se llama \code{World}. Contiene el estado del programa, como
 los artefactos disponibles (\emph{repositorios}) y los que se están ejecutando
 (\emph{registros}) y se usa para inicializar y controlar el programa.
 
 Los \emph{managers} o \emph{gestores} son simplemente actores en el sistema que
 envuelven una funcionalidad. Los gestores ayudan a desacoplar la comunicación y
-la implementación de la funcionalidad interna. También son útiles para eliminar
-código repetitivo al inicializar los componentes, así como la creación de
-canales de comunicación, o el lanzamiento del componente en una tarea nueva.
-Generalmente, hay un gestor por cada tipo de artefacto para ayudar con su
-inicialización, y también un gestor por cada instancia que se esté ejecutando,
-para controlar su comunicación.
+la implementación de la funcionalidad interna. Son útiles para eliminar código
+repetitivo al inicializar los componentes, así como la creación de canales de
+comunicación o el lanzamiento del componente en una tarea nueva. Generalmente,
+hay un gestor por cada tipo de artefacto para ayudar con su inicialización, y
+también un gestor por cada instancia que se esté ejecutando, para controlar su
+comunicación.
 
 Notar que la inicialización de los \connectors ocurre en dos pasos: primero se
 \emph{registran}, es decir, indica que está disponible para cargarlo (y se añade

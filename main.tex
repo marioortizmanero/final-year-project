@@ -12,6 +12,14 @@
 % NOTES:
 % * Count words with `:TexWordCount`
 % * Svg to pdf: `inkscape -D image.svg  -o image.pdf --export-latex`
+%
+% TODO:
+% * Buscar (grep) comas antes de conjunciones (y, e, o, u)
+% * Debería tener palabras anglosajonas con `\emph` siempre? Me parece que
+% debería traducir 'connector' por 'conector', pero no sé cómo hacerlo en el
+% caso de onramp, offramp, sink y source.
+% * Traducir runtime por ejecutor?
+% * Debería incluir las figuras siempre en su sitio, o siempre al final, o cómo?
 
 \documentclass[a4paper,12pt,twoside,hidelinks,openright]{book}
 
@@ -21,7 +29,6 @@
 
 \usepackage[usenames, dvipsnames]{color}
 \usepackage{graphicx}
-\usepackage{enumerate}
 \usepackage{multirow}
 \usepackage{graphics}
 \usepackage{appendix}
@@ -54,6 +61,12 @@
 \setmainfont{Heuristica} % For the text
 \setmonofont{Liberation Mono} % For the code
 
+% Less margin between lists, otherwise after overriding \parskip and etc it's
+% too much.
+% TODO: decidir si hacer párrafos estilo TeX o convencionales.
+\usepackage{enumitem}
+\setlist{topsep=0pt}
+
 % Code syntax highlighting
 \usepackage{minted}
 \usepackage{xcolor}
@@ -66,6 +79,15 @@
     fontsize=\footnotesize,
     linenos
 }
+
+% Remove red boxes around illegal characters in minted, taken from:
+% https://tex.stackexchange.com/a/343506
+%
+% This way, `mysql` can be used to highlight tremorscript as a quick hack.
+\makeatletter
+\AtBeginEnvironment{minted}{\dontdofcolorbox}
+\def\dontdofcolorbox{\renewcommand\fcolorbox[4][]{##4}}
+\makeatother
 
 % Command for inline code
 \newcommand{\code}[1] {\mintinline{text}{#1}}
