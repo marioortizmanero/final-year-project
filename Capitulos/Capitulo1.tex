@@ -47,7 +47,7 @@ de Tremor:
 
 \end{enumerate}
 
-\begin{figure}[h]
+\begin{figure}
     \centering
     \includegraphics[width=\textwidth]{./Imagenes/example.pdf}
     \caption{Ejemplo de uso básico de Tremor}%
@@ -80,7 +80,7 @@ Tremor se basa en los términos de \onramps o \sources y \offramps o \sinks:
 
 \end{itemize}
 
-\begin{figure}[h]
+\begin{figure}
     \centering
     \begin{minted}[escapeinside=||]{mysql}
 |\textcolor{blue}{define pipeline}| main
@@ -184,7 +184,7 @@ estática al inicio del programa.
     \centering
     \begin{minted}{rust}
 pub trait Connector {
-    /// Crea la parte "source" del conector, si es aplicable.
+    /// Crea la parte "source" del connector, si es aplicable.
     async fn create_source(
         &mut self,
         _source_context: SourceContext,
@@ -193,7 +193,7 @@ pub trait Connector {
         Ok(None)
     }
 
-    /// Crea la parte "sink" del conector, si es aplicable.
+    /// Crea la parte "sink" del connector, si es aplicable.
     async fn create_sink(
         &mut self,
         _sink_context: SinkContext,
@@ -225,11 +225,11 @@ pub trait Connector {
         Ok(())
     }
     /// Llamado ante un evento de "drain", que se asegura de que no
-    /// lleguen más eventos a este conector.
+    /// lleguen más eventos a este connector.
     async fn on_drain(&mut self, _ctx: &ConnectorContext) -> Result<()> {
         Ok(())
     }
-    /// Llamado cuando el conector para.
+    /// Llamado cuando el connector para.
     async fn on_stop(&mut self, _ctx: &ConnectorContext) -> Result<()> {
         Ok(())
     }
@@ -252,7 +252,7 @@ su usabilidad dentro de Tremor. Esto mismo lo hacen otras \crates como
 \cratelink{rdkafka}, que implementa una capa de abstracción asíncrona sobre su
 interfaz de C en \cratelink{rdkafka-sys}.
 
-\section{Funcionamiento interno}
+\section{Arquitectura interna}
 
 Antes de comenzar a modificar el código existente en Tremor, es importante
 conocer cómo funciona para evitar perder el tiempo. Tremor se basa en el modelo
@@ -285,6 +285,8 @@ synchronization.''
 Podríamos resumir su arquitectura con la frase ``Tremor se basa en actores
 corriendo en tareas diferentes, que se comunican asíncronamente con canales''.
 
+\section{Detalles de implementación}
+
 El actor principal se llama \code{World}. Contiene el estado del programa, como
 los artefactos disponibles (\emph{repositorios}) y los que se están ejecutando
 (\emph{registros}) y se usa para inicializar y controlar el programa.
@@ -305,13 +307,13 @@ otro artefacto con \code{launch_binding}, lo cual lo movería del repositorio al
 registro, con el resto de artefactos ejecutándose.
 
 A continuación se muestran los pasos que Tremor sigue para iniciar la ejecución
-de un \connector, comenzando por el registro de un conector en la
+de un \connector, comenzando por su registro en la
 Figura~\ref{fig:tremor_registering}.
 
 \begin{figure}
     \centering
     \includegraphics[width=\textwidth]{./Imagenes/registering.pdf}
-    \caption{Registro de un conector en el programa}%
+    \caption{Registro de un \connector en el programa}%
     \label{fig:tremor_registering}
 \end{figure}
 
@@ -323,19 +325,19 @@ configurado, e intentaría registrar todos los plugins que encuentre. En una
 futura versión, el usuario podría solicitar el cargado de un plugin nuevo
 mientras se está ejecutando Tremor.
 
-\code{connectors::Manager} contiene todos los conectores ejecutándose en Tremor,
-que se muestra en la Figura \ref{fig:tremor_initializing}.
+\code{connectors::Manager} contiene todos los \connectors ejecutándose en
+Tremor, que se muestra en la Figura \ref{fig:tremor_initializing}.
 
 \begin{figure}
     \centering
     \includegraphics[width=\textwidth]{./Imagenes/initializing.pdf}
-    \caption{Inicialización de un conector en el programa}%
+    \caption{Inicialización de un \connector en el programa}%
     \label{fig:tremor_initializing}
 \end{figure}
 
 Ya que es un proceso en múltiples pasos (en la implementación es más complicado
 que registro + creación), la primera parte provee las herramientas para
-inicializar el conector (el \emph{builder}). Cuando el conector necesite
+inicializar el \connector (el \emph{builder}). Cuando el \connector necesite
 comenzar a ejecutarse porque se haya añadido a una \pipeline, el \builder ayuda
 a construir y configurarlo de forma genérica. Finalmente, se añade a una tarea
 propia para que se pueda comunicar con otras partes de Tremor.
@@ -349,7 +351,7 @@ tarea para ellos, como se puede observar en la Figura
 \begin{figure}
     \centering
     \includegraphics[width=\textwidth]{./Imagenes/setting-up.pdf}
-    \caption{Configuración de un conector en el programa}%
+    \caption{Configuración de un \connector en el programa}%
     \label{fig:tremor_setting_up}
 \end{figure}
 
@@ -364,11 +366,11 @@ este último también puede responder a mensajes usando la misma conexión. Esto
 fallado (\code{Fail} para un evento específico, \code{CircuitBreaker}) para
 dejar de recibir datos por completo.
 
-Algunos conectores se basan en \emph{flujos}. Son equivalentes a los flujos de
+Algunos \connectors se basan en \emph{flujos}. Son equivalentes a los flujos de
 TCP, que ayudan a agrupar mensajes para evitar mezclarlos. Se inician y
 finalizan mediante mensajes, y el gestor se guarda su estado actual en un campo
 llamado \code{states} (ya que, por ejemplo, algunos preprocesadores puedan
-querer guardar un estado). Si un conector no necesita flujos, como
+querer guardar un estado). Si un \connector no necesita flujos, como
 \code{metronome}, puede especificar su ID como \code{DEFAULT_STREAM_ID} siempre.
 
 Los códecs y preprocesadores se involucran aquí tanto a nivel de \source como de
@@ -378,8 +380,8 @@ se sigue el proceso inverso: los datos se codifican primero a bytes con el
 códec, y posteriormente una serie de postprocesadores se aplican a los datos
 binarios.
 
-Después de implementar la interfaz de los conectores para el sistema de plugins,
-podría escribir los siguientes plugins:
+Después de implementar la interfaz de los \connectors para el sistema de
+plugins, podría escribir los siguientes plugins:
 
 \begin{itemize}
     \item \emph{Blackhole}, usado para medir el rendimiento. Realiza mediciones
@@ -391,6 +393,6 @@ podría escribir los siguientes plugins:
 
 \end{itemize}
 
-Ambos conectores son relativamente simples y serán de gran ayuda para realizar
+Ambos \connectors son relativamente simples y serán de gran ayuda para realizar
 \emph{benchmarks} para el PDK después. Sin embargo, lo más importante al
 principio es que funcione, y después me encargaré del rendimiento.
