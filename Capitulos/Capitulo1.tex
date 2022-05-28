@@ -206,31 +206,31 @@ pub trait Connector {
     /// conexión con una base de datos.
     async fn connect(
         &mut self,
-        _ctx: &ConnectorContext,
+        _c: &ConnectorContext,
         _attempt: &Attempt
     ) -> Result<bool> {
         Ok(true)
     }
 
     /// Llamado una vez cuando el conector inicia.
-    async fn on_start(&mut self, _ctx: &ConnectorContext) -> Result<()> {
+    async fn on_start(&mut self, _c: &ConnectorContext) -> Result<()> {
         Ok(())
     }
     /// Llamado cuando el conector pausa.
-    async fn on_pause(&mut self, _ctx: &ConnectorContext) -> Result<()> {
+    async fn on_pause(&mut self, _c: &ConnectorContext) -> Result<()> {
         Ok(())
     }
     /// Llamado cuando el conector continúa.
-    async fn on_resume(&mut self, _ctx: &ConnectorContext) -> Result<()> {
+    async fn on_resume(&mut self, _c: &ConnectorContext) -> Result<()> {
         Ok(())
     }
     /// Llamado ante un evento de "drain", que se asegura de que no
     /// lleguen más eventos a este conector.
-    async fn on_drain(&mut self, _ctx: &ConnectorContext) -> Result<()> {
+    async fn on_drain(&mut self, _c: &ConnectorContext) -> Result<()> {
         Ok(())
     }
     /// Llamado cuando el conector para.
-    async fn on_stop(&mut self, _ctx: &ConnectorContext) -> Result<()> {
+    async fn on_stop(&mut self, _c: &ConnectorContext) -> Result<()> {
         Ok(())
     }
 }
@@ -292,23 +292,30 @@ los artefactos disponibles (\emph{repositorios}) y los que se están ejecutando
 (\emph{registros}) y se usa para inicializar y controlar el programa.
 
 Los \emph{managers} o \emph{gestores} son simplemente actores en el sistema que
-envuelven una funcionalidad. Los gestores ayudan a desacoplar la comunicación y
-la implementación de la funcionalidad interna. Son útiles para eliminar código
-repetitivo al inicializar los componentes, así como la creación de canales de
-comunicación o el lanzamiento del componente en una tarea nueva. Generalmente,
-hay un gestor por cada tipo de artefacto para ayudar con su inicialización, y
-también un gestor por cada instancia que se esté ejecutando, para controlar su
-comunicación.
+envuelven una funcionalidad. Ayudan a desacoplar la comunicación y la
+implementación de la funcionalidad interna. De esta forma, se puede eliminar
+código repetitivo al inicializar los componentes, así como la creación de
+canales de comunicación o el lanzamiento del componente en una tarea nueva.
+Generalmente, hay un gestor por cada tipo de artefacto para facilitar su
+inicialización y también uno por cada instancia que se esté ejecutando, para
+controlar su comunicación.
 
-Notar que la inicialización de los conectores ocurre en dos pasos: primero se
-\emph{registran}, es decir, indica que está disponible para cargarlo (y se añade
-al repositorio). El conector no empieza a ejecutarse hasta que se conecte con
-otro artefacto con \code{launch_binding}, lo cual lo movería del repositorio al
-registro, con el resto de artefactos ejecutándose.
+Notar que la inicialización de los conectores ocurre en dos pasos. Primero se
+\emph{registran}, es decir, se indica su disponibilidad para cargarlo
+(añadiéndolo al repositorio). Posteriormente, no se ejecutará hasta conectarse
+con otro artefacto con \code{launch_binding}, lo cual lo movería del repositorio
+al registro, junto al resto de artefactos ejecutándose.
 
-A continuación se muestran los pasos que Tremor sigue para iniciar la ejecución
-de un conector, comenzando por su registro en la
-Figura~\ref{fig:tremor_registering}.
+\subsection{Registro}
+
+La Figura~\ref{fig:tremor_registering} detalla todos los pasos seguidos en el
+código. Primero han de inicializarse los gestores, y después registrar los
+artefactos. Actualmente, esta parte se realiza de forma estática con
+\code{register_builtin_types}, pero después de implementar el PDK, debería ser
+dinámicamente. Tremor buscaría automáticamente plugins en sus directorios
+configurados e intentaría registrar todos los que encuentre. En una futura
+versión, el usuario podría solicitar manualmente el cargado de un plugin nuevo
+mientras se está ejecutando Tremor.
 
 \begin{figure}
     \centering
@@ -317,16 +324,16 @@ Figura~\ref{fig:tremor_registering}.
     \label{fig:tremor_registering}
 \end{figure}
 
-Una vez todos los gestores han sido inicializados, Tremor registra los
-artifactos --- actualmente de forma estática con \code{register_builtin_types}.
-Después de implementar el PDK, esto debería ocurrir dinámicamente, i.e., Tremor
-buscaría automáticamente por archivos \code{dll}/\code{so} en su directorio
-configurado, e intentaría registrar todos los plugins que encuentre. En una
-futura versión, el usuario podría solicitar el cargado de un plugin nuevo
-mientras se está ejecutando Tremor.
+\subsection{Inicialización}
 
+Ya que es un proceso en múltiples pasos (en la implementación es más complicado
+que registro + creación), la primera parte provee las herramientas para
+inicializar el conector (el \emph{builder}). Cuando el conector necesite
+comenzar a ejecutarse porque se haya añadido a una \pipeline, el \builder ayuda
+a construir y configurarlo de forma genérica. Finalmente, se añade a una tarea
+propia para que se pueda comunicar con otras partes de Tremor. El gestor
 \code{connectors::Manager} contiene todos los conectores ejecutándose en Tremor,
-que se muestra en la Figura \ref{fig:tremor_initializing}.
+como se muestra en la Figura~\ref{fig:tremor_initializing}.
 
 \begin{figure}
     \centering
@@ -335,18 +342,13 @@ que se muestra en la Figura \ref{fig:tremor_initializing}.
     \label{fig:tremor_initializing}
 \end{figure}
 
-Ya que es un proceso en múltiples pasos (en la implementación es más complicado
-que registro + creación), la primera parte provee las herramientas para
-inicializar el conector (el \emph{builder}). Cuando el conector necesite
-comenzar a ejecutarse porque se haya añadido a una \pipeline, el \builder ayuda
-a construir y configurarlo de forma genérica. Finalmente, se añade a una tarea
-propia para que se pueda comunicar con otras partes de Tremor.
+\subsection{Configuración}
 
-Ahora que tenemos un conector corriendo, visualizaremos cómo se divide en una
-parte \sink y otra \source. De forma similar, un \builder se usa para
-inicializar su \sink, \source, o ambos y posteriormente se inicia una nueva
-tarea para ellos, como se puede observar en la Figura
-\ref{fig:tremor_setting_up}.
+Una vez haya un conector corriendo, la Figura \ref{fig:tremor_setting_up}
+visualiza cómo se divide en una parte \sink y otra \source. Estas son
+opcionales, pero no exclusivas, así que se puede tener cualquiera de las dos o
+ambas. De forma similar, un \builder se usa para inicializar las partes y a
+continuación inicia una nueva tarea para ellos.
 
 \begin{figure}
     \centering
@@ -358,30 +360,33 @@ tarea para ellos, como se puede observar en la Figura
 También se crea un gestor por cada instancia de \sink o \source, que se
 encargará de la comunicación con otros actores. De esta forma, sus interfaces
 pueden mantenerse lo más simple posible. Esos gestores recibirán peticiones de
-conexión de la \pipeline y posteriormente redirigirán o leerán de ella.
+conexión de la \pipeline y posteriormente leerán o enviarán eventos en ella.
 
 La diferencia principal entre \sources y \sinks a nivel de implementación es que
 este último también puede responder a mensajes usando la misma conexión. Esto es
-útil para notificar que el paquete ha llegado (\code{Ack}), o que algo ha
-fallado (\code{Fail} para un evento específico, \code{CircuitBreaker}) para
-dejar de recibir datos por completo.
+útil para notificar que el paquete ha llegado (\code{Ack}) o que algo ha fallado
+(\code{Fail} para un evento específico, \code{CircuitBreaker} para dejar de
+recibir datos por completo).
+
+Los códecs y preprocesadores se involucran aquí tanto para los \sources como
+para los \sinks. En la parte de \source, los datos son transformados a través de
+una cadena de preprocesadores y posteriormente se aplica un códec. Para los
+\sinks, se sigue el proceso inverso: los datos se codifican primero a bytes con
+el códec, y posteriormente una serie de postprocesadores se aplican a los datos
+binarios.
+
+\subsection{Notas adicionales}
 
 Algunos conectores se basan en \emph{flujos}. Son equivalentes a los flujos de
 TCP, que ayudan a agrupar mensajes para evitar mezclarlos. Se inician y
-finalizan mediante mensajes, y el gestor se guarda su estado actual en un campo
-llamado \code{states} (ya que, por ejemplo, algunos preprocesadores puedan
+finalizan mediante mensajes, y el gestor se guarda el estado del flujo en un
+campo llamado \code{states} (ya que, por ejemplo, algunos preprocesadores puedan
 querer guardar un estado). Si un conector no necesita flujos, como
-\code{metronome}, puede especificar su ID como \code{DEFAULT_STREAM_ID} siempre.
+\code{metronome} (que únicamente envía eventos periódicamente), puede
+especificar su identificador de flujo como \code{DEFAULT_STREAM_ID} siempre.
 
-Los códecs y preprocesadores se involucran aquí tanto a nivel de \source como de
-\sink. En la parte de \source, los datos son transformados a través de una
-cadena de preprocesadores y posteriormente se aplica un códec. Para los \sinks,
-se sigue el proceso inverso: los datos se codifican primero a bytes con el
-códec, y posteriormente una serie de postprocesadores se aplican a los datos
-binarios.
-
-Después de implementar la interfaz de los conectores para el sistema de plugins,
-podría escribir los siguientes plugins:
+Tras implementar la interfaz de los conectores para el sistema de plugins,
+los primeros conectores a desarrollar deberían ser:
 
 \begin{itemize}
     \item \emph{Blackhole}, usado para medir el rendimiento. Realiza mediciones
@@ -393,6 +398,7 @@ podría escribir los siguientes plugins:
 
 \end{itemize}
 
-Ambos conectores son relativamente simples y serán de gran ayuda para realizar
-\emph{benchmarks} para el PDK después. Sin embargo, lo más importante al
-principio es que funcione, y después me encargaré del rendimiento.
+Ambos son relativamente simples y serán de gran ayuda para medir el efecto de
+los cambios sobre el rendimiento. De todos modos, el equipo de Tremor insistía
+que lo más importante primero es que funcione, y después me podría preocupar
+sobre eficiencia.

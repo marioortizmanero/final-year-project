@@ -14,7 +14,9 @@
 % * Svg to pdf: `inkscape -D image.svg  -o image.pdf --export-latex`
 %
 % TODO:
-% * Buscar (grep) comas antes de conjunciones (y, e, o, u)
+% * Buscar typos (grep):
+%   - Comas antes de conjunciones (y, e, o, u)
+%   - 'Artifacto'
 %
 % * Debería tener palabras anglosajonas con `\emph` siempre?
 %
@@ -107,6 +109,7 @@
     \code{#1}\footnote{\url{https://crates.io/crates/#1}}\xspace%
 }
 % Gracias unizar por no evolucionar y solo permitir memorias en castellano...
+\newcommand{\unsafe}{\code{unsafe}\xspace}
 \newcommand{\crate}{\emph{crate}\xspace}
 \newcommand{\crates}{\emph{crates}\xspace}
 \newcommand{\onramp}{\emph{onramp}\xspace}
@@ -116,7 +119,7 @@
 % TODO: sink/source sí que se podrían traducir por salida/entrada
 \newcommand{\sink}{\emph{sink}\xspace}
 \newcommand{\sinks}{\emph{sinks}\xspace}
-\newcommand{\source}{\emph{sources}\xspace}
+\newcommand{\source}{\emph{source}\xspace}
 \newcommand{\sources}{\emph{sources}\xspace}
 \newcommand{\pipeline}{\emph{pipeline}\xspace}
 \newcommand{\pipelines}{\emph{pipelines}\xspace}
