@@ -202,7 +202,137 @@ interesante, pero ciertamente no lo es en el caso de Tremor.
 
 \subsection{WebAssembly}
 
+\textcite{wasm}, también conocido como Wasm, es esencialmente un formato binario
+abierto y portable. A diferencia de binarios normales, el mismo ejecutable Wasm
+puede correr en cualquier plataforma, siempre y cuando exista una runtime que lo
+soporte. Comenzó como una alternativa a JavaScript exclusiva a la web, pero ha
+evolucionado con el tiempo y ahora es posible usarlo en el escritorio gracias a
+\textcite{wasi}.
+
+Los objetivos de Wasm son maximizar la portabilidad y seguridad, sin un coste de
+rendimiento excesivo. Su diseño incluye una \sandbox para lidiar con programas
+no fiables, como es el caso en sistemas de plugins, y apenas no requiere usar
+\unsafe. Ya que puede ser compilado desde otros lenguajes como Rust o C, el
+código existente en Tremor podría ser reusado (lo cual era imposible con
+lenguajes de \scripting).
+
+Existen dos runtimes principales para Rust: \textcite{wasmer} y
+\textcite{wasmtime}. Ambas son implementaciones competitivas que se enfocan a
+unos u otros casos de uso. Por lo general, Wasmer es más adecuado para embebirlo
+en programas nativos, mientras que Wasmtime se centra en programas individuales
+--- aunque los dos se pueden usar apara ambos casos~\cite{wasmwikiusage}.
+
+% TODO: quizá esta footnote es innecesaria; podría llamarlo `intérprete` y ya.
+WebAssembly todavía es una tecnología relativamente nueva, así que algunas
+partes siguen bajo desarrollo continuo y necesitan mejoras, como en rendimiento.
+En comparación a JavaScript, \textcite{jangda2019not} muestra resultados
+mezclados al realizar pruebas de rendimiento. Depende principalmente del
+compilador\footnote{Nos referimos también a la runtime como un
+\emph{compilador}, dado que las implementaciones más eficientes y populares son
+intérpretes \emph{Just-In-Time} (JIT), que transforman partes del código fuente
+a código máquina.} y del entorno que se esté usando, variando desde mejoras en
+velocidad de 1.67x en Chrome, a 11.71x con Firefox. Cuando se compara contra
+código nativo, \textcite{libsodiumwasmperf} describe una varianza similar, donde
+Wasmer es 2.47x más lento y con Wasmtime es 3.28x. En resumen, mientras que
+WebAssembly es una solución más eficiente que algunos lenguajes de \scripting,
+sigue sin llegar al nivel de binarios nativos, y posiblemente no sea lo
+suficiente para este caso.
+
+Esta tecnología es de las más adecuadas encontradas por el momento; su único
+problema es el rendimiento. Tras implementar algún sistema de plugins en
+miniatura, su usabilidad era excelente. Si fuera posible transferir datos entre
+la runtime y el plugin sin tener que copiarlos, sería definitivamente la mejor
+alternativa.
+
+La especificación de WebAssembly define únicamente enteros y decimales como sus
+tipos disponibles~\cite{wasmertypes}. Existen algunas maneras de tratar tipos no
+triviales como estructuras o enumeraciones:
+
+\begin{itemize}
+    \item A través de la \textcite{wasminterfacetypes}. Esta define un formato
+        binario para codificar y decodificar los nuevos tipos que define: tipos
+        de números más especializados, caracteres individuales, listas,
+        estructuras y enumeraciones. También especifica una lista de
+        instrucciones para transformar los datos entre WebAssembly y el mundo
+        exterior. Notar que esta propuesta no intenta definir una representación
+        fija de, por ejemplo, una cadena de caracteres en Wasm; intenta permitir
+        tipos de alto nivel agnósticos a su representación.
+
+        Adicionalmente, las interfaces se pueden definir independientemente del
+        lenguaje de programación que se esté usando, gracias al formato
+        \code{witx}~\cite{witx}, como muestra la Figura~\ref{fig:witx_example}.
+
+        El mayor problema de esta solución es que aún está en ``Fase 1'': aún
+        necesita mucho trabajo y su especificación no es estable. Ninguna de las
+        runtimes tienen soporte para esta propuesta
+        aún~\cite{interfacetypeswasmtime}\cite{interfacetypeswasmer}. Tras
+        fallar al intentar usarlo, esta opción fue descartada.
+
+    \item La forma actualmente funcional pero imperfecta, con punteros y memoria
+        compartida. El usuario debe construir y serializar el tipo complejo y
+        después guardarlo en la memoria reservada para Wasm, a la que la runtime
+        puede acceder directamente con punteros. Esto es lo que otros sistemas
+        de plugins como Feather o Veloren
+        hacen~\cite{featherpluginsystem}\cite{velorenpluginsystem}, así que es
+        garantizado que funciona.
+
+        No sólo requiere esto un paso de serialización y otro de deserialización
+        y escribir y leer todos los datos de una memoria, sino que también es
+        una tarea ardua y complicado de hacer correctamente. A nivel de
+        rendimiento esto implicaría copiar los datos, así que no es algo que
+        Tremor se pueda permitir.
+
+    \item Otra opción que usan programas como Zellij~\cite{zellijpluginsystem},
+        que usa un ejecutable de Wasm en vez de usarlo como una librería. Para
+        cargarlo, lo ejecuta y usa \emph{stdin} y \emph{stdout} para los flujos
+        de datos. Por desgracia, esto también requiere copiar datos, y tiene que
+        descartarse.
+
+\end{itemize}
+
+\begin{figure}
+    \centering
+    \begin{minted}{lisp}
+(use "errno.witx")
+
+;;; Add two integers
+(module $calculator
+  (@interface func (export "add")
+    (param $lh s32)
+    (param $rh s32)
+    (result $error $errno)
+    (result $res s32)
+  )
+)
+    \end{minted}
+    \caption{Ejemplo de interfaz definida con \code{witx}}%
+    \label{fig:witx_example}
+\end{figure}
+
 \subsection{eBPF}
+
+eBPF es ``a revolutionary technology with origins in the Linux kernel that can
+run sandboxed programs in an operating system kernel''~\cite{ebpf}. Sin embargo,
+de forma similar a WebAssembly, su uso se ha extendido a \emph{user-space}. eBPF
+define una lista de instrucciones que pueden ejecutarse por una máquina virtual,
+también como WebAssembly funciona.
+
+Esta tecnología es prometedora, ya que a diferencia de WebAssembly, no es
+necesario serializar o deserializar los datos o escribirlos a una memoria
+intermedia. Ya que existe control completo sobre la máquina virtual, la runtime
+podría implementar una \sandbox personalizada para comprobar las direcciones de
+memoria de donde se lee o escribe para asegurarse de que se encuentran en el
+rango permitiendo, siendo posible compartir una única memoria. La única
+penalización en el rendimiento sería interpretar las instrucciones en vez de
+ejecutar código nativo, pero técnicamente Tremor sí que podría usarlo.
+
+El problema principal con eBPF es que su suporte es carente. La mayoría de sus
+usuarios usan C y lo muestra la poca cantidad de tutoriales, guías, artículos o
+incluso librerías disponibles para Rust. No es posible compilar Rust a
+instrucciones eBPF de forma oficial y la única runtime disponible es
+\cratelink{rbpf} y derivados como \cratelink{solana_rbpf}, ya que este primero
+parece estar obsoleto. Además, supondría un esfuerzo mucho mayor que
+WebAssembly, ya que también requeriría implementar una \sandbox personalizada.
 
 \subsection{Comunicación Inter-Proceso}
 
@@ -295,11 +425,117 @@ cargado dinámico y por tanto se descarta como opción.
 
 \subsection{Cargado dinámico}\label{sec:dynload}
 
-\section{Conclusión}
+Esta es la manera más popular para implementar un sistema de plugins, al menos
+fuera de Rust. Una \emph{Foreign Function Interface} (FFI) nos permite acceder
+directamente a recursos en objetos comparados por separado, aun después de la
+fase de \emph{linking}, gracias al cargado dinámico. Es una de las opciones más
+eficientes porque no implica casi ningún coste adicinal tras cargar la librería
+dinámica.
+
+La librería principal para este método es \cratelink{libloading}, aunque también
+existen los menos conocidos \cratelink{dlopen} y \crate{sharedlib}, con pequeñas
+diferencias~\cite{cratesdynloadcompare}. Todas ellas requieren de uso extensivo
+de \unsafe, aunque algunas librerías facilitan la tarea con macros u otras
+herramientas.
+
+\subsubsection{Estabilidad del ABI}
+
+El problema principal con esta alternativa es que Rust carece de un
+\emph{Application Binary Interface} (ABI) estable. El ABI es una interfaz entre
+dos módulos binarios, en nuestro caso una librería dinámica. Se encarga de
+definir, entre otros, la estructura que siguen los tipos en memoria y la
+convención usada para llamar funciones.
+
+Muchas fuentes explican de forma incorrecta qué significa este concepto en Rust.
+Esto también se produjo en la propuesta del PDK y no nos dimos cuenta de su
+verdadero significado hasta haber invertido una gran cantidad de horas. El
+malentendido es que supuestamente el ABI de Rust es estable, siempre que los dos
+binarios se compilen con la misma versión de compilador. Esto, sin embargo, es
+incorrecto por varias razones. Fuentes como la referencia oficial no entran en
+suficiente detalle~\cite{refabi}. Hay que recurrir a otra sección que menciona
+brevemente lo siguiente:
+
+``La estructura de tipos en memoria puede cambiar con cada compilación. En vez
+de intentar documentar exactamente qué se hace, se documenta solo lo que se
+garantiza hoy''
+
+% TODO: a lo mejor lo de órdenes de magnitud se podría cambiar por algo mejor
+Descubrir esto implicó un cambio de planes y un aumento en la complejidad del
+proyecto de órdenes de magnitud. Ahora tendría que recurrirse a una ABI que sí
+que tuviera garantías de estabilidad, y traducir entre la de Rust y esta para
+comunicarse entre runtime y plugins. La más usable es la de C, que se puede
+acceder como indican las Figuras~\ref{fig:rustpure}~y~\ref{fig:rustffi}.
+
+\begin{figure}
+    \centering
+    \begin{minted}{rust}
+pub struct Event {
+    pub count: i32,
+    pub name: &'static str,
+}
+
+pub fn transform(x: Event) -> i32 {
+    println!("Received an event with count {}", x.count);
+    x.count
+}
+
+pub static cached: Event = Event {
+    count: 0,
+    name: "my data"
+};
+    \end{minted}
+
+    \caption{Ejemplo de cómo sería un plugin escrito con Rust}%
+    \label{fig:rustpure}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \begin{minted}{rust}
+// Using C's memory layout with `#[repr]`
+#[repr(C)]
+pub struct Event {
+    // We can't have types from the standard library anymore, only
+    // either basic ones...
+    pub count: i32,
+    // ...or types from C itself
+    pub name: *const std::os::raw::char_c,
+}
+
+// Using C's calling conventions with `extern "C"`
+pub extern "C" fn transform(x: Event) -> i32 {
+    println!("Received an event with count {}", x.count);
+    x.count
+}
+
+// Disabling mangling so that the resource's name is known when
+// loading the plugin.
+#[no_mangle]
+pub static cached: Event = Event {
+    count: 0,
+    name: "my data".as_ptr() as _
+};
+    \end{minted}
+
+    \caption{El mismo plugin que la Figura \ref{fig:rustpure}, pero usando el
+    ABI de C}%
+    \label{fig:rustffi}
+\end{figure}
+
+\section{Elección Final}
+
+Esta decisión requirió escribir varios ejemplos, disponibles en
+\code{https://github.com/marioortizmanero/pdk-experiments}. Este repositorio
+incluye tres ejemplos en detalle usando \code{abi-stable}, otros tres con
+cargado dinámico sin librerías, y uno por cada runtime de WebAssembly (Wasmer y
+Wasmtime).
 
 \begin{figure}
     \centering
     \includegraphics[width=10cm]{./Imagenes/triangle.pdf}
-    \caption{Ejemplo de uso de Tremor}%
+    \caption{Comparación aproximada de los métodos investigados}%
     \label{fig:tech_triangle}
 \end{figure}
+
+Ninguna de las alternativas que se investigaron llegaron al nivel de rendimiento
+de cargado dinámico y requerían copiar los datos de una manera u otra.
