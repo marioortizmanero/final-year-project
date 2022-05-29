@@ -162,37 +162,138 @@ de escribir ninguna línea de código.
 Todo tipo de proyectos usan lenguajes interpretados para extender su
 funcionalidad a tiempo de ejecución, como Python, Ruby, Perl, Bash, o
 JavaScript. Particularmente, el editor de texto Vim creó su propio lenguaje para
-poderlo personalizar por completo, Vimscript. Ahora NeoVim, una alternativa más
-moderna, está esforzándose por tener Lua como lenguaje de primera clase para su
-configuración. Incluso Tremor tiene su propio lenguaje para configurarlo, Troy.
+poderlo personalizar por completo, Vimscript~\cite{vimscript}. Ahora NeoVim, un
+fork más moderno, está esforzándose por tener Lua como lenguaje de primera clase
+para su configuración~\cite{nvimlua}. Incluso Tremor tiene su propio lenguaje
+para configurarlo, Troy.
 
-% TODO: existe 'embeber' (traducción de embed) o me lo he inventado?
-Lua es popular en desarrollo de videojuegos; es un lenguaje simple con una
-implementación \emph{Just-In-time} (JIT) de muy alto rendimiento, por lo que
-sería de las mejores opciones para Tremor. Se podría embeber en la runtime, dado
-que solo ocupa 247kB compilado~\cite{luawhy}.
+% TODO: alguna traducción de 'embedding' decente?
+De todos los lenguajes disponibles, Lua sería una de las mejores opciones para
+este sistema de plugins en específico. Está hecho con \emph{embedding} en mente:
+es simple y únicamente alrededor de 220KB~\cite{ierusalimschy2006programming}.
+Algunas implementaciones del lenguaje, como LuaJIT, son extremadamente
+eficientes y pueden ser viables hasta en escenarios de rendimiento
+crítico~\cite{luajitperf}. Adicionalmente, las garantías de seguridad de Lua son
+más fuertes que otros lenguajes, dado que no requiere \unsafe y que incluye una
+\sandbox (aunque es ``delicado y difícil de configurar
+correctamente'')~\cite{luasandboxes}.
+
+Rust dispone de librerías como \cratelink{rlua}, con bindings para interoperar
+con Lua. \code{rlua} en particular parece enfocar su interfaz en ser idiomática
+y segura, que es un punto positivo para una librería fuertemente relacionada con
+C. Por desgracia, parece estar semi-abandonada y fue reemplazada por
+\cratelink{mlua}. Por lo general, el ecosistema de Lua en Rust no parece lo
+suficientemente maduro para un proyecto como este; aún queda trabajo para
+mejorar la estabilidad.
+
+También sería posible usar uno de los lenguajes interpretados creados
+específicamente para Rust: \textcite{cratesiogluon}, \textcite{cratesiorhai} o
+\textcite{cratesiorune}. Usarlos posiblemente resulte en código más limpio y
+simple. Sin embargo, su ecosistema todavía está en su infancia y ninguna de las
+opciones son tan estables o seguras como lenguajes de programación de uso
+general. Rhai, el más usado, anunció su versión v1.0 en julio de 2021 y no
+sobrepasa las 200.000 descargas, mientras que Lua fue creado en 1993 y es uno de
+los 20 lenguajes más famosos, según el \textcite{tiobe}.
+
+De cualquier manera, portar el código a este sistema de plugins sería un trabajo
+excesivamente laborioso. Todos los conectores tendrían que reescribirse por
+completo a un lenguaje distinto. Para un proyecto nuevo sería una alternativa
+interesante, pero ciertamente no lo es en el caso de Tremor.
+
+\subsection{WebAssembly}
+
+\subsection{eBPF}
 
 \subsection{Comunicación Inter-Proceso}
 
+Otra opción popular para sistemas de plugins es la \emph{Comunicación
+Inter-Proceso}, que divide el programa en un cliente y un servidor en procesos
+distintos. El cliente actuaría como runtime y estaría conectado a múltiples
+servidores que proporcionan la funcionalidad. Se podría comparar con el
+\emph{Language Server
+Protocol}\footnote{\url{https://microsoft.github.io/language-server-protocol/}},
+basado en JSON-RPC y usado por la mayoría de editores de texto para tener
+soporte especializado para cualquier lenguaje de programación.
+
+Una ventaja común para todos los métodos de esta familia es que, de forma
+similar a WebAssembly, los plugins se podrán escribir en Rust, así que el código
+existente se podría reusar. Además, ya que el cliente y servidor se dividirían
+en múltiples procesos, serían más seguros por lo general; plugins defectuosos no
+afectarían a la runtime de Tremor.
+
+\subsubsection{Sockets}
+
+Son los que peor rendimiento tienen de acuerdo a la Figura
+\ref{fig:ipc_comparison1} y la Figura \ref{fig:ipc_comparison2}, pero también
+son los más famosos, y consecuentemente, los más fáciles de usar. Los \sockets
+son la misma tecnología usada en cualquier servidor para comunicarse con un
+cliente y viceversa, por lo que hay una cantidad enorme de implementaciones
+disponibles.
+
 \begin{figure}
     \centering
-    \includegraphics[width=10cm]{./Imagenes/venkataraman2015evaluation1.png}
+    \includegraphics[width=12cm]{./Imagenes/venkataraman2015evaluation1.png}
     \caption{Latencia vs. Tamaño de Mensaje \cite{venkataraman2015evaluation}}%
     \label{fig:ipc_comparison1}
 \end{figure}
 
 \begin{figure}
     \centering
-    \includegraphics[width=10cm]{./Imagenes/venkataraman2015evaluation2.png}
+    \includegraphics[width=12cm]{./Imagenes/venkataraman2015evaluation2.png}
     \caption{Rendimiento vs. Tamaño de Mensaje \cite{venkataraman2015evaluation}}%
     \label{fig:ipc_comparison2}
 \end{figure}
 
-\subsection{Cargado dinámico}
+Usar \sockets también requiere un paso de deserialización, dado que los datos se
+envían en paquetes. Formatos como JSON son los más flexibles, pero otros como
+\textcite{protobuf} son ligeros y tienen mejor rendimiento.
 
-\subsection{WebAssembly}
+\subsubsection{Pipes}
 
-\subsection{eBPF}
+Para un sistema de plugins, las \pipes son muy similares a los \sockets, con la
+única diferencia siendo que las \pipes solo se pueden usar en una misma máquina.
+Con \sockets, técnicamente podrías usar TCP o UDP y tener la runtime y los
+plugins en ordenadores distintos. Esto no es algo necesario para el caso de
+Tremor, y ya que las \pipes ofrecen un mejor rendimiento, posiblemente sean una
+mejor opción por lo general.
+
+Por ejemplo, el gestor de archivos
+nnn\footnote{\url{https://github.com/jarun/nnn}} usa este método: los plugins
+pueden leer de una FIFO (una \pipe con nombre) para recibir las selecciones de
+archivos o directorios que realice el usuario e implementar su funcionalidad
+adicional.
+
+La única desventaja es que no parecen haber librerías populares para la
+funcionalidad genérica de \pipes (quizá \cratelink{interprocess} o
+\cratelink{ipipe}). Sin embargo, esto podría ser innecesario si se usaran las
+\pipes de \emph{stdin}, \emph{stdout} o \emph{stderr} implícitamente, ya que
+tienen soporte en la librería estándar al ejecutar comandos
+\emph{shell}~\cite{rustpipes}.
+
+\subsubsection{Memoria compartida}
+
+Como el nombre indica, la memoria compartida consiste en inicializar un buffer
+del que se puede leer y escribir desde dos o más procesos al mismo tiempo para
+comunicarse. El API de memoria compartida se implementa a nivel del kernel, por
+lo que depende mucho del sistema operativo y posiblemente no sea tan portable
+como otras soluciones.
+
+Tal y como indican las
+Figuras~\ref{fig:ipc_comparison1}~y~\ref{fig:ipc_comparison2}, es el método con
+mejor rendimiento, ya que no requiere copiar ni transformar datos entre
+procesos. El único coste adicional es la inicialización de las páginas
+compartidas en el sistema operativo, que se debe hacer únicamente al
+principio~\cite{sharedmemperf}.
+
+Desgraciadamente, el soporte para memoria compartida en Rust es casi
+inexistente. Las únicas \crates disponibles son \cratelink{shared_memory} y
+\cratelink{raw_sync}, que no superan las 150.000 descargas en total y usan gran
+cantidad de \unsafe. Esto probablemente tenga que ver con el hecho de que
+comparte los mismos problemas que cargado dinámico respecto a estabilidad de ABI
+(explicado en la sección~\ref{sec:dynload}). No parece ofrecer nada mejor que el
+cargado dinámico y por tanto se descarta como opción.
+
+\subsection{Cargado dinámico}\label{sec:dynload}
 
 \section{Conclusión}
 
