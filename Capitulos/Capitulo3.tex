@@ -284,8 +284,8 @@ triviales como estructuras o enumeraciones:
 
     \item Otra opción que usan programas como Zellij~\cite{zellijpluginsystem},
         que usa un ejecutable de Wasm en vez de usarlo como una librería. Para
-        cargarlo, lo ejecuta y usa \emph{stdin} y \emph{stdout} para los flujos
-        de datos. Por desgracia, esto también requiere copiar datos, y tiene que
+        cargarlo, lo ejecuta y usa \stdin y \stdout para los flujos de datos.
+        Por desgracia, esto también requiere copiar datos, y tiene que
         descartarse.
 
 \end{itemize}
@@ -305,7 +305,7 @@ triviales como estructuras o enumeraciones:
   )
 )
     \end{minted}
-    \caption{Ejemplo de interfaz definida con \code{witx}}%
+    \caption{Ejemplo de interfaz definida con \code{witx}.}%
     \label{fig:witx_example}
 \end{figure}
 
@@ -363,14 +363,15 @@ disponibles.
 \begin{figure}
     \centering
     \includegraphics[width=12cm]{./Imagenes/venkataraman2015evaluation1.png}
-    \caption{Latencia vs. Tamaño de Mensaje \cite{venkataraman2015evaluation}}%
+    \caption{Latencia vs. Tamaño de Mensaje \cite{venkataraman2015evaluation}.}%
     \label{fig:ipc_comparison1}
 \end{figure}
 
 \begin{figure}
     \centering
     \includegraphics[width=12cm]{./Imagenes/venkataraman2015evaluation2.png}
-    \caption{Rendimiento vs. Tamaño de Mensaje \cite{venkataraman2015evaluation}}%
+    \caption{Rendimiento vs. Tamaño de Mensaje
+    \cite{venkataraman2015evaluation}.}%
     \label{fig:ipc_comparison2}
 \end{figure}
 
@@ -396,9 +397,8 @@ adicional.
 La única desventaja es que no parecen haber librerías populares para la
 funcionalidad genérica de \pipes (quizá \cratelink{interprocess} o
 \cratelink{ipipe}). Sin embargo, esto podría ser innecesario si se usaran las
-\pipes de \emph{stdin}, \emph{stdout} o \emph{stderr} implícitamente, ya que
-tienen soporte en la librería estándar al ejecutar comandos
-\emph{shell}~\cite{rustpipes}.
+\pipes de \stdin, \stdout o \stderr implícitamente, ya que tienen soporte en la
+librería estándar al ejecutar comandos \emph{shell}~\cite{rustpipes}.
 
 \subsubsection{Memoria compartida}
 
@@ -427,44 +427,60 @@ cargado dinámico y por tanto se descarta como opción.
 
 Esta es la manera más popular para implementar un sistema de plugins, al menos
 fuera de Rust. Una \emph{Foreign Function Interface} (FFI) nos permite acceder
-directamente a recursos en objetos comparados por separado, aun después de la
+directamente a recursos en objetos compilados separadamente, aun después de la
 fase de \emph{linking}, gracias al cargado dinámico. Es una de las opciones más
 eficientes porque no implica casi ningún coste adicinal tras cargar la librería
 dinámica.
 
-La librería principal para este método es \cratelink{libloading}, aunque también
-existen los menos conocidos \cratelink{dlopen} y \crate{sharedlib}, con pequeñas
+La \crate principal para este método es \cratelink{libloading}, aunque también
+existen las menos conocidas \cratelink{dlopen} y \crate{sharedlib}, con pequeñas
 diferencias~\cite{cratesdynloadcompare}. Todas ellas requieren de uso extensivo
-de \unsafe, aunque algunas librerías facilitan la tarea con macros u otras
-herramientas.
+de \unsafe, son complicadas de usar
+correctamente~\cite{hardplugins1}\cite{hardplugins2}, incluyendo sutiles
+disparidades entre sistemas operativos~\cite{hardplugins3}, ni disponen de un
+mecanismo similar a una \sandbox. La única manera de mejorar la usabilidad será
+a través de los macros y herramientas facilitados por algunas librerías.
 
-\subsubsection{Estabilidad del ABI}
+\subsubsection{Estabilidad del ABI}\label{sec:abi}
 
 El problema principal con esta alternativa es que Rust carece de un
 \emph{Application Binary Interface} (ABI) estable. El ABI es una interfaz entre
-dos módulos binarios, en nuestro caso una librería dinámica. Se encarga de
-definir, entre otros, la estructura que siguen los tipos en memoria y la
-convención usada para llamar funciones.
+dos módulos binarios, en nuestro caso entre un ejecutable (runtime) y una
+librería dinámica (plugin). Este se encarga de definir, entre otros, la
+estructura que siguen los tipos en memoria y la convención usada para llamar
+funciones. Sin un ABI definido (y por tanto, \emph{estable}), sería imposible
+saber cómo acceder a los recursos de otros binarios.
 
-Muchas fuentes explican de forma incorrecta qué significa este concepto en Rust.
-Esto también se produjo en la propuesta del PDK y no nos dimos cuenta de su
-verdadero significado hasta haber invertido una gran cantidad de horas. El
-malentendido es que supuestamente el ABI de Rust es estable, siempre que los dos
-binarios se compilen con la misma versión de compilador. Esto, sin embargo, es
-incorrecto por varias razones. Fuentes como la referencia oficial no entran en
-suficiente detalle~\cite{refabi}. Hay que recurrir a otra sección que menciona
-brevemente lo siguiente:
+En el comienzo este proyecto, gran cantidad de fuentes en la comunidad
+confundían cómo funciona este concepto en Rust, y lo explicaban de forma
+incorrecta~\cite{wrongabi1}\cite{wrongabi2}\cite{wrongabi3}\cite{wrongabi4}.
+Este popular malentendido también se dio en la propuesta del PDK y no nos dimos
+cuenta del verdadero significado hasta haber invertido numerosas horas. El
+equipo de Tremor --- yo incluido --- creía que el ABI de Rust es estable,
+siempre que los dos binarios se compilen con la misma versión de compilador. Sin
+embargo, esto es incorrecto por varias razones y fuentes como la referencia
+oficial no entran en suficiente detalle~\cite{refabi_abi}. Debe recurrirse a
+otra sección que menciona brevemente lo siguiente:
 
 ``La estructura de tipos en memoria puede cambiar con cada compilación. En vez
 de intentar documentar exactamente qué se hace, se documenta solo lo que se
-garantiza hoy''
+garantiza hoy''~\cite{refabi_layout}
+
+La asumpción anterior incorrecta se basa en que, hasta el momento, Rust no ha
+implementado ninguna optimización que rompa el ABI entre ejecuciones de un mismo
+compilador. Pero no existe absolutamente ninguna garantía de que esto sea así, y
+es un detalle de implementación del compilador del que no debería confiarse. Es
+posible que este comportamiento sí que se rompa en el
+futuro~\cite{randomizelayout}, en cuyo caso el sistema de plugins tendría que
+reescribirse por completo.
 
 % TODO: a lo mejor lo de órdenes de magnitud se podría cambiar por algo mejor
 Descubrir esto implicó un cambio de planes y un aumento en la complejidad del
 proyecto de órdenes de magnitud. Ahora tendría que recurrirse a una ABI que sí
 que tuviera garantías de estabilidad, y traducir entre la de Rust y esta para
-comunicarse entre runtime y plugins. La más usable es la de C, que se puede
-acceder como indican las Figuras~\ref{fig:rustpure}~y~\ref{fig:rustffi}.
+comunicarse entre runtime y plugins. La ABI más conocida es la del lenguaje de
+programación C, que se puede acceder desde Rust como indican las
+Figuras~\ref{fig:rustpure}~y~\ref{fig:rustffi}.
 
 \begin{figure}
     \centering
@@ -485,7 +501,7 @@ pub static cached: Event = Event {
 };
     \end{minted}
 
-    \caption{Ejemplo de cómo sería un plugin escrito con Rust}%
+    \caption{Ejemplo de cómo sería un plugin escrito con Rust.}%
     \label{fig:rustpure}
 \end{figure}
 
@@ -517,25 +533,121 @@ pub static cached: Event = Event {
 };
     \end{minted}
 
-    \caption{El mismo plugin que la Figura \ref{fig:rustpure}, pero usando el
-    ABI de C}%
+    \caption{El mismo plugin que la Figura~\ref{fig:rustpure}, pero usando el
+    ABI de C.}%
     \label{fig:rustffi}
 \end{figure}
 
+\subsubsection{Herramientas disponibles}
+
+Todo este proyecto va a ser posible gracias a una \crate de más alto nivel,
+\cratelink{abi_stable}. Esta usa \code{libloading} internamente y exporta una
+gran cantidad de macros y herramientas para facilitar el desarrollo. También
+incluye una copia de la librería estándar de Rust declarada con el ABI de C, por
+lo que podremos usar el tipo vector \code{RVec<T>} en vez de un puntero
+\code{*const T} sin tener que reescribirlo nosotros mismos. También incluye
+soporte para librerías externas muy conocidas en la comunidad, como
+\cratelink{crossbeam} o \cratelink{serde_json}. La
+Figura~\ref{fig:rustabi_stable} demuestra parte de la simplificación del código
+en la Figura~\ref{fig:rustffi}.
+
+Existen algunas alternativas o extensiones de \code{abi_stable} como
+\code{lccc}\footnote{\url{https://github.com/LightningCreations/lccc}},
+\cratelink{safer_ffi} o \cratelink{cglue} que se tuvieron en cuenta, pero no son
+soluciones tan completas ni maduras, por lo que no serán incluidas en este
+proyecto. \code{abi_stable} se trata de una librería compleja, con más de 50.000
+líneas de código en Rust (como referencia, Tremor tiene unas 35.000 líneas), lo
+cual deberá tenerse en cuenta en la decisión final también.
+
+\begin{figure}
+    \centering
+    \begin{minted}{rust}
+// Now we also "derive" the trait StableAbi, i.e., it's implemented
+// automatically.
+#[repr(C)]
+#[derive(StableAbi)]
+pub struct Event {
+    pub count: i32,
+    // We can use abi_stable's types!
+    pub name: RStr<'static>,
+}
+
+// Using C's calling conventions with `extern "C"`
+#[sabi_extern_fn]
+pub fn transform(x: Event) -> i32 {
+    println!("Received an event with count {}", x.count);
+    x.count
+}
+    \end{minted}
+
+    \caption{El mismo plugin que la Figura~\ref{fig:rustpure}, pero con
+        \code{abi_stable}. La declaración de la global \code{cached} se omite por
+        simplicidad.}%
+    \label{fig:rustabi_stable}
+\end{figure}
+
+\section{Sistemas de plugins de referencia}
+
+Otro punto de estudio importante es qué plugins ya hay existentes en Rust y cómo
+se han realizado:
+
+\begin{itemize}
+    \item El mismo Cargo o
+        \code{mdbook}\footnote{\url{https://github.com/rust-lang/mdBook}}
+        implementan un sistema de extensiones a través de la línea de comandos.
+        Añadir un subcomando nuevo es tan sencillo como crear un binario con un
+        prefijo establecido (e.g., \code{cargo-expand}). Si está disponible en
+        la variable de entorno \code{PATH} al ejecutar \code{cargo}, se podrá
+        invocar al plugin con \code{cargo expand} también. Es una manera
+        especialmente simple y creativa de usar \pipes con IPC, dado que usa
+        \stdin y \stdout para comunicarse con la runtime.
+
+    \item \code{zellij}\footnote{\url{https://github.com/zellij-org/zellij}} es
+        un entorno de trabajo en el terminal con ``un sistema de plugins que
+        permite crear plugins en cualquier lenguaje que compile a WebAssembly''.
+        De forma similar al caso anterior, funciona un binario distinto para
+        cada plugin y el ejecutable principal ejecuta el código en WebAssembly,
+        comunicándose con \stdin y \stdout.
+
+    \item \code{xi}\footnote{\url{https://github.com/xi-editor/xi-editor}} es un
+        editor de texto moderno ahora abandonado. Usa RPC con mensajes JSON para
+        comunicarse con plugins en procesos distintos~\cite{xiplugin}, método
+        también usado en Visual Studio Code~\cite{vscodeplugin} o
+        Eclipse~\cite{eclipseplugin}.
+
+    \item \cratelink{bevy} es un motor de videojuegos prometedor cuyas
+        prestaciones se implementan como plugins. En la mayoría de los casos, se
+        cargan en tiempo de compilación, pero \code{bevy::dynamic_plugin}
+        da la posibilidad de hacerlo dinámicamente. \code{bevy} se basa en la
+        falsa estabilidad del ABI explicado en la sección~\ref{sec:abi} y
+        únicamente usa tipos definidos en Rust.
+
+        Otras fuentes como \textcite{dynloading1} o \textcite{dynloading2}
+        también intentan usar cargado dinámico para funcionalidades similares.
+        Este último se trata de \cratelink{amethyst}, el predecesor de
+        \code{bevy}, que acabó rindiéndose debido a la inestabilidad del
+        ABI~\cite{dynloading_giveup1}\cite{dynloading_giveup2}.
+
+\end{itemize}
+
 \section{Elección Final}
 
-Esta decisión requirió escribir varios ejemplos, disponibles en
-\code{https://github.com/marioortizmanero/pdk-experiments}. Este repositorio
-incluye tres ejemplos en detalle usando \code{abi-stable}, otros tres con
-cargado dinámico sin librerías, y uno por cada runtime de WebAssembly (Wasmer y
-Wasmtime).
+Tras implementar varios sistemas de plugins en miniatura con las tecnologías más
+prometedoras mencionadas en este capítulo, se tomó la decisión de usar cargado
+dinámico con \code{abi_stable}. Cada alternativa tiene sus puntos fuertes y sus
+puntos flojos, como ilustra la Figura~\ref{fig:triangle}, pero ninguna de las
+demás terminaron de cumplir los requisitos de rendimiento establecidos por el
+equipo de Tremor.
+
+Todas las tecnologías excepto cargado dinámico, eBPF o memoria compartida
+requieren la copia de los datos en algún momento, algo que Tremor no se puede
+permitir. De esas tres posibles soluciones, todas tienen que lidiar con
+problemas con el ABI. La que mejor soporte tiene es cargado dinámico, así que
+ese será el camino tomado.
 
 \begin{figure}
     \centering
     \includegraphics[width=10cm]{./Imagenes/triangle.pdf}
-    \caption{Comparación aproximada de los métodos investigados}%
-    \label{fig:tech_triangle}
+    \caption{Comparación aproximada de los métodos investigados.}%
+    \label{fig:triangle}
 \end{figure}
-
-Ninguna de las alternativas que se investigaron llegaron al nivel de rendimiento
-de cargado dinámico y requerían copiar los datos de una manera u otra.
