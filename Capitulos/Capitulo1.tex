@@ -56,8 +56,24 @@ fn factorial(i: u64) -> u64 {
 
 \section{Gestión de errores}
 
-Panic
+En Rust, los errores se indican con el tipo \code{Result<T, E>}. Este se trata
+de una enumeración cuyo valor puede ser \code{Ok(T)}, con el resultado obtenido
+satisfactoriamente, o \code{Err(E)}, con el tipo de error que ha sucedido. Dado
+que es un tipo nuevo, si el programador se olvidase de comprobar errores, el
+programa no compilaría. Se puede usar \code{match} para comprobar el resultado,
+o una serie de funciones disponibles para hacer el proceso más ergonómico:
 
-\code{Result<T>}
+\begin{minted}{rust}
+match load_file(input) {
+    Ok(data) => /* ... */,
+    Err(e) => eprintln!("Error: {e}"),
+}
+\end{minted}
 
-\section{}
+En caso de que se produjera un error del que el programa no se puediera
+recuperar, como quedarse sin memoria o un fallo inesperado en la implementación,
+se usa la funcionalidad de \emph{pánicos}. Un pánico se propaga de forma similar
+a una excepción de C++ o Java, y terminará la ejecución por completo. Esto se
+puede invocar con el macro \code{panic!} o utilidades similares.
+
+\section{TODO}
