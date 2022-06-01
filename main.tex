@@ -98,7 +98,7 @@
 \makeatother
 
 % Command for inline code
-\newcommand{\code}[1] {\mintinline{text}{#1}}
+\newmintinline[code]{text}{fontsize=\normalsize}
 \newcommand{\image}[1] {
   \begin{figure}[H]
     \centering
@@ -143,6 +143,7 @@
 \newcommand{\stdin}{\emph{stdin}\xspace}
 \newcommand{\stdout}{\emph{stdout}\xspace}
 \newcommand{\stderr}{\emph{stderr}\xspace}
+\newcommand{\abistable}{\code{abi_stable}\xspace}
 % TODO: lo podría traducir a 'tuberías' pero suena terrible
 \newcommand{\pipe}{\emph{pipe}\xspace}
 \newcommand{\pipes}{\emph{pipes}\xspace}
