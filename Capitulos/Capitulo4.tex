@@ -78,9 +78,9 @@ necesario para llegar a la solución final. Pero es doloroso tener que eliminar
 código al que le has dedicado tiempo, así que al menos debería intentarse
 minimizar las veces que esto ocurra.
 
-\section{\code{abi_stable}}
+\section{\abistable}
 
-Dado que \code{abi_stable} va a ser la librería principal en la que se basará el
+Dado que \abistable va a ser la librería principal en la que se basará el
 sistema de plugins, es importante entender cómo funciona al completo. Además de
 conocer los detalles de implementación, es importante conocer cómo \abistable
 soluciona los problemas a tener en cuenta para implementar un sistema de
@@ -100,7 +100,7 @@ plugins:
 
 \subsection{Seguridad en hilos}
 
-\subsection{Rendimiento}
+\subsection{Rendimiento}\label{abiperf}
 
 \section{Conversión al ABI de C}
 
@@ -108,13 +108,9 @@ El primer paso en el proceso es declarar toda la interfaz del PDK de forma que
 use el ABI de C, en vez del de Rust. Esto se puede hacer con el atributo
 \code{#[repr(C)]} (en lugar del \code{#[repr(Rust)]} implícito), pero el
 problema reside en que todos los tipos dentro suyo \emph{también} tendrán que
-haber sido declarados con dicho atributo:
-
-\subsection{Problemas con tipos externos}
-
-Por ilustrarlo mejor, la estructura que más problemas dio al respecto fue
-\code{Value}, usado para representar datos pseudo-JSON y definido a continuación
-(aproximadamente):
+haber sido declarados con dicho atributo. Para ilustrarlo mejor, la estructura
+más complicada al respecto fue \code{Value}, usado para representar datos
+pseudo-JSON y definido a continuación de forma simplificada:
 
 \begin{minted}{rust}
 pub enum Value {
@@ -150,9 +146,9 @@ pub enum Value {
 }
 \end{minted}
 
-El primer problema surge en la variante \code{Static}: \code{StaticNode} es un
-tipo externo con \code{#[repr(Rust)]}. Se declara en el \crate
-\cratelink{value_trait}, que lo declara tal que:
+El primer problema surge en la variante \code{Static}. Su tipo contenido
+internamente, \code{StaticNode}, es externo y usa \code{#[repr(Rust)]}. Se
+declara en el \crate \cratelink{value_trait}, que lo declara tal que:
 
 \begin{minted}{rust}
 pub enum StaticNode {
@@ -167,7 +163,7 @@ pub enum StaticNode {
 Esto se podría arreglar siguiendo el mismo procedimiento recursivamente hasta
 que todo sea \code{#[repr(C)]}. Pero como se trata de una librería externa,
 tendrá que abrirse un nuevo pull request y esperar que al autor le parezcan bien
-los cambios~\cite{openstaticnode}:
+los cambios~\cite{openstaticnode}~\ref{annex:contributions}:
 
 \begin{minted}{rust}
 #[cfg_attr(feature = "abi_stable", repr(C))]
@@ -186,7 +182,7 @@ El atributo \code{cfg_attr} se asegura de que la estructura es \code{#[repr(C)]}
 necesario. De esta forma, el resto de usuarios podrán seguir aprovechándose de
 las ventajas de rendimiento que puede ofrecer \code{#[repr(Rust)]}.
 
-\subsection{}
+\subsection{Consecuencias del sistema de plugins}
 
 Por desgracia, este cambio no termina ahí; cambiar las variantes de \code{Value}
 implica que el código que lo usaba se romperá de numerosas formas:
@@ -196,7 +192,80 @@ implica que el código que lo usaba se romperá de numerosas formas:
 let value = Value::Array(Vec::new());
 \end{minted}
 
-\subsection{Cuando no es tan fácil como añadir \code{#[repr(Rust)]}}
+Este caso es el más sencillo: simplemente hace falta cambiar \code{Vec} por
+\code{RVec}. La intención de los tipos de \abistable es que sean un reemplazo
+directo de los de la librería estándar, i.e., su interfaz será la misma:
+
+\begin{minted}{rust}
+let value = Value::Array(RVec::new());
+\end{minted}
+
+% TODO: 'return' es devolver o retornar?
+Es un poco más complicado cuando los tipos anteriores se exponían en métodos,
+porque requiere tomar una decisión entre expandir el límite de FFI del
+\emph{funcionamiento interno} de \code{Value} a los \emph{usuarios} de
+\code{Value}. Por ejemplo, la variante \code{Value::Object} contiene un
+\code{RHashMap} ahora, pero el método \code{Value::as_object} solía devolver una
+referencia a \code{HashMap}. Se producirá un error nuevo ahí y tendrá que
+tomarse la decisión de devolver \code{RHashMap} o añadir una conversión interna
+a \code{HashMap}:
+
+\begin{minted}{rust}
+impl Value {
+    // Código original
+    fn as_object(&self) -> Option<&HashMap<String, Value>> {
+        match self {
+            // Problema: `m` ahora es una `RHashMap`, pero la función
+            // devuelve un `HashMap`.
+            //
+            // Solución 1: cambiar el tipo devuelto a `RHashMap`
+            // Solución 2: convertir `m` a un `HashMap` con `m.into()`
+            Self::Object(m) => Some(m),
+            _ => None,
+        }
+    }
+}
+\end{minted}
+
+\begin{itemize}
+    \item Si se cambia el tipo devuelto a \code{RHashMap}, casi todas las veces
+        que se llamaba a \code{as_object} ahora dejarán de compilar porque se
+        esperan un \code{HashMap}.
+
+        Esto puede ser complicado porque, para evitar realizar conversiones, el
+        sistema de plugins \emph{infectaría} la base de código por completo.
+        Tendría que propagarse el uso de \code{RHashMap} por todo el programa,
+        incluso cuando el PDK no es importante. Por ejemplo, \code{Value}
+        también se usaba en la implementación del lenguaje de Tremor, Troy.
+        Tener que usar un \code{RHashMap} en esa situación sería confuso y
+        acabarían modificándose gran cantidad de ficheros sin relación al
+        sistema de plugins.
+
+    \item Si se realiza una conversión interna a \code{HashMap} en
+        \code{as_object}, evitaremos todos esos errores, con un pequeño coste de
+        rendimiento. Es la opción más fácil, pero si \code{Value::as_object} se
+        usara frecuentemente, e.g., en el bucle principal, sí que podría causar
+        una degradación considerable.
+\end{itemize}
+
+Como indica la sección~\ref{abiperf}, las conversiones entre la librería
+estándar y \abistable son $O(1)$. Esto es dónde la metodología \work es
+relevante: simplemente dejaremos el límite del FFI en su mínimo y añadiremos
+conversiones cuanto antes sea posible. Al terminar, si se detectan problemas de
+rendimiento en un caso en concreto, se puede reconsiderar.
+
+\subsection{Problemas con tipos externos}
+
+En algunos casos, los tipos de \abistable no habían sido actualizados para
+incluir métodos nuevos de la librería estándar, por lo que era necesario un pull
+request para añadirlo~\ref{annex:contributions}. Pero por lo general, convertir
+los tipos \emph{de la librería a estándar a \abistable} es una tarea trivial,
+simplemente un tanto tedioso.
+
+Los problemas surgen cuando es necesario convertir \emph{tipos externos a
+\abistable}. La declaración anterior de \code{Value} era una simplificación;
+realmente Tremor usa la implementación de \cratelink{halfbrown} de
+\code{HashMap<K, V>}.
 
 \subsection{Problemas con varianza y subtipado}
 

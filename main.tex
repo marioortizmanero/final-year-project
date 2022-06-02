@@ -278,6 +278,7 @@ Junio 2022\\
 % Capitulos
 
 % Vuelta a configurar los párrafos para que no afecte al índice
+\begingroup
 \setlength{\parskip}{\baselineskip}%
 \setlength{\parindent}{0pt}%
 
@@ -287,9 +288,9 @@ Junio 2022\\
 \input{Capitulos/Capitulo3.tex}
 \input{Capitulos/Capitulo4.tex}
 \input{Capitulos/Conclusion.tex}
+\endgroup
 
 % BIBLIOGRAFÍA Y REFERENCIAS
-
 \printbibliography%
 \nocite{*} % Include all the entries in the bibliography, even if not mentioned
 
@@ -302,6 +303,10 @@ Junio 2022\\
 \listoftables
 
 % ANEXOS
+
+% Vuelta a configurar los párrafos para que no afecte al índice
+\setlength{\parskip}{\baselineskip}%
+\setlength{\parindent}{0pt}%
 
 \newpage
 \appendix

@@ -20,6 +20,9 @@ lenguaje en específico, como \unsafe o la programación asíncrona. En esos cas
 se recomienda leer \textcite{rustnomicon} y \textcite{rustasyncbook},
 respectivamente.
 
+TODO: revisar traducciones del libro o similares para asegurarse de que la
+terminología es la misma.
+
 \section{¿Qué es Rust?}
 
 Rust es un lenguaje de programación de sistemas compilado y de propósito
@@ -55,6 +58,56 @@ fn factorial(i: u64) -> u64 {
     }
 }
 \end{minted}
+
+\section{Librería estándar}
+
+De forma similar a C++, Rust posee tipos genéricos. Esto permite la
+implementación de una librería estándar flexible, con varias estructuras de
+datos importantes a conocer:
+
+\begin{itemize}
+    \item Tipos primitivos:
+        \begin{itemize}
+            \item Carácteres con \code{char}.
+
+            \item Punto flotante con \code{f32} y \code{f64}.
+
+            \item Booleanos con \code{bool}.
+
+            \item Enteros: \code{u8}, \code{i8}, \code{u16}, \code{i16},
+                \code{u32}, \code{i32}, \code{u64}, \code{i64}, e incluso
+                \code{i128} y \code{u128} en las arquitecturas que lo soportan.
+
+            \item Vectores de tamaño fijo: por ejemplo \code{[1, 2, 3, 4, 5]}.
+
+            \item N-tuplas como \code{(1, true, 9.2)}.
+
+            \item El tipo ``unidad'', \code{()}, equivalente a \code{void} en C
+                o C++.
+
+            \item Punteros básicos con \code{*const T} o \code{*mut T}.
+
+        \end{itemize}
+
+    \item \code{Vec<T>} representa un vector contiguo y redimensionable.
+
+    \item \code{HashMap<K, V>} es una tabla hash, genérica respecto a su clave
+        \code{K} y su valor \code{V}. No se encuentra en el preludio, por lo que
+        requeriría la siguiente declaración, similar a un \code{import} de Java:
+
+\begin{minted}{rust}
+use std::collections::HashMap;
+\end{minted}
+
+    \item \code{Box<T>}, usado para localizar un tipo \code{T} en memoria.
+        Incluye el tamaño que ocupa \code{T}.
+
+    \item \code{str} es una cadena UTF-8 de solo lectura, típicamente usada con
+        una referencia \code{&str}. Va acompañada por su longitud, por lo que no
+        hace falta terminarla con \code{\0}, a diferencia de C. \code{String} es
+        su versión modificable asignada en memoria.
+
+\end{itemize}
 
 \section{Gestión de errores}
 

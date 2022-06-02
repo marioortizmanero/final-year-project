@@ -542,11 +542,12 @@ pub static cached: Event = Event {
 
 Todo este proyecto va a ser posible gracias a una \crate de más alto nivel,
 \cratelink{abi_stable}. Esta usa \code{libloading} internamente y exporta una
-gran cantidad de macros y herramientas para facilitar el desarrollo. También
-incluye una copia de la librería estándar de Rust declarada con el ABI de C, por
-lo que podremos usar el tipo vector \code{RVec<T>} en vez de un puntero
-\code{*const T} sin tener que reescribirlo nosotros mismos. También incluye
-soporte para librerías externas muy conocidas en la comunidad, como
+gran cantidad de macros y herramientas para facilitar el desarrollo. Incluye una
+copia de la librería estándar de Rust declarada con el ABI de C, generalmente
+precedidos por la letra \code{R}. Por tanto, en vez de \code{Vec<T>}, podremos
+usar \code{RVec<T>}; en caso contrario habría que recurrir a punteros
+\code{*const T} o tendríamos que reescribir los tipos desde cero nosotros.
+También da soporte para librerías externas muy conocidas en la comunidad, como
 \cratelink{crossbeam} o \cratelink{serde_json}. La
 Figura~\ref{fig:rustabi_stable} demuestra parte de la simplificación del código
 en la Figura~\ref{fig:rustffi}.
