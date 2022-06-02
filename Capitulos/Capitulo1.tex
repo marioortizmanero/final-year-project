@@ -131,4 +131,28 @@ se usa la funcionalidad de \emph{pánicos}. Un pánico se propaga de forma simil
 a una excepción de C++ o Java, y terminará la ejecución por completo. Esto se
 puede invocar con el macro \code{panic!} o utilidades similares.
 
-\section{TODO}
+\section{Macros}
+
+Rust da soporte para dos tipos de macros, los \emph{declarativos}, y los
+\emph{procedurales}. Sin entrar en excesivo detalle, los declarativos se pueden
+implementar de forma similar al caso de C o C++, como si se tratase de una
+función con una sintaxis especial. Los procedurales son mucho más costosos
+
+\begin{minted}{rust}
+some_macro!(1, 2, 3); // Puede ser tanto declarativo como procedural
+\end{minted}
+
+\begin{minted}{rust}
+// Con macros declarativos
+some_macro! {
+    fn some_function() { /* ... */ }
+}
+
+// Con macros procedurales
+#[some_macro]
+fn some_function() { /* ... */ }
+\end{minted}
+
+\begin{minted}{rust}
+// Los de tipo `derive` son solo posibles con EEEEPAAAA
+\end{minted}

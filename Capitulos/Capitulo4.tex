@@ -96,6 +96,9 @@ plugins:
 
 \subsection{Programación asíncrona}
 
+El objetivo inicial era simplificar la interfaz lo suficiente como para que no
+sea necesario tratar aspectos como programación asíncrona en el PDK.
+
 * \cratelink{async_ffi}
 
 \subsection{Seguridad en hilos}
@@ -264,8 +267,134 @@ simplemente un tanto tedioso.
 
 Los problemas surgen cuando es necesario convertir \emph{tipos externos a
 \abistable}. La declaración anterior de \code{Value} era una simplificación;
-realmente Tremor usa la implementación de \cratelink{halfbrown} de
-\code{HashMap<K, V>}.
+realmente, Tremor usa la implementación de \cratelink{halfbrown} de
+\code{HashMap<K, V>}. Esto se debe a que es más eficiente para su caso de uso, y
+que posee algunas funcionalidades adicionales necesarias. El mismo caso se da
+para otro tipo \code{Cow}, cuya alternativa en la \crate \cratelink{beef} ocupa
+menos espacio en memoria y ofrece un mejor rendimiento en Tremor.
+
+Ninguno de estos dos tipos tienen soporte dentro de \abistable, y aunque estos
+tipos estén basados en otros de la librería estándar, la conversión no es
+directa. Se pueden tomar cuatro posibles alternativas:
+
+\subsubsection{Evitar el tipo externo}
+
+Basándose en \work, una solución perfectamente válida es eliminar las
+optimizaciones temporalmente y dejar un \code{TODO} para que se pueda revisar
+posteriormente. Es posible que el sistema de plugins tenga excesiva complejidad,
+y limitarse a usar tipos de la librería estándar podría ser suficiente.
+
+En el caso específico de \code{Value}, eliminar las optimizaciones problemáticas
+parece la manera más fácil de arreglar el problema. Y lo sería, si no fuera
+porque eliminar código también puede ser complicado, como muestra la
+Figura~\ref{fig:errors}, especialmente cuando la funcionalidad extra del tipo
+externo no está disponible.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=10cm]{./Imagenes/errors.png}
+    \caption{Al intentar evitar los tipos externos se produjeron más de 120
+    errores de compilación.}%
+    \label{fig:errors}
+\end{figure}
+
+\subsubsection{Encapsular el tipo externo}
+
+Otra opción es crear un \emph{wrapper} para \code{halfbrown}, de la misma forma
+que lo hace ya \abistable con otras librerías más conocidas. Este
+encapsulamiento hace posible su uso desde el ABI de C de forma segura. Sin
+embargo, estos ejemplos ya existentes son complejos~\cite{complexwrapper} y
+difíciles de mantener, ya que tendrán que actualizarme con cada nueva versión de
+\code{halfbrown}.
+
+\subsubsection{Reimplementar el tipo con el ABI de C desde cero}
+
+Similar a la solución anterior, pero con incluso más costoso, dado que también
+requeriría reimplementar la funcionalidad. Puede parecer indeseable, pero es la
+mejor forma de asegurar un rendimiento máximo. Los tipos externos mencionados
+son parte de optimizaciones; encapsularlos podría tener un impacto en su
+rendimiento y hacerlos inútiles.
+
+Si esta parte del proyecto es lo suficientemente importante y existen los
+recursos, debería considerarse. De hecho, el mismo tipo \code{Value} en Tremor
+surgió por esta razón: ya existía \code{simd_json::Value} de otra librería, pero
+carecía de la suficiente flexibilidad y el equipo implementó uno personalizado.
+
+\subsubsection{Simplificar el tipo para la interfaz}
+
+Esta última opción resultó ser la más sencilla de implementar: crear una copia
+de \code{Value} cuyo único uso es para comunicarse entre runtime y plugins,
+ilustrado en la Figura~\ref{simplify}.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=10cm]{./Imagenes/simplify.pdf}
+    \caption{Comunicación entre runtime y plugins en el PDK.}%
+    \label{fig:simplify}
+\end{figure}
+
+Ya que es un tipo nuevo, no se romperá nada del código ya existente, y
+únicamente hará falta cambiarlo donde se use la interfaz. Su implementación es
+sencilla (notar el cambio de nombre a \code{PdkValue}):
+
+\begin{minted}{rust}
+pub enum PdkValue {
+    /// Valores estáticos (enteros, booleanos, etc)
+    Static(StaticNode),
+    /// Tipo para cadenas de caracteres
+    String(String),
+    /// Tipo para listas
+    Array(Vec<Value>),
+    /// Tipo para objetos (mapas clave-valor)
+    Object(Box<HashMap<String, PdkValue>>),
+    /// Tipo para datos binarios
+    Bytes(Vec<u8>),
+}
+\end{minted}
+
+No es necesario escribir métodos adicionales para el nuevo \code{PdkValue}, solo
+sus conversiones desde y hasta el tipo original, \code{Value}. Esto sería
+equivalente a, en vez de pasar un \code{Vec<T>} al PDK, reemplzarlo con un
+\code{*const u8} para los datos y un \code{u32} para la longitud. Simplemente
+consiste en simplificar los tipos en la interfaz, y convertirlos de vuelta para
+usar la funcionalidad completa.
+
+El problema principal es que la conversión entre tipos es ahora $O(n)$ en vez de
+$O(1)$, dado que es necesario iterar los datos en los objetos y vectores para la
+conversión. Su uso sería el siguiente:
+
+TODO: mejor si omito el código aquí con la conversión, no?
+
+\begin{minted}{rust}
+// Esta función es exportada por el plugin. Funcionará porque
+// `PdkValue` está declarado con el ABI de C.
+pub extern "C" fn plugin_funfuncue: PdkValue) {
+    let value = Value::from(value);
+    value.do_func()
+}
+
+// Esto se puede implementar en la runtime para facilitar su uso,
+// convirtiendo al tipo original.
+fn runtime_wrapper(value: Value) {
+    plugin_func(value.into());
+}
+\end{minted}
+
+Es la alternativa más sencilla, pero implica un coste de rendimiento; dos
+conversiones implican iterar los datos dos veces. Tras mediciones posteriores,
+se verificó que convertir los datos era un 5-10\% de la ejecución del programa.
+Es menos de lo esperado, pero sigue sin ser suficiente para Tremor.
+
+También tiene un coste de usabilidad; en comparación con tener un único
+\code{Value}, es necesario convertir los tipos y posiblemente crear encapsularlo
+con una función de más alto nivel (\code{runtime_wrapper}). Es una tarea
+relativamente trivial, por lo que se podría automatizar con macros procedurales
+en Rust, pero esto debería dejarse para el final del proyecto.
+
+En conclusión, esta alternativa es la más fácil de implementar en el corto
+plazo y por tanto la que mejor sigue \work. Una vez esté terminado, se puede
+analizar el rendimiento y optar por una alternativa más eficiente, como
+reescribir los tipos para el caso de uso específico de Tremor.
 
 \subsection{Problemas con varianza y subtipado}
 
