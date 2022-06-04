@@ -59,7 +59,7 @@ Rust no protege a sus usuarios de \leaks de memoria. De hecho, es tan sencillo
 como llamar a \code{mem::forget}. Si un plugin tuviera un \leak, el proceso
 entero también se vería afectado; el rendimiento de Tremor se degradaría con
 plugins no desarrollados incorrectamente. Algo similar podría suceder en caso de
-que un plugin abortase o sufriese de un \panic, lo que terminaría la ejecución
+que un plugin abortase o sufriese de un pánico, lo que terminaría la ejecución
 del programa por completo.
 
 Idealmente, Tremor debería poder detectar plugins que no rinden óptimamente y

@@ -50,63 +50,6 @@ funciones, requiere un \code{!} al final.
 
 \section{Conceptos básicos}
 
-Los componentes principales de Rust son:
-
-\begin{itemize}
-    \item Estructuras de datos:
-
-\begin{minted}{rust}
-struct Message {
-    // Campo público con una cadena de caracteres
-    pub text: String,
-    // Campo privado con un entero
-    user_id: i32,
-}
-\end{minted}
-
-\begin{minted}{rust}
-// Sin nombres de campos; se pueden acceder con `data.0`
-// y `data.1`, respectivamente.
-struct Message(pub String, i32);
-\end{minted}
-
-    \item Enumeraciones, que también permiten contener datos:
-
-\begin{minted}{rust}
-enum Message {
-    Join,
-    Text(String, i32),
-    Leave(i32),
-}
-\end{minted}
-
-    \item \emph{Traits}, similares a las interfaces de Java en el sentido que
-        son una serie de requerimientos y que se pueden implementar múltiples,
-        pero también permiten implementaciones por defecto:
-
-\begin{minted}{rust}
-trait Sender {
-    // Los métodos requieren especificar `self` explícitamente,
-    // que es lo mismo que `this` en Java o C++. En este caso,
-    // `send` tomará una referencia al tipo que implemente
-    // `Sender`. También podría ser una referencia mutable con
-    // `&mut`, o el mismo tipo con `self`.
-    fn send(&self, msg: String);
-
-    // Implementación por defecto.
-    fn send_twice(&self, msg: String) {
-        self.send(msg);
-        self.send(msg.clone());
-    }
-}
-\end{minted}
-
-    Notar que, sin embargo, Rust no es un lenguaje orientado a objetos. Un
-    \trait puede heredar de otro \trait, pero un \struct no puede heredar de
-    otro \struct.
-
-\end{itemize}
-
 Los bloques básicos (\code{if}, \code{else}, \code{while}, \code{for}) son muy
 similares a en otros lenguajes. También existe \code{match}, que permite extraer
 patrones de variables.
@@ -130,13 +73,13 @@ fn main() {
     // automáticamente.
     let my_number = 1234;
     // Declaración de una variable con un tipo especificado
-    // manualmente. Notar que se puede usar el mismo nombre,
-    // y la variable anterior será destruida.
+    // manualmente. Notar que se puede usar el mismo nombre, y la
+    // variable anterior será destruida.
     let my_number: i32 = 4321;
-    // Invocación de la función estática (constructor) `new`
-    // dentro del tipo `String`. El uso de `mut` indica que
-    // la instancia del tipo se puede modificar; de forma
-    // inversa a C++, `const` indicaría que *no* se puede
+    // Invocación de la función estática (constructor) `new` dentro
+    // del tipo `String`. El uso de `mut` indica que la instancia del
+    // tipo se puede modificar. Funciona de forma inversa a C++, que
+    // por defecto es mutable y `const` indica que *no* se puede
     // modificar.
     let mut my_str = String::new();
     // Invocación del método `push` de `my_str`, que añade un
@@ -145,11 +88,96 @@ fn main() {
 }
 \end{minted}
 
-\section{Librería estándar}
+Otros componentes principales de Rust son:
+
+\begin{itemize}
+    \item Estructuras de datos:
+
+\begin{minted}{rust}
+struct MessageA {
+    // Campo público con una cadena de caracteres
+    pub text: String,
+    // Campo privado con un entero
+    user_id: i32,
+}
+\end{minted}
+
+\begin{minted}{rust}
+// Sin nombres de campos; se pueden acceder con `data.0`
+// y `data.1`, respectivamente.
+struct MessageB(pub String, i32);
+\end{minted}
+
+    \item Enumeraciones, que también permiten contener datos:
+
+\begin{minted}{rust}
+enum MessageC {
+    Join,
+    Text(String, i32),
+    Leave(i32),
+}
+\end{minted}
+
+    \item \emph{Traits}, similares a las interfaces de Java en el sentido de que
+        son una serie de requerimientos y que un tipo puede implementar
+        múltiples \traits, pero también permiten implementaciones por defecto:
+
+\begin{minted}{rust}
+trait Sender {
+    // Los métodos requieren especificar `self` explícitamente,
+    // que es lo mismo que `this` en Java o C++. En este caso,
+    // `&send` tomará una referencia al tipo que implemente
+    // `Sender`. También podría ser una referencia mutable con
+    // `&mut self`, o el mismo tipo con `self`.
+    fn send(&self, msg: String);
+
+    // Implementación por defecto.
+    fn send_twice(&self, msg: String) {
+        self.send(msg);
+        self.send(msg.clone());
+    }
+}
+\end{minted}
+
+        Y para implementar un trait para un tipo:
+
+\begin{minted}{rust}
+impl Sender for MessageC {
+    fn send(&self, msg: String) {
+        match self {
+            Join => println!("Joined"),
+            Text(txt, id) => println!("{} sent: {}", id, txt),
+            // Las variables `_` son ignoradas
+            Leave(_) => println!("Left"),
+        }
+    }
+
+    // `send_twice` se implementará automáticamente.
+}
+\end{minted}
+
+    Notar que, sin embargo, Rust no es un lenguaje orientado a objetos. Un
+    \trait puede heredar de otro \trait, pero un \struct no puede heredar de
+    otro \struct.
+
+\end{itemize}
+
+\section{Genéricos y librería estándar}
 
 De forma similar a C++, Rust posee tipos genéricos. Esto permite la
 implementación de una librería estándar flexible, con varias estructuras de
 datos importantes a conocer:
+
+% NOTE: esto creo que lo puedo evitar si no incluyo cómo se usa async_ffi, que
+% me parece demasiado complejo para el documento.
+% \begin{minted}{rust}
+% // Función genérica, donde `ToString` es un trait
+% fn print<T: ToString>(t: T) {}
+
+% // Otra manera de especificar genéricos con diferencias
+% // menores que no se explicarán en esta introducción.
+% fn print(t: impl ToString) {}
+% \end{minted}
 
 \begin{itemize}
     \item Tipos primitivos:

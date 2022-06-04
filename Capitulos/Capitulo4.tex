@@ -88,11 +88,66 @@ plugins:
 
 \subsection{Versionado}
 
+\abistable especifica lo siguiente respecto a su sistema de
+seguridad~\cite{abistable_safety}:
+
+\begin{itemize}
+    \item El ABI de \abistable se comprueba siempre. Cada versión \code{0.y.0} y
+        \code{x.0.0} de \abistable define su propio ABI, que es incompatible
+        con versiones anteriores.
+
+    \item Los tipos se comprueban recursivamente cuando se carga una librería
+        dinámica, antes de llamar ninguna función.
+
+\end{itemize}
+
+Todo esto se basa en el \trait \code{StableAbi}, indicador de que un tipo es
+seguro para FFI. Contiene información sobre la estructura en memoria y puede ser
+derivado automáticamente. Todos los tipos exportados por \abistable, además de
+usar el ABI de C, implementan dicho \trait. Por tanto, si queremos declarar
+nuestro propio tipo para usar con \abistable, ademaś de marcarlo con
+\code{#[repr(C)]}, tendremos que añadir \code{#[derive(StableAbi)]}.
+
 \subsection{Cargado de plugins}
 
 \subsection{Exportando un plugin}
 
 \subsection{Gestión de pánicos}
+
+Actualmente, lanzar pánicos a través del FFI es comportamiento no
+definido~\cite{panicsnomicon}. Aunque el programa aborte en la mayoría de los
+casos, no existe ninguna garantía de que vaya a suceder así; podría continuar en
+un estado inválido, con cualquier tipo de consecuencia.
+
+La solución más directa es usar la función \code{std::panic::catch_unwind}, que,
+para casos excepcionales como este, puede parar la propagación de pánicos cuando
+sea llamada. Se podría usar en todas las funciones exportadas por el plugin
+internamente, y en caso de producirse un pánico se abortaría el programa, en
+lugar de dejar que se propague a la runtime, que sería indefinido.
+
+También es posible configurar el programa para que aborte cuando se produzca un
+pánico, en vez de propagarlo. De esta forma, no se llegaría a invocar
+comportamiento no definido y se mantendría un rendimiento máximo --- capturar
+pánicos tiene un coste. Sin embargo, implica varias desventajas importantes: al
+abortar, no se tendrá acceso a la información de \emph{debug} que dan los
+pánicos, tampoco se limpiará el estado del programa, y desde la runtime es
+imposible saber si el plugin ha configurado los pánicos para que aborten. Esto
+último será posible en el futuro, una vez \textcite{pluggablepanic} llegue a una
+versión estable.
+
+Esto es algo que \abistable ha tenido en cuenta desde el principio. Antes de que
+un pánico se vaya a propagar de plugin a runtime, la librería abortará el
+programa por completo. Esta parte se realiza de forma transparente; no hace
+falta que el desarrollador se preocupe en ningún momento por ello.
+
+La solución de \abistable no es perfecta por tener un pequeño coste de
+rendimiento y por imposibilitar el recuperarse de errores en los plugins. En una
+futura versión de Tremor, podría ser posible reiniciar plugins en caso de que
+dejen de funcionar para mejorar la resiliencia a fallos.
+
+El equipo de Rust conoce esta limitación y está trabajando en mejorar la
+situación. En una futura versión, planea definir cuándo se puede propagar un
+pánico de forma más precisa~\cite{cunwind}.
 
 \subsection{Programación asíncrona}
 
@@ -101,41 +156,75 @@ sea necesario tratar aspectos como programación asíncrona en el PDK. Esto
 terminó siendo inevitable, dado que la asincronía es uno de los pilares de
 Tremor.
 
+TODO: podría poner un ejemplo de cómo se usa esta librería (está en un
+comentario aquí), pero creo que es demasiado detalle.
+
+% \begin{minted}{rust}
+% // Así funciona la programación asíncrona en Rust; la primera
+% // función es prácticamente equivalente a la segunda.
+% async fn example() -> String {
+%     read_file().await
+% }
+% fn example() -> impl Future<Output = String> {
+%     async {
+%         read_file().await
+%     }
+% }
+%
+% // No pueden haber genéricos en FFI, por lo que ahora `Future`
+% // es un tipo concreto `FfiFuture` en vez de un trait. La
+% // conversión de `Future` a `FfiFuture` se puede realizar con
+% // `into_ffi`.
+% fn example() -> FfiFuture<String> {
+%     async move {
+%         read_file().await
+%     }
+%     .into_ffi()
+% }
+% // `FfiFuture<T>` implementa `Future<Output = T>`, por lo que
+% // su uso es el mismo.
+% async fn user() {
+%     example().await
+% }
+% \end{minted}
+
 Para poder usar \code{async} con el ABI de C se puede recurrir a la \crate
 \cratelink{async_ffi}, cuyo único problema era no tener soporte para \abistable.
 Al no implementar el \trait \code{StableAbi}, no se podía usar en la interfaz
-del PDK, por lo que 
-
-\begin{minted}{rust}
-// Así funciona la programación asíncrona en Rust; la primera
-// función es prácticamente equivalente a la segunda.
-async fn example() -> String {
-    read_file().await
-}
-fn example() -> impl Future<Output = String> {
-    async {
-        read_file().await
-    }
-}
-
-// For FFI-safe interfaces there can't be generics involved, so the future is a
-// concrete type instead of a trait. This conversion from `Future` to
-// `FfiFuture` can be done with `into_ffi`.
-fn example() -> FfiFuture<String> {
-    async move {
-        read_file().await
-    }
-    .into_ffi()
-}
-// `FfiFuture<T>` implements `Future<Output = T>`, so it can be awaited as usual
-async fn user() {
-    example().await
-}
-\end{minted}
+del PDK, por lo que tuve que abrir un pull request para hacerlo yo
+mismo~\cite{asyncfficontrib}. El uso de esta librería resulta en código más
+verboso, pero esto se podría mejorar en el futuro con un macro
+procedural~\cite{asyncffimacro}.
 
 \subsection{Seguridad en hilos}
 
+\abistable utiliza la \crate \cratelink{libloading} internamente, cuya gestión
+de errores no es segura en hilos en algunas plataformas, como \code{dlerror} en
+FreeBSD~\cite{thsafe_libloading}\cite{thsafe_openbsd}. Sí que lo es en
+Linux~\cite{thsafe_linux}, macOS~\cite{thsafe_macos} y Windows~\cite{thsafe_ms},
+así que en el caso de Tremor no hace falta preocuparse por esto.
+
+Será importante tener esto en cuenta en el futuro; al añadir soporte para un
+nuevo sistema operativo habrá que asegurarse de que su gestión de errores sea
+segura en hilos. En caso contrario, deberá actualizarse \code{libloading} para
+sincronizar el acceso con un mútex interno, como lo hace la \crate
+\cratelink{dlopen}~\cite{thsafe_dlopen}. Notar que esta librería es también
+mejorable, dado que usa el mútex siempre, incluso en sistemas operativos donde
+el sistema de errores sí es seguro en hilos~\cite{thsafe_dlopen_issue}.
+
 \subsection{Rendimiento}\label{abiperf}
+
+Un último punto vital a tener en cuenta es el coste de realizar conversiones
+entre tipos de la librería estándar y tipos de \abistable. Esto se dará en
+numerosas ocasiones, dado que usar \abistable cuando no es necesario es
+subóptimo para tanto el rendimiento como la usabilidad. Y si, por ejemplo,
+convertir un \code{Vec<T>} a un \code{RVec<T>} tuviese complejidad $O(n)$,
+probablemente \abistable tendría que ser descartado como la solución escogida.
+
+Afortunadamente, tras analizar la implementación de tipos como \code{RVec<T>},
+\code{RSlice<T>}, \code{RStr} o \code{RString}, estas conversiones únicamente
+consisten en transferir un puntero con los datos, sin necesidad de copiar nada.
+Es decir, las conversiones que realizaremos serán $O(1)$.
 
 \section{Conversión al ABI de C}
 
@@ -198,7 +287,7 @@ pub enum StaticNode {
 Esto se podría arreglar siguiendo el mismo procedimiento recursivamente hasta
 que todo sea \code{#[repr(C)]}. Pero como se trata de una librería externa,
 tendrá que abrirse un nuevo pull request y esperar que al autor le parezcan bien
-los cambios~\cite{openstaticnode}~\ref{annex:contributions}:
+los cambios~\cite{openstaticnode}:
 
 \begin{minted}{rust}
 #[cfg_attr(feature = "abi_stable", repr(C))]
@@ -293,9 +382,10 @@ rendimiento en un caso en concreto, se puede reconsiderar.
 
 En algunos casos, los tipos de \abistable no habían sido actualizados para
 incluir métodos nuevos de la librería estándar, por lo que era necesario un pull
-request para añadirlo~\ref{annex:contributions}. Pero por lo general, convertir
-los tipos \emph{de la librería a estándar a \abistable} es una tarea trivial,
-simplemente un tanto tedioso.
+request para añadirlo\footnote{El anexo \ref{annex:contributions} lista todas
+las contribuciones de código abierto realizadas para este proyecto}. Pero por lo
+general, convertir los tipos \emph{de la librería a estándar a \abistable} es
+una tarea trivial, simplemente un tanto tedioso.
 
 Los problemas surgen cuando es necesario convertir \emph{tipos externos a
 \abistable}. La declaración anterior de \code{Value} era una simplificación;
