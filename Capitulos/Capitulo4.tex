@@ -2,7 +2,7 @@
 
 \chapter{Implementación}
 
-\section{Prototipado eficiente}
+\section{Metodología}
 
 \newcommand{\work}{``Primero que Funcione''\xspace}
 
@@ -19,13 +19,13 @@ algunos warnings, o quitar statements \code{use}), pero no creo que sea tan
 importante en este caso y el documento ya es bastante largo.
 
 La metodología fue insipirada por mis mentores, que lo denominaron el ``Just
-Make it Work'', o \work. Con lo que más problemas tenía era el perderme en los
-detalles. Pero ciertamente, primero de todo lo importante es que funcione.
-Siempre y cuando el sistema de plugins se pueda compilar y ejecutar, lo
-siguiente es secundario:
+Make it Work'', o \work. Se basa en que, inicialmente, con lo que más problemas
+tenía era el perderme en los detalles. Pero ciertamente, primero de todo lo
+importante es que ``funcione''. Siempre y cuando el sistema de plugins se pueda
+compilar y ejecutar, lo siguiente es secundario:
 
 TODO: alguna traducción de "just make it work" un poco más natural? "Solo que
-funcione"? "Primero que funcione?
+funcione"? "No te líes, que funcione primero"?
 
 \begin{itemize}
     \item Código ``feo'' (no idiomático, repetitivo o desordenado).
@@ -36,7 +36,7 @@ funcione"? "Primero que funcione?
 
     \item No tener tests.
 
-    \item Sin aplicar sugerencias aplicar por \emph{linters} (en el caso de
+    \item No aplicar sugerencias recomendadas por \emph{linters} (en el caso de
         Rust, \emph{Clippy}).
 
 \end{itemize}
@@ -47,22 +47,22 @@ sinceramente ocurrió.
 
 El no trabajar con tests es discutible, dado que depende de si el programador
 prefiere seguir un desarrollo basado en tests. Sin embargo, personalmente no
-sentí la necesidad de escribir ningún test en mi caso; gracias al sistema
-fuertemente tipado de Rust, fue principalmente un desarrollo basado en el
-compilador. Mi progreso se basaba en realizar algunos cambios y posteriormente
-intentar que los aceptara el compilador, repetidamente. Únicamente avancé a la
-parte de tests cuando todo parecía funcionar manualmente y estaba lo
-suficientemente satisfecho con el resultado.
+sentí la necesidad de escribir ningún test en este caso, al menos al principio.
+Gracias al sistema fuertemente tipado de Rust, fue principalmente un
+\emph{desarrollo basado en el compilador}. Mi progreso se basaba en realizar
+algunos cambios y posteriormente intentar que los aceptara el compilador,
+repetidamente. Únicamente avancé a la parte de tests cuando todo parecía
+funcionar manualmente y estaba lo suficientemente satisfecho con el resultado.
 
 Adicionalmente, las optimizaciones prematuras son la fuente de todos los
-problemas. No es algo que sea importante aún. Una vez terminada la primera
-iteración, se puede dedicar más tiempo a medir el rendimiento para saber cuáles
-optimizaciones merecen la pena. Notar que sí que sí que debería preocuparse en
-escoger un método o tecnología que sea apropiado en términos de rendimiento; por
-ello se descartó WebAssembly o IPC en el paso anterior. Pero definitivamente el
-desarrollador debería rendirse en, por ejemplo, evitar una conversión de tipos
-posiblemente innecesaria que posiblemente no afecte al rendimiento al fin y al
-cabo.
+problemas. No es algo que sea importante aún. Solo una vez terminada la primera
+iteración se puede dedicar más tiempo a medir el rendimiento para saber cuáles
+optimizaciones merecen la pena. Notar que sí es importante escoger un
+\emph{método o tecnología} que sea apropiado en términos de rendimiento; fue por
+ello por lo que se descartó WebAssembly o IPC en el capítulo anterior. Pero
+definitivamente el desarrollador debería rendirse en, por ejemplo, evitar una
+conversión entre dos tipos innecesaria que posiblemente no afecte al rendimiento
+al fin y al cabo.
 
 Lo que quería dejar claro el equipo de Tremor es que todos los tests, limpiezas
 u optimizaciones que intentes realizar en este momento acabará muy probablemente
@@ -76,7 +76,7 @@ Notar que no hay problema con ``gastar'' el tiempo con métodos que acaban siend
 incorrectos, porque realmente no se está ``gastando'' nada; son un paso
 necesario para llegar a la solución final. Pero es doloroso tener que eliminar
 código al que le has dedicado tiempo, así que al menos debería intentarse
-minimizar las veces que esto ocurra.
+minimizar el impacto que esto tenga.
 
 \section{\abistable}
 
@@ -284,27 +284,13 @@ pub enum StaticNode {
 }
 \end{minted}
 
-Esto se podría arreglar siguiendo el mismo procedimiento recursivamente hasta
+Esto se podría arreglar siguiendo el mismo procedimiento recursivamente, hasta
 que todo sea \code{#[repr(C)]}. Pero como se trata de una librería externa,
 tendrá que abrirse un nuevo pull request y esperar que al autor le parezcan bien
-los cambios~\cite{openstaticnode}:
-
-\begin{minted}{rust}
-#[cfg_attr(feature = "abi_stable", repr(C))]
-#[cfg_attr(feature = "abi_stable", derive(abi_stable::StableAbi))]
-pub enum StaticNode {
-    I64(i64),
-    U64(u64),
-    F64(f64),
-    Bool(bool),
-    Null,
-}
-\end{minted}
-
-El atributo \code{cfg_attr} se asegura de que la estructura es \code{#[repr(C)]}
-únicamente cuando opcionalmente se configure a tiempo de compilación como
-necesario. De esta forma, el resto de usuarios podrán seguir aprovechándose de
-las ventajas de rendimiento que puede ofrecer \code{#[repr(Rust)]}.
+los cambios~\cite{openstaticnode}. Será importante también que la estructura use
+\code{#[repr(C)]} únicamente cuando opcionalmente se configure a tiempo de
+compilación como necesario. De esta forma, el resto de usuarios podrán seguir
+aprovechándose de las ventajas de rendimiento que ofrece \code{#[repr(Rust)]}.
 
 \subsection{Consecuencias del sistema de plugins}
 
