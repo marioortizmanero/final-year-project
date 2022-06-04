@@ -59,6 +59,12 @@ fn factorial(i: u64) -> u64 {
 }
 \end{minted}
 
+\section{Tipos de datos básicos}
+
+* Struct
+* Enum
+* Trait
+
 \section{Librería estándar}
 
 De forma similar a C++, Rust posee tipos genéricos. Esto permite la
@@ -133,26 +139,80 @@ puede invocar con el macro \code{panic!} o utilidades similares.
 
 \section{Macros}
 
-Rust da soporte para dos tipos de macros, los \emph{declarativos}, y los
-\emph{procedurales}. Sin entrar en excesivo detalle, los declarativos se pueden
-implementar de forma similar al caso de C o C++, como si se tratase de una
-función con una sintaxis especial. Los procedurales son mucho más costosos
+Rust da soporte para dos tipos de macros: \emph{declarativos} y
+\emph{procedurales}. Ambos permiten generar código a tiempo de compilación, pero
+se diferencian principalmente en la flexibilidad que ofrecen, a coste de un
+coste de desarrollo mayor o menor.
+
+Los macros declarativos se crean con una sintaxis especializada, similar a un
+\code{match} con patrones de tokens como entrada, y los tokens modificados como
+salida. Son similares a los macros de C o C++, pero más potentes e higiénicos
+(i.e., su expansión no captura identificadores accidentalmente).
+
+Los macros procedurales se describen como extensiones del lenguaje.
+Esencialmente, ejecutan código en la compilación que consume y produce sintaxis
+de Rust. Consisten en directamente transformar el Árbol de Sintaxis Abstracta
+(AST)~\cite{procmacrosref}. Consecuentemente, su complejidad es mucho mayor,
+pero expanden las posibilidades de los macros enormemente.
 
 \begin{minted}{rust}
 some_macro!(1, 2, 3); // Puede ser tanto declarativo como procedural
 \end{minted}
 
 \begin{minted}{rust}
-// Con macros declarativos
+// Sintaxis típica de invocación de un macro
 some_macro! {
     fn some_function() { /* ... */ }
 }
 
-// Con macros procedurales
+// También permitido en el caso de los procedurales
 #[some_macro]
 fn some_function() { /* ... */ }
 \end{minted}
 
+Finalmente, los macros procedurales se pueden declarar de forma que
+\emph{deriven} (implementen automáticamente) un \trait. Esto evita escribir
+código repetitivo de forma muy sencilla:
+
 \begin{minted}{rust}
-// Los de tipo `derive` son solo posibles con EEEEPAAAA
+// Con un macro `derive` para el trait `Debug`, que sirve para
+// mostrar variables por pantalla.
+#[derive(Debug)]
+struct X(i32);
+
+// Sin ellos sería lo siguiente. Como es trivial se puede
+// simplificar en un macro procedural de tipo `derive`.
+impl fmt::Debug for X {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self.0)
+    }
+}
+\end{minted}
+
+\section{Programación asíncrona}
+
+Como muchos lenguajes modernos, Rust da soporte a la programación asíncrona, un
+modelo de programación concurrente. Sin entrar en excesivo detalle, esta permite
+tener una gran cantidad de \emph{tareas} concurrentes ejecutándose sobre unos
+pocos hilos del Sistema Operativo. Su caso de uso principal es programas cuyo
+rendimiento está limitado por operaciones de entrada y salida, como servidores o
+bases de datos~\cite{rustasyncbook}.
+
+\begin{minted}{rust}
+// Con `async` se indica que la función es asíncrona.
+async fn get_two_sites_async() {
+    // Creación de dos "futuros" que, al completarse, descargarán
+    // asíncronamente las páginas web. Similar a la creación de
+    // un nuevo hilo.
+    let future_one = download_async("https://www.foo.com");
+    let future_two = download_async("https://www.bar.com");
+
+    // Ejecutar dos tareas. similar a esperar la terminación de
+    // los hilos.
+    join!(future_one, future_two);
+
+    // Con `.await` se puede esperar a la terminación de un futuro
+    // individual.
+    let future_three = download_async("https://www.bar.com").await;
+}
 \end{minted}

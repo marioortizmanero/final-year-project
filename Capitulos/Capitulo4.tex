@@ -97,9 +97,41 @@ plugins:
 \subsection{Programación asíncrona}
 
 El objetivo inicial era simplificar la interfaz lo suficiente como para que no
-sea necesario tratar aspectos como programación asíncrona en el PDK.
+sea necesario tratar aspectos como programación asíncrona en el PDK. Esto
+terminó siendo inevitable, dado que la asincronía es uno de los pilares de
+Tremor.
 
-* \cratelink{async_ffi}
+Para poder usar \code{async} con el ABI de C se puede recurrir a la \crate
+\cratelink{async_ffi}, cuyo único problema era no tener soporte para \abistable.
+Al no implementar el \trait \code{StableAbi}, no se podía usar en la interfaz
+del PDK, por lo que 
+
+\begin{minted}{rust}
+// Así funciona la programación asíncrona en Rust; la primera
+// función es prácticamente equivalente a la segunda.
+async fn example() -> String {
+    read_file().await
+}
+fn example() -> impl Future<Output = String> {
+    async {
+        read_file().await
+    }
+}
+
+// For FFI-safe interfaces there can't be generics involved, so the future is a
+// concrete type instead of a trait. This conversion from `Future` to
+// `FfiFuture` can be done with `into_ffi`.
+fn example() -> FfiFuture<String> {
+    async move {
+        read_file().await
+    }
+    .into_ffi()
+}
+// `FfiFuture<T>` implements `Future<Output = T>`, so it can be awaited as usual
+async fn user() {
+    example().await
+}
+\end{minted}
 
 \subsection{Seguridad en hilos}
 
@@ -292,7 +324,7 @@ externo no está disponible.
 
 \begin{figure}
     \centering
-    \includegraphics[width=10cm]{./Imagenes/errors.png}
+    \includegraphics[width=\textwidth]{./Imagenes/errors.png}
     \caption{Al intentar evitar los tipos externos se produjeron más de 120
     errores de compilación.}%
     \label{fig:errors}
@@ -324,7 +356,7 @@ carecía de la suficiente flexibilidad y el equipo implementó uno personalizado
 
 Esta última opción resultó ser la más sencilla de implementar: crear una copia
 de \code{Value} cuyo único uso es para comunicarse entre runtime y plugins,
-ilustrado en la Figura~\ref{simplify}.
+ilustrado en la Figura~\ref{fig:simplify}.
 
 \begin{figure}
     \centering
