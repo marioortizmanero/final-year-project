@@ -2,6 +2,9 @@
 
 \chapter{Breve introducción a Rust}\label{ch:rust}
 
+TODO: quizá mover esto a un anexo para que no cuente en la suma de palabras
+total?
+
 Dado que Rust es un lenguaje de programación que tan solo anunció su primera
 versión en 2015, aún no es conocido por muchos desarrolladores. Este proyecto
 requiere ser familiar con cómo funciona, por lo que en este capítulo se
@@ -26,10 +29,9 @@ terminología es la misma.
 \section{¿Qué es Rust?}
 
 Rust es un lenguaje de programación de sistemas compilado y de propósito
-general. Su objetivo es maximizar rendimiento y usabilidad, esto último
-basándose en seguridad integrada en el lenguaje, en vez de en el \
-
-\section{Primeros pasos}
+general. Su objetivo es maximizar rendimiento y seguridad, tanto en memoria como
+en concurrencia, ambos en tiempo de compilación. Proporciona control a bajo
+nivel, manteniendo una productividad cercana a lenguajes de alto nivel.
 
 Comenzando por el clásico ``Hola Mundo'', se incluyen algunos ejemplos de cómo
 es la sintaxis de Rust más básica. El programa se podría ejecutar fácilmente con
@@ -42,28 +44,106 @@ fn main() {
 }
 \end{minted}
 
-\code{main} es nuestra función principal, que invoca al macro \emph{println}
-para escribir por pantalla. Esto se sabe porque, a diferencia de una llamada a
-función, la invocación termina con una exclamación (\code{!}).
+\code{main} es nuestra función principal, que invoca al macro \code{println}
+para escribir por pantalla. Notar que la invocación de macros, a diferencia de
+funciones, requiere un \code{!} al final.
 
-Los bloques básicos (\code{if}, \code{else}, \code{while}, \code{for}) son los
-mismos que en otros lenguajes, con la introducción de \code{match}, que permite
-extraer patrones.
+\section{Conceptos básicos}
+
+Los componentes principales de Rust son:
+
+\begin{itemize}
+    \item Estructuras de datos:
+
+\begin{minted}{rust}
+struct Message {
+    // Campo público con una cadena de caracteres
+    pub text: String,
+    // Campo privado con un entero
+    user_id: i32,
+}
+\end{minted}
+
+\begin{minted}{rust}
+// Sin nombres de campos; se pueden acceder con `data.0`
+// y `data.1`, respectivamente.
+struct Message(pub String, i32);
+\end{minted}
+
+    \item Enumeraciones, que también permiten contener datos:
+
+\begin{minted}{rust}
+enum Message {
+    Join,
+    Text(String, i32),
+    Leave(i32),
+}
+\end{minted}
+
+    \item \emph{Traits}, similares a las interfaces de Java en el sentido que
+        son una serie de requerimientos y que se pueden implementar múltiples,
+        pero también permiten implementaciones por defecto:
+
+\begin{minted}{rust}
+trait Sender {
+    // Los métodos requieren especificar `self` explícitamente,
+    // que es lo mismo que `this` en Java o C++. En este caso,
+    // `send` tomará una referencia al tipo que implemente
+    // `Sender`. También podría ser una referencia mutable con
+    // `&mut`, o el mismo tipo con `self`.
+    fn send(&self, msg: String);
+
+    // Implementación por defecto.
+    fn send_twice(&self, msg: String) {
+        self.send(msg);
+        self.send(msg.clone());
+    }
+}
+\end{minted}
+
+    Notar que, sin embargo, Rust no es un lenguaje orientado a objetos. Un
+    \trait puede heredar de otro \trait, pero un \struct no puede heredar de
+    otro \struct.
+
+\end{itemize}
+
+Los bloques básicos (\code{if}, \code{else}, \code{while}, \code{for}) son muy
+similares a en otros lenguajes. También existe \code{match}, que permite extraer
+patrones de variables.
 
 \begin{minted}{rust}
 fn factorial(i: u64) -> u64 {
     match i {
+        // Primer caso: i = 0
         0 => 1,
+        // El resto de casos, asignado a una variable `n`
         n => n * factorial(n-1)
     }
 }
 \end{minted}
 
-\section{Tipos de datos básicos}
+Uso de variables y métodos:
 
-* Struct
-* Enum
-* Trait
+\begin{minted}{rust}
+fn main() {
+    // Declaración de una variable, cuyo tipo se infiere
+    // automáticamente.
+    let my_number = 1234;
+    // Declaración de una variable con un tipo especificado
+    // manualmente. Notar que se puede usar el mismo nombre,
+    // y la variable anterior será destruida.
+    let my_number: i32 = 4321;
+    // Invocación de la función estática (constructor) `new`
+    // dentro del tipo `String`. El uso de `mut` indica que
+    // la instancia del tipo se puede modificar; de forma
+    // inversa a C++, `const` indicaría que *no* se puede
+    // modificar.
+    let mut my_str = String::new();
+    // Invocación del método `push` de `my_str`, que añade un
+    // carácter al final de la cadena.
+    my_str.push('a');
+}
+\end{minted}
 
 \section{Librería estándar}
 
@@ -105,8 +185,10 @@ datos importantes a conocer:
 use std::collections::HashMap;
 \end{minted}
 
-    \item \code{Box<T>}, usado para localizar un tipo \code{T} en memoria.
-        Incluye el tamaño que ocupa \code{T}.
+    \item \code{Box<T>}, usado para localizar un tipo \code{T} no nulo en
+        memoria. Además de un \code{*const T}, incluye el tamaño que ocupa
+        \code{T} y tiene una interfaz limitada para que su uso sea siempre
+        seguro.
 
     \item \code{str} es una cadena UTF-8 de solo lectura, típicamente usada con
         una referencia \code{&str}. Va acompañada por su longitud, por lo que no
@@ -120,9 +202,10 @@ use std::collections::HashMap;
 En Rust, los errores se indican con el tipo \code{Result<T, E>}. Este se trata
 de una enumeración cuyo valor puede ser \code{Ok(T)}, con el resultado obtenido
 satisfactoriamente, o \code{Err(E)}, con el tipo de error que ha sucedido. Dado
-que es un tipo nuevo, si el programador se olvidase de comprobar errores, el
-programa no compilaría. Se puede usar \code{match} para comprobar el resultado,
-o una serie de funciones disponibles para hacer el proceso más ergonómico:
+que el resultado está contenido dentro suyo, es imposible olvidar comprobar si
+se ha producido algún error. Se puede usar \code{match} para comprobar el
+resultado, o una serie de funciones disponibles para hacer el proceso más
+ergonómico:
 
 \begin{minted}{rust}
 match load_file(input) {
@@ -134,24 +217,25 @@ match load_file(input) {
 En caso de que se produjera un error del que el programa no se puediera
 recuperar, como quedarse sin memoria o un fallo inesperado en la implementación,
 se usa la funcionalidad de \emph{pánicos}. Un pánico se propaga de forma similar
-a una excepción de C++ o Java, y terminará la ejecución por completo. Esto se
-puede invocar con el macro \code{panic!} o utilidades similares.
+a una excepción de C++ o Java, y terminará la ejecución por completo. Se puede
+invocar con el macro \code{panic!} o utilidades similares.
 
 \section{Macros}
 
-Rust da soporte para dos tipos de macros: \emph{declarativos} y
-\emph{procedurales}. Ambos permiten generar código a tiempo de compilación, pero
-se diferencian principalmente en la flexibilidad que ofrecen, a coste de un
-coste de desarrollo mayor o menor.
+Rust cuenta con dos tipos de macros: \emph{declarativos} y \emph{procedurales}.
+Ambos permiten generar código a tiempo de compilación, pero se diferencian
+principalmente en la flexibilidad que ofrecen, a coste de un coste de desarrollo
+menor o mayor, respectivamente.
 
 Los macros declarativos se crean con una sintaxis especializada, similar a un
-\code{match} con patrones de tokens como entrada, y los tokens modificados como
-salida. Son similares a los macros de C o C++, pero más potentes e higiénicos
-(i.e., su expansión no captura identificadores accidentalmente).
+\code{match} con patrones de tokens (identificadores, tipos, etc) como entrada,
+y los tokens nuevos como salida. Son similares a los macros de C o C++, pero más
+potentes e higiénicos (i.e., su expansión no captura identificadores
+accidentalmente).
 
 Los macros procedurales se describen como extensiones del lenguaje.
 Esencialmente, ejecutan código en la compilación que consume y produce sintaxis
-de Rust. Consisten en directamente transformar el Árbol de Sintaxis Abstracta
+de Rust; consisten en directamente transformar el Árbol de Sintaxis Abstracta
 (AST)~\cite{procmacrosref}. Consecuentemente, su complejidad es mucho mayor,
 pero expanden las posibilidades de los macros enormemente.
 
@@ -207,7 +291,7 @@ async fn get_two_sites_async() {
     let future_one = download_async("https://www.foo.com");
     let future_two = download_async("https://www.bar.com");
 
-    // Ejecutar dos tareas. similar a esperar la terminación de
+    // Ejecutar las dos tareas. Similar a esperar la terminación de
     // los hilos.
     join!(future_one, future_two);
 
