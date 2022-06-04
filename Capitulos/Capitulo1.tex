@@ -13,14 +13,14 @@ de lenguajes de propósito general, como C, C++, Python o Java.
 
 Sin embargo, es posible que se omitan algunos conceptos o que algunas
 explicaciones no sean completamente precisas por razones de simplicidad.
-\textcite{rustfullbook} es el libro oficial para aprender Rust por completo,
-pero es una lectura larga y posiblemente demasiado exhaustiva. Para mayor
-brevedad, se recomienda leer \textcite{rustprofessionals},
-\textcite{rustgentleintro} o \textcite{rust30min}.
+\textcite{rustbook} es el libro oficial para aprender Rust por completo, pero es
+una lectura larga y posiblemente demasiado exhaustiva. Para mayor brevedad, se
+recomienda leer \textcite{rustprofessionals}, \textcite{rustgentleintro} o
+\textcite{rust30min}.
 
 La comunidad dispone de otros libros que explican aspectos más avanzados del
 lenguaje en específico, como \unsafe o la programación asíncrona. En esos casos,
-se recomienda leer \textcite{rustnomicon} y \textcite{rustasyncbook},
+se recomienda leer \textcite{nomicon} y \textcite{rustasyncbook},
 respectivamente.
 
 TODO: revisar traducciones del libro o similares para asegurarse de que la
@@ -264,8 +264,8 @@ accidentalmente).
 Los macros procedurales se describen como extensiones del lenguaje.
 Esencialmente, ejecutan código en la compilación que consume y produce sintaxis
 de Rust; consisten en directamente transformar el Árbol de Sintaxis Abstracta
-(AST)~\cite{procmacrosref}. Consecuentemente, su complejidad es mucho mayor,
-pero expanden las posibilidades de los macros enormemente.
+(AST)~\cite[Procedural Macros]{rustref}. Consecuentemente, su complejidad es
+mucho mayor, pero expanden las posibilidades de los macros enormemente.
 
 \begin{minted}{rust}
 some_macro!(1, 2, 3); // Puede ser tanto declarativo como procedural
@@ -328,3 +328,7 @@ async fn get_two_sites_async() {
     let future_three = download_async("https://www.bar.com").await;
 }
 \end{minted}
+
+\section{Lifetimes}
+
+
