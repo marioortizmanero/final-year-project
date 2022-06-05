@@ -15,7 +15,7 @@ trabajo a seguir. En esta sección se cubrirá lo último, dado que es menos un
 detalle de implementación.
 
 TODO: podría mencionar trucos relacionados con Rust en detalle (desactivar
-algunos warnings, o quitar statements \code{use}), pero no creo que sea tan
+algunos warnings, o quitar statements \rust{use}), pero no creo que sea tan
 importante en este caso y el documento ya es bastante largo.
 
 La metodología fue insipirada por mis mentores, que lo denominaron el ``Just
@@ -101,12 +101,12 @@ seguridad~\cite{abistable_safety}:
 
 \end{itemize}
 
-Todo esto se basa en el \trait \code{StableAbi}, indicador de que un tipo es
+Todo esto se basa en el \trait \rust{StableAbi}, indicador de que un tipo es
 seguro para FFI. Contiene información sobre la estructura en memoria y puede ser
 derivado automáticamente. Todos los tipos exportados por \abistable, además de
 usar el ABI de C, implementan dicho \trait. Por tanto, si queremos declarar
 nuestro propio tipo para usar con \abistable, ademaś de marcarlo con
-\code{#[repr(C)]}, tendremos que añadir \code{#[derive(StableAbi)]}.
+\rust{#[repr(C)]}, tendremos que añadir \rust{#[derive(StableAbi)]}.
 
 \subsection{Cargado de plugins}
 
@@ -119,7 +119,7 @@ definido~\cite[FFI and Panics]{nomicon}. Aunque el programa aborte en la mayorí
 de los casos, no existe ninguna garantía de que vaya a suceder así; podría
 continuar en un estado inválido, con cualquier tipo de consecuencia.
 
-La solución más directa es usar la función \code{std::panic::catch_unwind}, que,
+La solución más directa es usar la función \rust{std::panic::catch_unwind}, que,
 para casos excepcionales como este, puede parar la propagación de pánicos cuando
 sea llamada. Se podría usar en todas las funciones exportadas por el plugin
 internamente, y en caso de producirse un pánico se abortaría el programa, en
@@ -188,9 +188,9 @@ comentario aquí), pero creo que es demasiado detalle.
 % }
 % \end{minted}
 
-Para poder usar \code{async} con el ABI de C se puede recurrir a la \crate
+Para poder usar \rust{async} con el ABI de C se puede recurrir a la \crate
 \cratelink{async_ffi}, cuyo único problema era no tener soporte para \abistable.
-Al no implementar el \trait \code{StableAbi}, no se podía usar en la interfaz
+Al no implementar el \trait \rust{StableAbi}, no se podía usar en la interfaz
 del PDK, por lo que tuve que abrir un pull request para hacerlo yo
 mismo~\cite{asyncfficontrib}. El uso de esta librería resulta en código más
 verboso, pero esto se podría mejorar en el futuro con un macro
@@ -218,11 +218,11 @@ Un último punto vital a tener en cuenta es el coste de realizar conversiones
 entre tipos de la librería estándar y tipos de \abistable. Esto se dará en
 numerosas ocasiones, dado que usar \abistable cuando no es necesario es
 subóptimo para tanto el rendimiento como la usabilidad. Y si, por ejemplo,
-convertir un \code{Vec<T>} a un \code{RVec<T>} tuviese complejidad $O(n)$,
+convertir un \rust{Vec<T>} a un \rust{RVec<T>} tuviese complejidad $O(n)$,
 probablemente \abistable tendría que ser descartado como la solución escogida.
 
-Afortunadamente, tras analizar la implementación de tipos como \code{RVec<T>},
-\code{RSlice<T>}, \code{RStr} o \code{RString}, estas conversiones únicamente
+Afortunadamente, tras analizar la implementación de tipos como \rust{RVec<T>},
+\rust{RSlice<T>}, \rust{RStr} o \rust{RString}, estas conversiones únicamente
 consisten en transferir un puntero con los datos, sin necesidad de copiar nada.
 Es decir, las conversiones que realizaremos serán $O(1)$.
 
@@ -230,10 +230,10 @@ Es decir, las conversiones que realizaremos serán $O(1)$.
 
 El primer paso en el proceso es declarar toda la interfaz del PDK de forma que
 use el ABI de C, en vez del de Rust. Esto se puede hacer con el atributo
-\code{#[repr(C)]} (en lugar del \code{#[repr(Rust)]} implícito), pero el
+\rust{#[repr(C)]} (en lugar del \rust{#[repr(Rust)]} implícito), pero el
 problema reside en que todos los tipos dentro suyo \emph{también} tendrán que
 haber sido declarados con dicho atributo. Para ilustrarlo mejor, la estructura
-más complicada al respecto fue \code{Value}, usado para representar datos
+más complicada al respecto fue \rust{Value}, usado para representar datos
 pseudo-JSON y definido a continuación de forma simplificada:
 
 \begin{minted}{rust}
@@ -251,7 +251,7 @@ pub enum Value {
 }
 \end{minted}
 
-Para poder usar \code{Value} en la interfaz del sistema de plugins, se puede
+Para poder usar \rust{Value} en la interfaz del sistema de plugins, se puede
 convertir a:
 
 \begin{minted}{rust}
@@ -270,8 +270,8 @@ pub enum Value {
 }
 \end{minted}
 
-El primer problema surge en la variante \code{Static}. Su tipo contenido
-internamente, \code{StaticNode}, es externo y usa \code{#[repr(Rust)]}. Se
+El primer problema surge en la variante \rust{Static}. Su tipo contenido
+internamente, \rust{StaticNode}, es externo y usa \rust{#[repr(Rust)]}. Se
 declara en el \crate \cratelink{value_trait}, que lo declara tal que:
 
 \begin{minted}{rust}
@@ -285,16 +285,16 @@ pub enum StaticNode {
 \end{minted}
 
 Esto se podría arreglar siguiendo el mismo procedimiento recursivamente, hasta
-que todo sea \code{#[repr(C)]}. Pero como se trata de una librería externa,
+que todo sea \rust{#[repr(C)]}. Pero como se trata de una librería externa,
 tendrá que abrirse un nuevo pull request y esperar que al autor le parezcan bien
 los cambios~\cite{openstaticnode}. Será importante también que la estructura use
-\code{#[repr(C)]} únicamente cuando opcionalmente se configure a tiempo de
+\rust{#[repr(C)]} únicamente cuando opcionalmente se configure a tiempo de
 compilación como necesario. De esta forma, el resto de usuarios podrán seguir
-aprovechándose de las ventajas de rendimiento que ofrece \code{#[repr(Rust)]}.
+aprovechándose de las ventajas de rendimiento que ofrece \rust{#[repr(Rust)]}.
 
 \subsection{Consecuencias del sistema de plugins}
 
-Por desgracia, este cambio no termina ahí; cambiar las variantes de \code{Value}
+Por desgracia, este cambio no termina ahí; cambiar las variantes de \rust{Value}
 implica que el código que lo usaba se romperá de numerosas formas:
 
 \begin{minted}{rust}
@@ -302,8 +302,8 @@ implica que el código que lo usaba se romperá de numerosas formas:
 let value = Value::Array(Vec::new());
 \end{minted}
 
-Este caso es el más sencillo: simplemente hace falta cambiar \code{Vec} por
-\code{RVec}. La intención de los tipos de \abistable es que sean un reemplazo
+Este caso es el más sencillo: simplemente hace falta cambiar \rust{Vec} por
+\rust{RVec}. La intención de los tipos de \abistable es que sean un reemplazo
 directo de los de la librería estándar, i.e., su interfaz será la misma:
 
 \begin{minted}{rust}
@@ -313,12 +313,12 @@ let value = Value::Array(RVec::new());
 % TODO: 'return' es devolver o retornar?
 Es un poco más complicado cuando los tipos anteriores se exponían en métodos,
 porque requiere tomar una decisión entre expandir el límite de FFI del
-\emph{funcionamiento interno} de \code{Value} a los \emph{usuarios} de
-\code{Value}. Por ejemplo, la variante \code{Value::Object} contiene un
-\code{RHashMap} ahora, pero el método \code{Value::as_object} solía devolver una
-referencia a \code{HashMap}. Se producirá un error nuevo ahí y tendrá que
-tomarse la decisión de devolver \code{RHashMap} o añadir una conversión interna
-a \code{HashMap}:
+\emph{funcionamiento interno} de \rust{Value} a los \emph{usuarios} de
+\rust{Value}. Por ejemplo, la variante \rust{Value::Object} contiene un
+\rust{RHashMap} ahora, pero el método \rust{Value::as_object} solía devolver una
+referencia a \rust{HashMap}. Se producirá un error nuevo ahí y tendrá que
+tomarse la decisión de devolver \rust{RHashMap} o añadir una conversión interna
+a \rust{HashMap}:
 
 \begin{minted}{rust}
 impl Value {
@@ -338,22 +338,22 @@ impl Value {
 \end{minted}
 
 \begin{itemize}
-    \item Si se cambia el tipo devuelto a \code{RHashMap}, casi todas las veces
-        que se llamaba a \code{as_object} ahora dejarán de compilar porque se
-        esperan un \code{HashMap}.
+    \item Si se cambia el tipo devuelto a \rust{RHashMap}, casi todas las veces
+        que se llamaba a \rust{as_object} ahora dejarán de compilar porque se
+        esperan un \rust{HashMap}.
 
         Esto puede ser complicado porque, para evitar realizar conversiones, el
         sistema de plugins \emph{infectaría} la base de código por completo.
-        Tendría que propagarse el uso de \code{RHashMap} por todo el programa,
-        incluso cuando el PDK no es importante. Por ejemplo, \code{Value}
+        Tendría que propagarse el uso de \rust{RHashMap} por todo el programa,
+        incluso cuando el PDK no es importante. Por ejemplo, \rust{Value}
         también se usaba en la implementación del lenguaje de Tremor, Troy.
-        Tener que usar un \code{RHashMap} en esa situación sería confuso y
+        Tener que usar un \rust{RHashMap} en esa situación sería confuso y
         acabarían modificándose gran cantidad de ficheros sin relación al
         sistema de plugins.
 
-    \item Si se realiza una conversión interna a \code{HashMap} en
-        \code{as_object}, evitaremos todos esos errores, con un pequeño coste de
-        rendimiento. Es la opción más fácil, pero si \code{Value::as_object} se
+    \item Si se realiza una conversión interna a \rust{HashMap} en
+        \rust{as_object}, evitaremos todos esos errores, con un pequeño coste de
+        rendimiento. Es la opción más fácil, pero si \rust{Value::as_object} se
         usara frecuentemente, e.g., en el bucle principal, sí que podría causar
         una degradación considerable.
 \end{itemize}
@@ -374,11 +374,11 @@ general, convertir los tipos \emph{de la librería a estándar a \abistable} es
 una tarea trivial, simplemente un tanto tedioso.
 
 Los problemas surgen cuando es necesario convertir \emph{tipos externos a
-\abistable}. La declaración anterior de \code{Value} era una simplificación;
+\abistable}. La declaración anterior de \rust{Value} era una simplificación;
 realmente, Tremor usa la implementación de \cratelink{halfbrown} de
-\code{HashMap<K, V>}. Esto se debe a que es más eficiente para su caso de uso, y
+\rust{HashMap<K, V>}. Esto se debe a que es más eficiente para su caso de uso, y
 que posee algunas funcionalidades adicionales necesarias. El mismo caso se da
-para otro tipo \code{Cow}, cuya alternativa en la \crate \cratelink{beef} ocupa
+para otro tipo \rust{Cow}, cuya alternativa en la \crate \cratelink{beef} ocupa
 menos espacio en memoria y ofrece un mejor rendimiento en Tremor.
 
 Ninguno de estos dos tipos tienen soporte dentro de \abistable, y aunque estos
@@ -392,7 +392,7 @@ optimizaciones temporalmente y dejar un \code{TODO} para que se pueda revisar
 posteriormente. Es posible que el sistema de plugins tenga excesiva complejidad,
 y limitarse a usar tipos de la librería estándar podría ser suficiente.
 
-En el caso específico de \code{Value}, eliminar las optimizaciones problemáticas
+En el caso específico de \rust{Value}, eliminar las optimizaciones problemáticas
 parece la manera más fácil de arreglar el problema. Y lo sería, si no fuera
 porque eliminar código también puede ser complicado, como muestra la
 Figura~\ref{fig:errors}, especialmente cuando la funcionalidad extra del tipo
@@ -424,14 +424,14 @@ son parte de optimizaciones; encapsularlos podría tener un impacto en su
 rendimiento y hacerlos inútiles.
 
 Si esta parte del proyecto es lo suficientemente importante y existen los
-recursos, debería considerarse. De hecho, el mismo tipo \code{Value} en Tremor
-surgió por esta razón: ya existía \code{simd_json::Value} de otra librería, pero
+recursos, debería considerarse. De hecho, el mismo tipo \rust{Value} en Tremor
+surgió por esta razón: ya existía \rust{simd_json::Value} de otra librería, pero
 carecía de la suficiente flexibilidad y el equipo implementó uno personalizado.
 
 \subsubsection{Simplificar el tipo para la interfaz}
 
 Esta última opción resultó ser la más sencilla de implementar: crear una copia
-de \code{Value} cuyo único uso es para comunicarse entre runtime y plugins,
+de \rust{Value} cuyo único uso es para comunicarse entre runtime y plugins,
 ilustrado en la Figura~\ref{fig:simplify}.
 
 \begin{figure}
@@ -443,7 +443,7 @@ ilustrado en la Figura~\ref{fig:simplify}.
 
 Ya que es un tipo nuevo, no se romperá nada del código ya existente, y
 únicamente hará falta cambiarlo donde se use la interfaz. Su implementación es
-sencilla (notar el cambio de nombre a \code{PdkValue}):
+sencilla (notar el cambio de nombre a \rust{PdkValue}):
 
 \begin{minted}{rust}
 pub enum PdkValue {
@@ -460,10 +460,10 @@ pub enum PdkValue {
 }
 \end{minted}
 
-No es necesario escribir métodos adicionales para el nuevo \code{PdkValue}, solo
-sus conversiones desde y hasta el tipo original, \code{Value}. Esto sería
-equivalente a, en vez de pasar un \code{Vec<T>} al PDK, reemplzarlo con un
-\code{*const u8} para los datos y un \code{u32} para la longitud. Simplemente
+No es necesario escribir métodos adicionales para el nuevo \rust{PdkValue}, solo
+sus conversiones desde y hasta el tipo original, \rust{Value}. Esto sería
+equivalente a, en vez de pasar un \rust{Vec<T>} al PDK, reemplzarlo con un
+\rust{*const u8} para los datos y un \rust{u32} para la longitud. Simplemente
 consiste en simplificar los tipos en la interfaz, y convertirlos de vuelta para
 usar la funcionalidad completa.
 
@@ -471,7 +471,7 @@ El problema principal es que la conversión entre tipos es ahora $O(n)$ en vez d
 $O(1)$, dado que es necesario iterar los datos en los objetos y vectores para la
 conversión. Su uso sería el siguiente:
 
-TODO: mejor si omito el código aquí con la conversión, no?
+TODO: mejor si omito el siguiente snippet de código?
 
 \begin{minted}{rust}
 // Esta función es exportada por el plugin. Funcionará porque
@@ -494,8 +494,8 @@ se verificó que convertir los datos era un 5-10\% de la ejecución del programa
 Es menos de lo esperado, pero sigue sin ser suficiente para Tremor.
 
 También tiene un coste de usabilidad; en comparación con tener un único
-\code{Value}, es necesario convertir los tipos y posiblemente crear encapsularlo
-con una función de más alto nivel (\code{runtime_wrapper}). Es una tarea
+\rust{Value}, es necesario convertir los tipos y posiblemente crear encapsularlo
+con una función de más alto nivel (\rust{runtime_wrapper}). Es una tarea
 relativamente trivial, por lo que se podría automatizar con macros procedurales
 en Rust, pero esto debería dejarse para el final del proyecto.
 
@@ -519,14 +519,14 @@ Variance]{nomicon} y \textcite[Subtyping and Variance]{rustref}. También es
 recomendable consultar el artículo \textcite{lcnr_covandcontra} o a
 \textcite{video_covandcontra} para un formato en vídeo.
 
-Deriva también de los problemas encontrados con el tipo \code{Value}. La
+Deriva también de los problemas encontrados con el tipo \rust{Value}. La
 historia completa se incluye en el issue \textcite{abi_covandcontra}. Al cambiar
 los tipos de la librería estándar a los de \abistable, se producían errores de
-\lifetimes inexplicables (ver Figura~\ref{fig:errors}). Estuve bloqueado con
-dicho problema durante mucho tiempo, así que tras comentárselo a mis mentores,
-Heinz me ayudó a reproducir el problema de forma mínima. Por alguna razón que
-todavía desconocíamos, dos tipos supuestamente equivalentes diferían a la hora
-de compilar:
+\lifetimes \emph{inexplicables} (ver Figura~\ref{fig:errors}). Estuve bloqueado
+con dicho problema durante mucho tiempo, así que tras comentárselo a mis
+mentores, Heinz me ayudó a reproducir el problema de forma mínima. Por alguna
+razón que todavía desconocíamos, dos tipos supuestamente equivalentes diferían a
+la hora de compilar:
 
 \begin{minted}{rust}
 use abi_stable::std_types::RCow;
@@ -562,15 +562,15 @@ error: could not compile `repro` due to previous error
 
 Este tipo de error suele darse en caso de que la \lifetime de un valor no viva
 lo suficiente. Por ejemplo, el ejemplo de \code{rustc --explain E0623} es el
-siguiente. Se tienen dos \lifetimes \emph{sin relación entre sí}, \code{'short}
-y \code{'long}. La estructura \code{Foo} que se pasa como parámetro tiene la
-\lifetime \code{'short}, pero dentro de la función se le intenta asignar una
-\lifetime \code{'long}, que es imposible porque el compilador no sabe cuál tiene
+siguiente. Se tienen dos \lifetimes \emph{sin relación entre sí}, \rust{'short}
+y \rust{'long}. La estructura \rust{Foo} que se pasa como parámetro tiene la
+\lifetime \rust{'short}, pero dentro de la función se le intenta asignar una
+\lifetime \rust{'long}, que es imposible porque el compilador no sabe cuál tiene
 un tiempo de vida mayor. Asignarle una \lifetime que viva más de lo que debe
-significiaría que se podría seguir usando después de que \code{'short} acabe, es
-decir, después de que \code{Foo} haya sido destruido. Finalmente, esto causaría
-inconsistencias en memoria porque nuestra variable de tipo \code{Foo} ya no
-existe, pero se está intentando acceder a ella.
+significaría que se podría seguir usando \rust{Foo} después de que \rust{'short}
+acabe, es decir, después de que \rust{Foo} haya sido destruido. Finalmente, esto
+causaría inconsistencias en memoria porque nuestra variable de tipo \rust{Foo}
+ya no existe, pero se está intentando acceder a ella.
 
 \begin{minted}{rust}
 struct Foo<'a> {
@@ -583,9 +583,9 @@ fn bar<'short, 'long>(c: Foo<'short>, l: &'long isize) {
 }
 \end{minted}
 
-Solucionarlo es tan simple como indicar que \code{'short} tiene al menos el
-mismo tiempo de vida que \code{'long}. Es decir, que no se podría dar el caso de
-que \code{Foo} es usado después de destruirse:
+Solucionarlo es tan simple como indicar que \rust{'short} tiene al menos el
+mismo tiempo de vida que \rust{'long}. Es decir, que no se podría dar el caso de
+que \rust{Foo} es usado después de destruirse:
 
 \begin{minted}{rust}
 // Notar que ahora `'short` se declara tal que `'short: 'long`
@@ -594,43 +594,92 @@ fn bar<'short: 'long, 'long>(c: Foo<'short>, l: &'long isize) {
 }
 \end{minted}
 
-Por tanto, uno pensaría que tiene que ver con la implementación del operador
-\code{==}, que se delega al \trait \code{PartialEq}, así que dediqué tiempo
-intentando encontrar la diferencia. Y en efecto, al usar \emph{exactamente la
-misma implementación} para \code{RCow} que para \code{Cow}, compilaba
-correctamente.
+Por tanto, uno pensaría que tiene que ver con el operador \rust{==}, que se
+delega al \trait \rust{PartialEq}, así que dediqué tiempo intentando encontrar
+la diferencia entre su implementación en \rust{Cow<'a, T>} y la de
+\rust{RCow<'a, T>}. La mención anterior a estos errores como
+\emph{inexplicables} se debe a que en este caso únicamente existe una \lifetime
+\rust{'a}, así que no se podría arreglar indicando que \rust{'short: 'long}. No
+obstante, existía alguna pequeña diferencia sin relación a este problema entre
+las implementaciones, y al usar \emph{exactamente lo mismo} que en \rust{Cow<'a,
+T>}, compilaba correctamente.
 
-Sin embargo, tras cambiar \code{left == right} por \code{left.cmp(right)}, se
-repetía el problema, incluso con la misma implementación de \code{PartialOrd},
-el \trait con el método \code{cmp}. No fue hasta que pedí ayuda en el servidor
-de Discord de Rust hasta que descubrí que el verdadero problema era un término
-llamado la \emph{varianza} de \code{RCow}.
+% TODO: credit properly
+Tras cambiar \rust{left == right} por \rust{left.cmp(right)} en la reproducción
+inicial, se repetía el problema, incluso con aparentemente la misma
+implementación de \rust{Ord} (el \trait con el método \rust{cmp}). No fue hasta
+que expliqué mi problema en un servidor de Discord con más desarrolladores de
+Rust que descubrí que el verdadero problema era un término llamado la
+\emph{varianza} de \rust{RCow<'a, T>}.
 
-\section{Separación de runtime e interfaz}
+Todo acabó reduciéndose a la única diferencia en la implementación del \trait
+\rust{Ord}. \rust{RCow<'a, T>} implementa un \trait llamado
+\rust{BorrowOwned<'a>} y \rust{Cow<'a, T>} implementa otro llamado
+\rust{ToOwned}. Ambos \traits son iguales, excepto que en \rust{BorrowOwned<'a>}
+se incluye funcionalidad adicional para \abistable. El problema no tiene que ver
+con esta diferencia en funcionalidad, sino que \rust{BorrowOwned<'a>} es
+genérico respecto a la \lifetime \rust{'a}, lo cual no es el caso de
+\rust{ToOwned}.
+
+Al implementar \rust{Ord}, se tenía que indicar que \rust{T: ToOwned} o \rust{T:
+BorrowOwned<'a>}. El problema era que al relacionar la \lifetime \rust{'a} de
+esta forma, estaba rompiendo una regla que hacía a \rust{RCow}
+\emph{invariante}, en vez de \emph{covariante}.
+
+TODO: es esta sección demasiado técnica? Debería continuar? Me falta explicar
+qué es invarianza y covarianza. La verdad que esto sí que me llevó mucho tiempo
+en su momento, así que me gustaría incluirlo de alguna forma.
+
+\section{Estado final del proyecto}
+
+Como se ha explicado, la complejidad del proyecto resultó ser mucho mayor que lo
+esperado por problemas con el ABI. Por tanto, resultó imposible desarrollar en
+el tiempo disponible un sistema de plugins tan completo y eficiente como se
+especificaba.
+
+La última versión del sistema de plugins es funcional y, mediante contribuciones
+de código abierto, ha hecho posible su futura inclusión en una versión de
+Tremor. Muchas de las librerías usadas no disponían de la funcionalidad
+necesaria para este proyecto, así como \code{async_ffi}, \code{abi_stable},
+\code{halfbrown} o \code{simd-json}.
+
+El problema principal tiene que ver con el rendimiento. Dada la naturaleza de
+Tremor, es un requerimiento imprescindible para poderlo incluir en una futura
+versión. Tras unas mediciones iniciales, se calculó que su inclusión reducía el
+rendimiento del programa un 30\%, así que los siguientes pasos consistieron en
+reducir dicha cifra.
+
+TODO: incluir todas las figuras de benchmarks con las explicaciones
 
 \section{Despliegue en producción}
 
-\section{Lecciones aprendidas}
+Preparing the release for the plugin system has always sounded like a quite
+complicated task. I’ve never wanted to introduce too many changes at once
+because otherwise it will become very hard to review and merge into the main
+branch. This is why I decided to schedule the PDK release in four separate
+iterations:
 
-* Quizá incluir consejos de los mentores?
+    Define the new interface and use it internally: the plugin system should be as minimal as possible. The program can be converted to support plugins, but while keeping them in the same binary, for simplicity. The plugin loading functionality can be left as a proof-of-concept for now. Still, this release could maybe include a couple external plugins for testing purposes.
 
-\begin{figure}
-    \centering
-    \includegraphics[width=6cm]{./Imagenes/separation-temporary.pdf}
-    \caption{Ejemplo de uso de Tremor}%
-    \label{fig:separation_temporary}
-\end{figure}
+    Separate the runtime from the interface: what I talked about in the previous section can actually be done now. Plugins should be able to depend only on the common crate, rather than on the runtime. We may also run into many Git conflicts while doing this, but it should be a much faster process, since the crate separation is all we have to worry about now.
+
+    Actually make the plugins external: since the in-tree plugins are implemented with the new interface, making them actually external should be trivial. It’ll just require re-organizing the repository with the new crates, fixing the build system, and similars.
+
+    Polishing for deployment: last improvements before the release, extensive documentation, evaluating the final results, etc.
+
+Step 2 and 3 can be interchanged as desired, but I thought that the sooner we separate the crates, the better. Plugin development should be much faster after that step for everyone else.
 
 \begin{figure}
     \centering
     \includegraphics[width=7cm]{./Imagenes/separation.pdf}
-    \caption{Ejemplo de uso de Tremor}%
+    \caption{La estructura ideal para un sistema de plugins.}%
     \label{fig:separation}
 \end{figure}
 
 \begin{figure}
     \centering
-    \includegraphics[width=\textwidth]{./Imagenes/simplify.pdf}
-    \caption{Ejemplo de uso de Tremor}%
-    \label{fig:simplify}
+    \includegraphics[width=6cm]{./Imagenes/separation-temporary.pdf}
+    \caption{La estructura inicial del sistema de plugins para un desarrollo más
+    rápido.}%
+    \label{fig:separation_temporary}
 \end{figure}

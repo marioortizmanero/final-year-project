@@ -40,7 +40,7 @@ Y opcionalmente:
 
 \section{Seguridad}\label{sec:security}
 
-\subsection{Código \unsafe}
+\subsection{Código unsafe}
 
 Muchas de las tecnologías que se pueden aplicar para un sistema de plugins usan
 código \unsafe. Técnicamente, esto no es necesariamente un problema si la
@@ -56,7 +56,7 @@ Tremor en caso de tener que recurrir a \unsafe.
 \subsection{Resiliencia a errores}
 
 Rust no protege a sus usuarios de \leaks de memoria. De hecho, es tan sencillo
-como llamar a \code{mem::forget}. Si un plugin tuviera un \leak, el proceso
+como llamar a \rust{mem::forget}. Si un plugin tuviera un \leak, el proceso
 entero también se vería afectado; el rendimiento de Tremor se degradaría con
 plugins no desarrollados incorrectamente. Algo similar podría suceder en caso de
 que un plugin abortase o sufriese de un pánico, lo que terminaría la ejecución
@@ -139,7 +139,7 @@ incluyen~\cite{swiftabi}:
 
 \end{itemize}
 
-\subsection{Evitar errores}
+\subsection{Resiliencia a errores}
 
 Hay casos donde un error inevitable. Es posible que Tremor quiera reescribir
 parte de su interfaz o finalmente eliminar una funcionalidad deprecada sin tener
@@ -149,6 +149,111 @@ Para ello, los plugins deben incluir metadatos sobre las diferentes versiones
 de rustc/interfaz/etc para las que fue desarrollado. Después, cuando sean
 cargados por Tremor, se podrá comprobar su compatibilidad, en vez de romperse de
 formas misteriosas.
+
+\section{Arquitectura}
+
+Para el sistema de plugins final, la estructura de Tremor debería ser la
+ilustrada en la Figura~\ref{fig:separation}:
+
+\begin{figure}
+    \centering
+    \includegraphics[width=7cm]{./Imagenes/separation.pdf}
+    \caption{La estructura ideal para un sistema de plugins.}%
+    \label{fig:separation}
+\end{figure}
+
+\begin{itemize}
+    \item La \crate \code{runtime}, que carga los plugins.
+
+    \item Las \crates \code{plugin}, con las implementaciones de los componentes
+        del sistema.
+
+    \item La \crate \code{common}, con la interfaz compartida entre la runtime y
+        los plugins. Por tanto, ambos tipos de \crate dependen de \code{common}.
+
+\end{itemize}
+
+Esta estructura es esencial para el objetivo principal: mejorar los tiempos de
+compilación. Existen dos maneras de entender los tiempos de compilación:
+
+\begin{itemize}
+    \item Para el desarrollo de la \textbf{runtime}
+
+    \item Para el desarrollo de los \textbf{plugins}
+
+\end{itemize}
+
+En ambos casos, se quiere compilar únicamente \emph{uno} de los componentes. En
+caso de desarrollar un plugin, no debería hacer falta recompilar también la
+runtime, porque no está siendo modificada. Y si se está trabajando sobre la
+runtime, no debería recompilarse la funcionalidad de los plugins.
+
+El problema reside en que, inicialmente, únicamente existe una \crate con todo:
+\code{runtime}, \code{plugin}s, y \code{common}. El primer paso debería ser el
+que muestra la Figura~\ref{fig:separation_temporary}: separar los plugins del
+mono-binario. La funcionalidad se encuentra en binarios diferentes, así que la
+runtime tendrá un tiempo de compilación considerablemente menor. Desarrollar un
+plugin también será menos costoso, ya que no hará falta compilar los demás.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=6cm]{./Imagenes/separation-temporary.pdf}
+    \caption{La estructura inicial del sistema de plugins para un desarrollo más
+    rápido.}%
+    \label{fig:separation_temporary}
+\end{figure}
+
+Para un tiempo de compilación óptimo también es necesario un segundo paso. La
+interfaz del PDK sigue encontrándose en la misma \crate que la runtime, así que
+un plugin tendrá que compilar también la runtime, aun cuando no es necesario.
+Esto no será una mejora tan grande sobre los tiempos de compilación como en el
+primer paso, dado que compilar la runtime es mucho menos costoso que compilar
+todos los plugins.
+
+Este segundo paso se puede omitir durante el inicio del desarrollo, ya que la
+interfaz está muy fuertemente relacionada con la runtime. Los tipos usados en la
+interfaz tendrán que moverse a una \crate distinta, pero todos estos tipos
+provienen de la runtime, así que habrá que modularizar una gran parte del
+código.
+
+Cuantos menos cambios se produzcan al principio del proyecto, mejor. Habrán
+menos conflictos y resultará más fácil y seguro revisar el ćodigo en pequeñas en
+iteraciones, en vez de una única revisión grande.
+
+\section{Plan de desarrollo}
+
+A partir de la sección anterior, se puede elaborar un plan aproximado para el
+sistema de plugins basado en iteraciones (o pull requests):
+
+\begin{enumerate}
+    \item \textbf{Definir una nueva interfaz y usarla internamente}: el sistema
+        de plugins debería ser todo lo mínimo posible. La interfaz principal
+        puede convertirse de forma que soporte plugins, pero se debería mantener
+        todo en un mismo binario por simplicidad. La parte de cargado de plugins
+        se puede dejar como una prueba de concepto por el momento y se pueden
+        incluir algunos plugins externos para demostrar su funcionamiento.
+
+        Esta iteración se podrá mergear con la rama principal, ya que el
+        programa seguirá funcionando de la misma forma, simplemente con una
+        interfaz distinta para los conectores internamente.
+
+    \item \textbf{Realmente hacer los plugins externos}: dado que los plugins
+        desarrollados usan la nueva interfaz, este paso debería ser sencillo.
+        Únicamente implicará una gran cantidad de cambios, ya que implica
+        reorganizar el repositorio con \crates nuevas, arreglar el sistema de
+        compilación y similares.
+
+    \item \textbf{Separar la runtime de la interfaz}: como se ha explicado, esta
+        parte es menos importante pero puede implicar un gran número de cambios.
+        Por tanto, únicamente al final se separará la interfaz a una crate
+        \code{common} nueva, para una última mejora a los tiempos de
+        compilación.
+
+    \item \textbf{Otras mejoras para el despliegue}: últimos cambios antes de
+        incluir el sistema de plugins en la nueva versión, incluyendo
+        su documentación o la evaluación de los resultados finales.
+
+\end{enumerate}
 
 \section{Tecnologías a considerar}
 
@@ -459,12 +564,13 @@ cuenta del verdadero significado hasta haber invertido numerosas horas. El
 equipo de Tremor --- yo incluido --- creía que el ABI de Rust es estable,
 siempre que los dos binarios se compilen con la misma versión de compilador. Sin
 embargo, esto es incorrecto por varias razones y fuentes como la referencia
-oficial no entran en suficiente detalle~\cite{refabi_abi}. Debe recurrirse a
-otra sección que menciona brevemente lo siguiente:
+oficial no entran en suficiente detalle~\cite[Application Binary Interface
+(ABI)]{rustref}. Debe recurrirse a otra sección que menciona brevemente lo
+siguiente:
 
 ``La estructura de tipos en memoria puede cambiar con cada compilación. En vez
 de intentar documentar exactamente qué se hace, se documenta solo lo que se
-garantiza hoy''~\cite{refabi_layout}
+garantiza hoy''~\cite[Type Layout]{rustref}
 
 La asumpción anterior incorrecta se basa en que, hasta el momento, Rust no ha
 implementado ninguna optimización que rompa el ABI entre ejecuciones de un mismo
@@ -544,21 +650,21 @@ Todo este proyecto va a ser posible gracias a una \crate de más alto nivel,
 \cratelink{abi_stable}. Esta usa \code{libloading} internamente y exporta una
 gran cantidad de macros y herramientas para facilitar el desarrollo. Incluye una
 copia de la librería estándar de Rust declarada con el ABI de C, generalmente
-precedidos por la letra \code{R}. Por tanto, en vez de \code{Vec<T>}, podremos
-usar \code{RVec<T>}; en caso contrario habría que recurrir a punteros
-\code{*const T} o tendríamos que reescribir los tipos desde cero nosotros.
+precedidos por la letra \code{R}. Por tanto, en vez de \rust{Vec<T>}, podremos
+usar \rust{RVec<T>}; en caso contrario habría que recurrir a punteros
+\rust{*const T} o tendríamos que reescribir los tipos desde cero nosotros.
 También da soporte para librerías externas muy conocidas en la comunidad, como
 \cratelink{crossbeam} o \cratelink{serde_json}. La
 Figura~\ref{fig:rustabi_stable} demuestra parte de la simplificación del código
 en la Figura~\ref{fig:rustffi}.
 
-Existen algunas alternativas o extensiones de \code{abi_stable} como
+Existen algunas alternativas o extensiones de \abistable como
 \code{lccc}\footnote{\url{https://github.com/LightningCreations/lccc}},
 \cratelink{safer_ffi} o \cratelink{cglue} que se tuvieron en cuenta, pero no son
 soluciones tan completas ni maduras, por lo que no serán incluidas en este
-proyecto. \code{abi_stable} se trata de una librería compleja, con más de 50.000
-líneas de código en Rust (como referencia, Tremor tiene unas 35.000 líneas), lo
-cual deberá tenerse en cuenta en la decisión final también.
+proyecto. \abistable se trata de una librería compleja, con más de 50.000 líneas
+de código en Rust (como referencia, Tremor tiene unas 35.000 líneas), lo cual
+deberá tenerse en cuenta en la decisión final también.
 
 \begin{figure}
     \centering
@@ -582,7 +688,7 @@ pub fn transform(x: Event) -> i32 {
     \end{minted}
 
     \caption{El mismo plugin que la Figura~\ref{fig:rustpure}, pero con
-        \code{abi_stable}. La declaración de la global \code{cached} se omite por
+        \abistable. La declaración de la global \rust{cached} se omite por
         simplicidad.}%
     \label{fig:rustabi_stable}
 \end{figure}
@@ -618,7 +724,7 @@ se han realizado:
 
     \item \cratelink{bevy} es un motor de videojuegos prometedor cuyas
         prestaciones se implementan como plugins. En la mayoría de los casos, se
-        cargan en tiempo de compilación, pero \code{bevy::dynamic_plugin}
+        cargan en tiempo de compilación, pero \rust{bevy::dynamic_plugin}
         da la posibilidad de hacerlo dinámicamente. \code{bevy} se basa en la
         falsa estabilidad del ABI explicado en la sección~\ref{sec:abi} y
         únicamente usa tipos definidos en Rust.
@@ -635,10 +741,10 @@ se han realizado:
 
 Tras implementar varios sistemas de plugins en miniatura con las tecnologías más
 prometedoras mencionadas en este capítulo, se tomó la decisión de usar cargado
-dinámico con \code{abi_stable}. Cada alternativa tiene sus puntos fuertes y sus
-puntos flojos, como ilustra la Figura~\ref{fig:triangle}, pero ninguna de las
-demás terminaron de cumplir los requisitos de rendimiento establecidos por el
-equipo de Tremor.
+dinámico con \abistable. Cada alternativa tiene sus puntos fuertes y sus puntos
+flojos, como ilustra la Figura~\ref{fig:triangle}, pero ninguna de las demás
+terminaron de cumplir los requisitos de rendimiento establecidos por el equipo
+de Tremor.
 
 Todas las tecnologías excepto cargado dinámico, eBPF o memoria compartida
 requieren la copia de los datos en algún momento, algo que Tremor no se puede

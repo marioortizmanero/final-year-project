@@ -1,6 +1,6 @@
 % vim: spelllang=es
 
-\chapter{Breve introducción a Rust}\label{ch:rust}
+\chapter{Breve guía de Rust}\label{ch:rust}
 
 TODO: quizá mover esto a un anexo para que no cuente en la suma de palabras
 total?
@@ -34,9 +34,10 @@ en concurrencia, ambos en tiempo de compilación. Proporciona control a bajo
 nivel, manteniendo una productividad cercana a lenguajes de alto nivel.
 
 Comenzando por el clásico ``Hola Mundo'', se incluyen algunos ejemplos de cómo
-es la sintaxis de Rust más básica. El programa se podría ejecutar fácilmente con
-\emph{Cargo}, el administrador de dependencias oficial, o específicamente con el
-comando \code{cargo run}.
+es la sintaxis de Rust más básica. Los binarios o librerías en Rust reciben el
+nombre de \crate. Nuestra \crate se podría ejecutar fácilmente con \emph{Cargo},
+el administrador de dependencias oficial, o específicamente con el comando
+\code{cargo run}.
 
 \begin{minted}{rust}
 fn main() {
@@ -44,14 +45,14 @@ fn main() {
 }
 \end{minted}
 
-\code{main} es nuestra función principal, que invoca al macro \code{println}
+\code{main} es nuestra función principal, que invoca al macro \code{println!}
 para escribir por pantalla. Notar que la invocación de macros, a diferencia de
-funciones, requiere un \code{!} al final.
+funciones, requiere un \rust{!} al final.
 
 \section{Conceptos básicos}
 
-Los bloques básicos (\code{if}, \code{else}, \code{while}, \code{for}) son muy
-similares a en otros lenguajes. También existe \code{match}, que permite extraer
+Los bloques básicos (\rust{if}, \rust{else}, \rust{while}, \rust{for}) son muy
+similares a en otros lenguajes. También existe \rust{match}, que permite extraer
 patrones de variables.
 
 \begin{minted}{rust}
@@ -182,56 +183,56 @@ datos importantes a conocer:
 \begin{itemize}
     \item Tipos primitivos:
         \begin{itemize}
-            \item Carácteres con \code{char}.
+            \item Carácteres con \rust{char}.
 
-            \item Punto flotante con \code{f32} y \code{f64}.
+            \item Punto flotante con \rust{f32} y \rust{f64}.
 
-            \item Booleanos con \code{bool}.
+            \item Booleanos con \rust{bool}.
 
-            \item Enteros: \code{u8}, \code{i8}, \code{u16}, \code{i16},
-                \code{u32}, \code{i32}, \code{u64}, \code{i64}, e incluso
-                \code{i128} y \code{u128} en las arquitecturas que lo soportan.
+            \item Enteros: \rust{u8}, \rust{i8}, \rust{u16}, \rust{i16},
+                \rust{u32}, \rust{i32}, \rust{u64}, \rust{i64}, e incluso
+                \rust{i128} y \rust{u128} en las arquitecturas que lo soportan.
 
-            \item Vectores de tamaño fijo: por ejemplo \code{[1, 2, 3, 4, 5]}.
+            \item Vectores de tamaño fijo: por ejemplo \rust{[1, 2, 3, 4, 5]}.
 
-            \item N-tuplas como \code{(1, true, 9.2)}.
+            \item N-tuplas como \rust{(1, true, 9.2)}.
 
-            \item El tipo ``unidad'', \code{()}, equivalente a \code{void} en C
+            \item El tipo ``unidad'', \rust{()}, equivalente a \code{void} en C
                 o C++.
 
-            \item Punteros básicos con \code{*const T} o \code{*mut T}.
+            \item Punteros básicos con \rust{*const T} o \rust{*mut T}.
 
         \end{itemize}
 
-    \item \code{Vec<T>} representa un vector contiguo y redimensionable.
+    \item \rust{Vec<T>} representa un vector contiguo y redimensionable.
 
-    \item \code{HashMap<K, V>} es una tabla hash, genérica respecto a su clave
-        \code{K} y su valor \code{V}. No se encuentra en el preludio, por lo que
+    \item \rust{HashMap<K, V>} es una tabla hash, genérica respecto a su clave
+        \rust{K} y su valor \rust{V}. No se encuentra en el preludio, por lo que
         requeriría la siguiente declaración, similar a un \code{import} de Java:
 
 \begin{minted}{rust}
 use std::collections::HashMap;
 \end{minted}
 
-    \item \code{Box<T>}, usado para localizar un tipo \code{T} no nulo en
-        memoria. Además de un \code{*const T}, incluye el tamaño que ocupa
-        \code{T} y tiene una interfaz limitada para que su uso sea siempre
+    \item \rust{Box<T>}, usado para localizar un tipo \rust{T} no nulo en
+        memoria. Además de un \rust{*const T}, incluye el tamaño que ocupa
+        \rust{T} y tiene una interfaz limitada para que su uso sea siempre
         seguro.
 
-    \item \code{str} es una cadena UTF-8 de solo lectura, típicamente usada con
-        una referencia \code{&str}. Va acompañada por su longitud, por lo que no
-        hace falta terminarla con \code{\0}, a diferencia de C. \code{String} es
+    \item \rust{str} es una cadena UTF-8 de solo lectura, típicamente usada con
+        una referencia \rust{&str}. Va acompañada por su longitud, por lo que no
+        hace falta terminarla con \code{\0}, a diferencia de C. \rust{String} es
         su versión modificable asignada en memoria.
 
 \end{itemize}
 
 \section{Gestión de errores}
 
-En Rust, los errores se indican con el tipo \code{Result<T, E>}. Este se trata
-de una enumeración cuyo valor puede ser \code{Ok(T)}, con el resultado obtenido
-satisfactoriamente, o \code{Err(E)}, con el tipo de error que ha sucedido. Dado
+En Rust, los errores se indican con el tipo \rust{Result<T, E>}. Este se trata
+de una enumeración cuyo valor puede ser \rust{Ok(T)}, con el resultado obtenido
+satisfactoriamente, o \rust{Err(E)}, con el tipo de error que ha sucedido. Dado
 que el resultado está contenido dentro suyo, es imposible olvidar comprobar si
-se ha producido algún error. Se puede usar \code{match} para comprobar el
+se ha producido algún error. Se puede usar \rust{match} para comprobar el
 resultado, o una serie de funciones disponibles para hacer el proceso más
 ergonómico:
 
@@ -246,7 +247,7 @@ En caso de que se produjera un error del que el programa no se puediera
 recuperar, como quedarse sin memoria o un fallo inesperado en la implementación,
 se usa la funcionalidad de \emph{pánicos}. Un pánico se propaga de forma similar
 a una excepción de C++ o Java, y terminará la ejecución por completo. Se puede
-invocar con el macro \code{panic!} o utilidades similares.
+invocar con el macro \rust{panic!} o utilidades similares.
 
 \section{Macros}
 
@@ -256,7 +257,7 @@ principalmente en la flexibilidad que ofrecen, a coste de un coste de desarrollo
 menor o mayor, respectivamente.
 
 Los macros declarativos se crean con una sintaxis especializada, similar a un
-\code{match} con patrones de tokens (identificadores, tipos, etc) como entrada,
+\rust{match} con patrones de tokens (identificadores, tipos, etc) como entrada,
 y los tokens nuevos como salida. Son similares a los macros de C o C++, pero más
 potentes e higiénicos (i.e., su expansión no captura identificadores
 accidentalmente).
@@ -301,6 +302,36 @@ impl fmt::Debug for X {
 }
 \end{minted}
 
+\section{Lifetimes}
+
+La seguridad que provee Rust en memoria se basa en un modelo a tiempo de
+compilación con \lifetimes. Una \lifetime es 
+
+TODO: esto depende de cómo se acaba incluyendo la sección de ``problemas con
+varianza y subtipado''.
+
+\section{Unsafe}
+
+Para poder mantener control completo a bajo nivel, es posible ignorar sus
+garantías de seguridad con el sub-lenguaje llamado \emph{unsafe Rust}. El
+análisis estático de Rust es conservativo; en algunas ocasiones es posible que
+rechace algunos programas correctos. El desarrollador puede indicar que es
+consciente de la situación y puede apagar este análisis para corregirlo por sí
+mismo, arriesgándose a cometer un error en su código.
+
+Se puede acceder a \emph{unsafe Rust} conteniendo el código dentro de un bloque
+\rust{unsafe { /* ... */ }} o una función \rust{unsafe fn name() { /* ... */ }}.
+Funciona igual que rust, pero incluye varias nuevas habilidades, entre otras:
+
+\begin{itemize}
+    \item Leer un puntero bruto en memoria
+
+    \item Acceder o modificar una variable estática mutable
+
+    \item Llamar a una función \unsafe
+
+\end{itemize}
+
 \section{Programación asíncrona}
 
 Como muchos lenguajes modernos, Rust da soporte a la programación asíncrona, un
@@ -328,7 +359,3 @@ async fn get_two_sites_async() {
     let future_three = download_async("https://www.bar.com").await;
 }
 \end{minted}
-
-\section{Lifetimes}
-
-

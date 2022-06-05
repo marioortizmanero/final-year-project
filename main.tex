@@ -78,7 +78,7 @@
 % Code syntax highlighting
 \usepackage{minted}
 \usepackage{xcolor}
-\usemintedstyle{vs}
+\usemintedstyle{friendly}
 \definecolor{bg}{HTML}{f8f8f8}
 \setminted{
     frame=lines,
@@ -99,6 +99,7 @@
 
 % Command for inline code
 \newmintinline[code]{text}{fontsize=\normalsize}
+\newmintinline[rust]{rust}{fontsize=\normalsize}
 \newcommand{\image}[1] {
   \begin{figure}[H]
     \centering
@@ -300,6 +301,7 @@ Junio 2022\\
 \renewcommand\listfigurename{Lista de Figuras}
 \listoffigures
 
+% TODO: quitar si no he acabado usando ninguna
 \newpage
 \renewcommand\listtablename{Lista de Tablas}
 \listoftables

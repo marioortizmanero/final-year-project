@@ -174,7 +174,7 @@ el sistema de plugins se enfocó a conectores desde el principio, en lugar de
 \onramps u \offramps, que actualmente están en desuso.
 
 A nivel de implementación, los conectores se definen con el \trait
-\code{Connector}, incluido en la figura \ref{fig:tremor_connector_trait}.
+\rust{Connector}, incluido en la figura \ref{fig:tremor_connector_trait}.
 Esencialmente, los plugins de tipo conector exportarán públicamente esta
 interfaz en su binario, y la runtime deberá ser capaz de cargarlo dinámicamente.
 Actualmente, todos los conectores disponibles se listan y cargan de forma
@@ -235,14 +235,14 @@ pub trait Connector {
     }
 }
     \end{minted}
-    \caption{Simplificación del \trait \code{Connector}}%
+    \caption{Simplificación del \trait \rust{Connector}}%
     \label{fig:tremor_connector_trait}
 \end{figure}
 
 Por tanto, es importante mantener la interfaz de plugins lo más simple posible.
 Los detalles de comunicación deberían dejarse a la runtime, de forma que los
 plugins se limiten a exportar una lista de funciones síncronas. De esta forma,
-se podrá evitar pasar tipos complejos (\code{async}, canales de comunicación,
+se podrá evitar pasar tipos complejos (\rust{async}, canales de comunicación,
 etc) entre la runtime y los plugins, que implicaría una carga de trabajo mucho
 más alta.
 
@@ -287,7 +287,7 @@ corriendo en tareas diferentes, que se comunican asíncronamente con canales''.
 
 \section{Detalles de implementación}
 
-El actor principal se llama \code{World}. Contiene el estado del programa, como
+El actor principal se llama \rust{World}. Contiene el estado del programa, como
 los artefactos disponibles (\emph{repositorios}) y los que se están ejecutando
 (\emph{registros}) y se usa para inicializar y controlar el programa.
 
@@ -303,7 +303,7 @@ controlar su comunicación.
 Notar que la inicialización de los conectores ocurre en dos pasos. Primero se
 \emph{registran}, es decir, se indica su disponibilidad para cargarlo
 (añadiéndolo al repositorio). Posteriormente, no se ejecutará hasta conectarse
-con otro artefacto con \code{launch_binding}, lo cual lo movería del repositorio
+con otro artefacto con \rust{launch_binding}, lo cual lo movería del repositorio
 al registro, junto al resto de artefactos ejecutándose.
 
 \subsection{Registro}
@@ -311,7 +311,7 @@ al registro, junto al resto de artefactos ejecutándose.
 La Figura~\ref{fig:tremor_registering} detalla todos los pasos seguidos en el
 código. Primero han de inicializarse los gestores, y después registrar los
 artefactos. Actualmente, esta parte se realiza de forma estática con
-\code{register_builtin_types}, pero después de implementar el PDK, debería ser
+\rust{register_builtin_types}, pero después de implementar el PDK, debería ser
 dinámicamente. Tremor buscaría automáticamente plugins en sus directorios
 configurados e intentaría registrar todos los que encuentre. En una futura
 versión, el usuario podría solicitar manualmente el cargado de un plugin nuevo
@@ -332,7 +332,7 @@ inicializar el conector (el \emph{builder}). Cuando el conector necesite
 comenzar a ejecutarse porque se haya añadido a una \pipeline, el \builder ayuda
 a construir y configurarlo de forma genérica. Finalmente, se añade a una tarea
 propia para que se pueda comunicar con otras partes de Tremor. El gestor
-\code{connectors::Manager} contiene todos los conectores ejecutándose en Tremor,
+\rust{connectors::Manager} contiene todos los conectores ejecutándose en Tremor,
 como se muestra en la Figura~\ref{fig:tremor_initializing}.
 
 \begin{figure}
@@ -364,8 +364,8 @@ conexión de la \pipeline y posteriormente leerán o enviarán eventos en ella.
 
 La diferencia principal entre \sources y \sinks a nivel de implementación es que
 este último también puede responder a mensajes usando la misma conexión. Esto es
-útil para notificar que el paquete ha llegado (\code{Ack}) o que algo ha fallado
-(\code{Fail} para un evento específico, \code{CircuitBreaker} para dejar de
+útil para notificar que el paquete ha llegado (\rust{Ack}) o que algo ha fallado
+(\rust{Fail} para un evento específico, \rust{CircuitBreaker} para dejar de
 recibir datos por completo).
 
 Los códecs y preprocesadores se involucran aquí tanto para los \sources como
@@ -380,10 +380,10 @@ binarios.
 Algunos conectores se basan en \emph{flujos}. Son equivalentes a los flujos de
 TCP, que ayudan a agrupar mensajes para evitar mezclarlos. Se inician y
 finalizan mediante mensajes, y el gestor se guarda el estado del flujo en un
-campo llamado \code{states} (ya que, por ejemplo, algunos preprocesadores puedan
+campo llamado \rust{states} (ya que, por ejemplo, algunos preprocesadores puedan
 querer guardar un estado). Si un conector no necesita flujos, como
-\code{metronome} (que únicamente envía eventos periódicamente), puede
-especificar su identificador de flujo como \code{DEFAULT_STREAM_ID} siempre.
+\rust{metronome} (que únicamente envía eventos periódicamente), puede
+especificar su identificador de flujo como \rust{DEFAULT_STREAM_ID} siempre.
 
 Tras implementar la interfaz de los conectores para el sistema de plugins,
 los primeros conectores a desarrollar deberían ser:
