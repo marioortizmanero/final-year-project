@@ -650,36 +650,3 @@ rendimiento del programa un 30\%, así que los siguientes pasos consistieron en
 reducir dicha cifra.
 
 TODO: incluir todas las figuras de benchmarks con las explicaciones
-
-\section{Despliegue en producción}
-
-Preparing the release for the plugin system has always sounded like a quite
-complicated task. I’ve never wanted to introduce too many changes at once
-because otherwise it will become very hard to review and merge into the main
-branch. This is why I decided to schedule the PDK release in four separate
-iterations:
-
-    Define the new interface and use it internally: the plugin system should be as minimal as possible. The program can be converted to support plugins, but while keeping them in the same binary, for simplicity. The plugin loading functionality can be left as a proof-of-concept for now. Still, this release could maybe include a couple external plugins for testing purposes.
-
-    Separate the runtime from the interface: what I talked about in the previous section can actually be done now. Plugins should be able to depend only on the common crate, rather than on the runtime. We may also run into many Git conflicts while doing this, but it should be a much faster process, since the crate separation is all we have to worry about now.
-
-    Actually make the plugins external: since the in-tree plugins are implemented with the new interface, making them actually external should be trivial. It’ll just require re-organizing the repository with the new crates, fixing the build system, and similars.
-
-    Polishing for deployment: last improvements before the release, extensive documentation, evaluating the final results, etc.
-
-Step 2 and 3 can be interchanged as desired, but I thought that the sooner we separate the crates, the better. Plugin development should be much faster after that step for everyone else.
-
-\begin{figure}
-    \centering
-    \includegraphics[width=7cm]{./Imagenes/separation.pdf}
-    \caption{La estructura ideal para un sistema de plugins.}%
-    \label{fig:separation}
-\end{figure}
-
-\begin{figure}
-    \centering
-    \includegraphics[width=6cm]{./Imagenes/separation-temporary.pdf}
-    \caption{La estructura inicial del sistema de plugins para un desarrollo más
-    rápido.}%
-    \label{fig:separation_temporary}
-\end{figure}
