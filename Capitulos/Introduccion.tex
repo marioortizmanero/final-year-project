@@ -5,8 +5,45 @@
 
 \section{Contexto}
 
-% TODO: quizá algunos footnotes podrían cambiarse por referencias aquí
-Este proyecto se ha realizado en colaboración con
+TODO: quizá algunos footnotes podrían cambiarse por referencias aquí?
+
+TODO: es ``fondos monetarios'' redundante? Se entiende con solo ``fondos''?
+
+TODO: a lo mejor me he pasado con la intro ahora? Pero la verdad que creo que es
+una historia bastante interesante.
+
+Este proyecto ha sido organizado y financiado por \emph{Wayfair}, una empresa
+estadounidense de comercio digital de muebles y artículos del
+hogar\footnote{\url{https://www.wayfair.com/}}. Actualmente, ofrece 14 millones
+de ítems de más de 11.000 proveedores globales~\cite{wayfairItems} y tiene unos
+ingresos de 13.700 millones de dólares.
+
+Se trata de una empresa de gran tamaño, por lo que dispone de una cantidad de
+datos extraordinaria. En la mayoría de casos, esto se trata de \emph{logs}, es
+decir, TODO. Muchas veces estos logs no siguen una misma estructura y requieren
+algún tipo de procesado, así como ignorar aquellos innecesarios, o reducir su
+tamaño. La arquitectura de estas tareas se basaba en:
+
+\begin{itemize}
+    \item ElasticSearch: motor de búsqueda basado en JSON.
+    \item Logstash: recibir y procesar logs y datos no estructurados.
+    \item Kibana: visualización de los datos
+\end{itemize}
+
+Sin embargo, a medida que crecía la empresa este stack dejó de escalar. Cada
+día, procesaban 100 \emph{terabytes}. Si estos logs se escribieran en
+papel, la montaña de papel resultante sería de unos 540 kilómetros, o en otras
+palabras, 10 veces la distancia a la Estación Espacial Internacional. Su coste
+llegaba a 40,000\$ mensuales\footnote{Las cantidades mencionadas en esta sección
+no son completamente precisas, y se usan para dar una representación del tamaño
+de datos procesados y su coste.}
+
+El bottleneck principal se encontraba en Logstash, escrito en Java y sin un
+enfoque especial en rendimiento.
+
+~\cite{tremorcon_lll}.
+
+en colaboración con
 \emph{Tremor}\footnote{\url{https://tremor.rs}}, un sistema de procesado de
 eventos de alto rendimiento, escrito en el lenguaje de programación
 \emph{Rust}\footnote{\url{https://www.rust-lang.org}}. Tremor es un programa de
@@ -25,12 +62,6 @@ documentación de Tremor:
 \url{https://www.tremor.rs/rfc/accepted/plugin-development-kit/}}. Esta
 iniciativa promueve el aprendizaje de desarrolladores de código abierto,
 proporcionando una plataforma transparente y facilitando un sistema de pagos.
-
-Finalmente, \emph{Wayfair} es una empresa estadounidense de comercio digital de
-muebles y artículos del hogar\footnote{\url{https://www.wayfair.com/}}.
-Actualmente, ofrece 14 millones de ítems de más de 11.000 proveedores
-globales~\cite{wayfairItems} y es el principal financiador tanto de Tremor como
-de este proyecto.
 
 \section{Objetivo}
 
