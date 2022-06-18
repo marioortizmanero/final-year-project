@@ -56,6 +56,12 @@
 \usepackage{adjustbox}
 \usepackage{hyperref}
 
+% Better table formatting
+\usepackage{array}
+% Centered and maximum width
+\newcolumntype{P}[1]{>{\centering\arraybackslash}p{#1}}
+\newcolumntype{M}[1]{>{\arraybackslash}m{#1}}
+
 % Bibtex for the bibliography
 \usepackage[
     backend=bibtex,
@@ -77,8 +83,12 @@
 \usepackage{enumitem}
 \setlist{topsep=0pt}
 
-% Code syntax highlighting
-\usepackage{minted}
+% Code syntax highlighting. The cache is hardcoded with an absolute path for the
+% Tectonic engine until this is fixed:
+% https://github.com/tectonic-typesetting/tectonic/issues/835
+\usepackage[
+    cachedir=/home/mario/Downloads/minted/
+]{minted}
 \usepackage{xcolor}
 \usemintedstyle{friendly}
 \definecolor{bg}{HTML}{f8f8f8}
@@ -330,6 +340,6 @@ Junio 2022\\
 \input{Anexos/Anexo2.tex}
 \input{Anexos/Anexo3.tex}
 \input{Anexos/Anexo4.tex}
-
+\input{Anexos/Anexo5.tex}
 
 \end{document}
