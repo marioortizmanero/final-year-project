@@ -57,9 +57,9 @@
 \usepackage{hyperref}
 
 % Better table formatting
-\usepackage{longtable}
-\usepackage{array}
-% Centered and maximum width
+\usepackage{longtable} % Multi-page tables
+\renewcommand*{\arraystretch}{1.5}
+\usepackage{array} % Better alignment
 \newcolumntype{P}[1]{>{\centering\arraybackslash}p{#1}}
 \newcolumntype{M}[1]{>{\arraybackslash}m{#1}}
 
