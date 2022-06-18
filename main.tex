@@ -1,16 +1,47 @@
+% vim: spelllang=es
+
+% Instrucciones:
+% https://eina.unizar.es/sites/eina.unizar.es/files/archivos/secretaria/20210706_instrucciones_tfg_tfm.pdf
+%
+% TFGs previos:
+% https://zaguan.unizar.es/search?ln=en&cc=trabajos-fin-grado&sc=1&p=inform%C3%A1tica&f=Departamento&action_search=Search
+%
+% Blog:
+% https://nullderef.com/series/rust-plugins/
+%
+% NOTES:
+% * Count words with `:TexWordCount`
+% * Svg to pdf: `inkscape -D image.svg  -o image.pdf --export-latex`
+%
+% TODO:
+% * Buscar typos (grep):
+%   - Comas antes de conjunciones (y, e, o, u)
+%   - 'Artifacto'
+%
+% * Debería tener palabras anglosajonas con `\emph` siempre?
+%
+% * No sé cómo traducir onramp, offramp, sink y source de forma precisa.
+%
+% * Debería traducir runtime por ejecutor?
+%
+% * Debería incluir las figuras siempre en su sitio, donde las pone LaTeX por
+% defecto, o al final de la sección?
+%
+% * "Figura" va en mayúsculas?
+
 \documentclass[a4paper,12pt,twoside,hidelinks,openright]{book}
 
-\usepackage[T1]{fontenc} 
+% \usepackage[T1]{fontenc}
 \usepackage[spanish]{babel}
 \usepackage[utf8]{inputenc}
 
 \usepackage[usenames, dvipsnames]{color}
 \usepackage{graphicx}
-\usepackage{enumerate}
 \usepackage{multirow}
 \usepackage{graphics}
 \usepackage{appendix}
 \usepackage[nottoc,numbib]{tocbibind}
+\usepackage{xspace}
 
 \usepackage{tikz}
 \usetikzlibrary{shapes,arrows}
@@ -21,6 +52,104 @@
 \usepackage[none]{hyphenat} \sloppy
 \usepackage{xcolor}
 \usepackage{adjustbox}
+\usepackage{hyperref}
+
+% Bibtex for the bibliography
+\usepackage[
+    backend=bibtex,
+    block=space,
+    language=spanish,
+    sorting=none % Sort by appearance in the document
+]{biblatex}
+\bibliography{Bibliografia_TFG}
+
+% Easier to read font
+\usepackage{fourier} % For math
+\usepackage{fontspec}
+\setmainfont{Heuristica} % For the text
+\setmonofont{Liberation Mono} % For the code
+
+% Less margin between lists, otherwise after overriding \parskip and etc it's
+% too much.
+% TODO: decidir si hacer párrafos estilo TeX o convencionales.
+\usepackage{enumitem}
+\setlist{topsep=0pt}
+
+% Code syntax highlighting
+\usepackage{minted}
+\usepackage{xcolor}
+\usemintedstyle{friendly}
+\definecolor{bg}{HTML}{f8f8f8}
+\setminted{
+    frame=lines,
+    framesep=2mm,
+    bgcolor=bg,
+    fontsize=\footnotesize,
+    linenos
+}
+
+% Remove red boxes around illegal characters in minted, taken from:
+% https://tex.stackexchange.com/a/343506
+%
+% This way, `mysql` can be used to highlight tremorscript as a quick hack.
+\makeatletter
+\AtBeginEnvironment{minted}{\dontdofcolorbox}
+\def\dontdofcolorbox{\renewcommand\fcolorbox[4][]{##4}}
+\makeatother
+
+% Command for inline code
+\newmintinline[code]{text}{fontsize=\normalsize}
+\newmintinline[rust]{rust}{fontsize=\normalsize}
+\newcommand{\image}[1] {
+  \begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{#1}
+  \end{figure}
+}
+% Shortcuts
+\newcommand{\cpp}{C\texttt{++}}
+\newcommand{\cratelink}[1] {%
+    \code{#1}\footnote{\url{https://crates.io/crates/#1}}\xspace%
+}
+% Gracias unizar por no evolucionar y solo permitir memorias en castellano...
+\newcommand{\unsafe}{\code{unsafe}\xspace}
+\newcommand{\crate}{\emph{crate}\xspace}
+\newcommand{\crates}{\emph{crates}\xspace}
+\newcommand{\onramp}{\emph{onramp}\xspace}
+\newcommand{\onramps}{\emph{onramps}\xspace}
+\newcommand{\offramp}{\emph{offramp}\xspace}
+\newcommand{\offramps}{\emph{offramps}\xspace}
+% TODO: sink/source sí que se podrían traducir por salida/entrada
+\newcommand{\sink}{\emph{sink}\xspace}
+\newcommand{\sinks}{\emph{sinks}\xspace}
+\newcommand{\source}{\emph{source}\xspace}
+\newcommand{\sources}{\emph{sources}\xspace}
+\newcommand{\pipeline}{\emph{pipeline}\xspace}
+\newcommand{\pipelines}{\emph{pipelines}\xspace}
+\newcommand{\builder}{\emph{builder}\xspace}
+\newcommand{\builders}{\emph{builders}\xspace}
+\newcommand{\lifetime}{\emph{lifetime}\xspace}
+\newcommand{\lifetimes}{\emph{lifetimes}\xspace}
+\newcommand{\websockets}{\emph{websockets}\xspace}
+\newcommand{\trait}{\emph{trait}\xspace}
+\newcommand{\traits}{\emph{traits}\xspace}
+\newcommand{\struct}{\emph{struct}\xspace}
+\newcommand{\structs}{\emph{structs}\xspace}
+\newcommand{\leak}{\emph{leak}\xspace}
+\newcommand{\leaks}{\emph{leaks}\xspace}
+\newcommand{\scripting}{\emph{scripting}\xspace}
+\newcommand{\sandbox}{\emph{sandbox}\xspace}
+\newcommand{\sandboxing}{\emph{sandboxing}\xspace}
+\newcommand{\socket}{\emph{socket}\xspace}
+\newcommand{\sockets}{\emph{sockets}\xspace}
+\newcommand{\stdin}{\emph{stdin}\xspace}
+\newcommand{\stdout}{\emph{stdout}\xspace}
+\newcommand{\stderr}{\emph{stderr}\xspace}
+\newcommand{\abistable}{\code{abi_stable}\xspace}
+\newcommand{\csharp}{C\#\xspace}
+% TODO: lo podría traducir a 'tuberías' pero suena terrible
+\newcommand{\pipe}{\emph{pipe}\xspace}
+\newcommand{\pipes}{\emph{pipes}\xspace}
 
 %	CONFIGURACIÓN DE PÁGINA
 
@@ -38,13 +167,13 @@
 \index{key}
 \newcommand{\myref}[1]{\color{red}\bf(\ref{#1})}
 
+
 \begin{document}
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%		PORTADA
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+% PORTADA
 \begin{titlepage}
+
+\definecolor{unizarblue}{RGB}{0, 86, 153}
 
 \vspace*{-4mm}
 \begin{figure}[!h]
@@ -57,47 +186,49 @@
 \fontsize{28pt}{28pt}\selectfont
 \begin{center}
 \setlength{\fboxsep}{3.4mm}
-\adjustbox{minipage=14.4cm,cfbox=blue,center}{\begin{center} Trabajo Fin de Máster \end{center}}
+\adjustbox{minipage=14.4cm,cfbox=unizarblue,center}{\begin{center} Trabajo Fin de Grado \end{center}}
 \end{center}
 
 \vspace*{18.7mm}
 
 
-\fontsize{20pt}{20pt}\selectfont
+\fontsize{22pt}{22pt}\selectfont
 \begin{center}
-TODO: tengo que ponerlo en castellano también?
-\end{center}
-\baselineskip 20pt
-\begin{center}
-Dynamic loading of plugins in Rust \\
+\textsc{Dynamic loading of plugins in Rust \\
 in the absence of a stable \\
-Application Binary Interface
+Application Binary Interface}
 \end{center}
 
-\vspace*{0cm} 
+\vspace*{1cm} 
 \baselineskip 36pt
 \begin{center}
-\fontsize{12pt}{12pt}\selectfont
-\center{\rm  Autor}
-\vspace*{3.65mm} 
-\fontsize{18pt}{18pt}\selectfont
-\center{Mario Ortiz Manero}
-\vspace*{1cm}
-\baselineskip 36pt
-\fontsize{12pt}{12pt}\selectfont
-\center{\rm  Director}
-\vspace*{3.56mm}
+
 \fontsize{14pt}{14pt}\selectfont
-\center{Javier Fabra Caro}
+\center{\rm Autor:}
+\vspace*{0mm} 
+\fontsize{18pt}{18pt}\selectfont
+\center{\textsc{Mario Ortiz Manero}}
+
+\vspace*{0.5cm}
+\baselineskip 36pt
+
+\fontsize{14pt}{14pt}\selectfont
+\center{\rm  Director:}
+\vspace*{0mm}
+\fontsize{15pt}{15pt}\selectfont
+\center{\textsc{Javier Fabra Caro}}
+
 \end{center}
 
 \setcounter{footnote}{1}
 
-\vspace*{16.45mm}
-\fontsize{12pt}{12pt}\selectfont
+\vspace*{35mm}
+\fontsize{14pt}{14pt}\selectfont
 \begin{center}
-ESCUELA DE INGENIERÍA Y ARQUITECTURA\\
-2022\\
+Grado en Ingeniería Informática\\ \medskip
+Departamento de Ingeniería e Ingeniería de Sistemas\\
+Escuela de Ingeniería y Arquitectura\\ \bigskip
+Junio 2022\\
 \end{center}
 
 
@@ -107,11 +238,11 @@ ESCUELA DE INGENIERÍA Y ARQUITECTURA\\
 \newpage
 
 
-\title{Título del trabajo final de máster}
-\author{Autor Apellido Apellido}
+\title{Dynamic loading of plugins in Rust in the absence of a stable Application Binary Interface}
+\author{Mario Ortiz Manero}
 
 \pagebreak
-\cleardoublepage
+\cleardoublepage%
 \baselineskip 19pt
 
 \renewcommand{\labelitemi}{$-$}
@@ -124,70 +255,69 @@ ESCUELA DE INGENIERÍA Y ARQUITECTURA\\
 
 \pagenumbering{Roman}
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%		Declaración de autoría y originalidad
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-\includepdf[pagecommand={}]{Impreso}
-\cleardoublepage
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%		Resumen
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Párrafos de forma más convencional, me parece más fácil leerlo así.
+\begingroup
+\setlength{\parskip}{\baselineskip}%
+\setlength{\parindent}{0pt}%
 
 \newpage
-
+\cleardoublepage%
 \input{Capitulos/Agradecimientos}
-\newpage
-\cleardoublepage
-\input{Capitulos/Resumen}
-\newpage
 
-\cleardoublepage
+\newpage
+\cleardoublepage%
+\input{Capitulos/Resumen}
+
+\newpage
+\cleardoublepage%
+\input{Capitulos/Abstract}
+\endgroup
+
+\newpage
+\cleardoublepage%
 \renewcommand{\contentsname}{Índice}
 \tableofcontents
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%		Capitulos
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Capitulos
+
+% Vuelta a configurar los párrafos para que no afecte al índice
+\begingroup
+\setlength{\parskip}{\baselineskip}%
+\setlength{\parindent}{0pt}%
 
 \input{Capitulos/Introduccion.tex}
 \input{Capitulos/Capitulo1.tex}
 \input{Capitulos/Capitulo2.tex}
 \input{Capitulos/Capitulo3.tex}
+\input{Capitulos/Capitulo4.tex}
 \input{Capitulos/Conclusion.tex}
+\endgroup
 
-%Puedes añadir más capítulos
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%		BIBLIOGRAFÍA Y REFERENCIAS
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-\bibliographystyle{unsrt} %plaindin
-\bibliography{Bibliografia_TFM}
-\nocite{*} 
+% BIBLIOGRAFÍA Y REFERENCIAS
+\printbibliography%
+\nocite{*} % Include all the entries in the bibliography, even if not mentioned
 
 \newpage
 \renewcommand\listfigurename{Lista de Figuras}
 \listoffigures
 
+% TODO: quitar si no he acabado usando ninguna
 \newpage
 \renewcommand\listtablename{Lista de Tablas}
 \listoftables
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%		ANEXOS
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% ANEXOS
+
+% Vuelta a configurar los párrafos para que no afecte al índice
+\setlength{\parskip}{\baselineskip}%
+\setlength{\parindent}{0pt}%
 
 \newpage
 \appendix
 \clearpage
-\addappheadtotoc
-\appendixpage
+\addappheadtotoc%
+\appendixpage%
 \input{Anexos/Anexo1.tex}
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 \end{document}
