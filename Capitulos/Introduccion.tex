@@ -15,72 +15,127 @@ una historia bastante interesante.
 Este proyecto ha sido organizado y financiado por \emph{Wayfair}, una empresa
 estadounidense de comercio digital de muebles y artículos del
 hogar\footnote{\url{https://www.wayfair.com/}}. Actualmente, ofrece 14 millones
-de ítems de más de 11.000 proveedores globales~\cite{wayfairItems} y tiene unos
-ingresos de 13.700 millones de dólares.
+de ítems de más de 11.000 proveedores globales~\cite{wayfairItems} e ingresó
+13.700 millones de dólares en 2021~\cite{wayfairRevenue}.
 
-Se trata de una empresa de gran tamaño, por lo que dispone de una cantidad de
-datos extraordinaria. En la mayoría de casos, esto se trata de \emph{logs}, es
-decir, TODO. Muchas veces estos logs no siguen una misma estructura y requieren
-algún tipo de procesado, así como ignorar aquellos innecesarios, o reducir su
-tamaño. La arquitectura de estas tareas se basaba en:
+Se trata de una entidad de gran tamaño, lo que se refleja en su cantidad
+disponible de datos o \emph{logs} para describir el comportamiento de sus
+servicios. Estos son de vital importancia, dado que permiten encontrar errores
+en sus sistemas y ayudan a medir el rendimiento del negocio.
 
-\begin{itemize}
-    \item ElasticSearch: motor de búsqueda basado en JSON.
-    \item Logstash: recibir y procesar logs y datos no estructurados.
-    \item Kibana: visualización de los datos
-\end{itemize}
+Los logs no suelen seguir un formato único ni necesariamente estructurado (es
+decir, texto plano en vez de JSON o XML). Por tanto, para poderlos usar es
+necesario algún tipo de procesado, que también incluye ignorar información
+redundante o transformar ciertos valores. Este paso se llevaba a cabo con el
+sistema de procesado de datos \textcite{logstash}.
 
-Sin embargo, a medida que crecía la empresa este stack dejó de escalar. Cada
-día, procesaban 100 \emph{terabytes}. Si estos logs se escribieran en
-papel, la montaña de papel resultante sería de unos 540 kilómetros, o en otras
-palabras, 10 veces la distancia a la Estación Espacial Internacional. Su coste
-llegaba a 40,000\$ mensuales\footnote{Las cantidades mencionadas en esta sección
-no son completamente precisas, y se usan para dar una representación del tamaño
-de datos procesados y su coste.}
+A medida que crecía la empresa, estas herramientas de observabilidad dejaban de
+ser apropiadas. Cada día, Wayfair procesaba 100 \emph{terabytes} de logs. Para
+visualizar mejor esta cantidad, si se escribieran en papel, la pila resultante
+sería de unos 5.400 kilómetros, o en otras palabras, 5 idas y vueltas a la
+Estación Espacial Internacional. El coste mensual de esta infraestructura
+alcanzaba unos 40,000 dólares\footnote{Las cantidades mencionadas en esta
+sección son aproximadas, para dar una representación del tamaño de datos
+procesados y su coste.}.
 
-El bottleneck principal se encontraba en Logstash, escrito en Java y sin un
-enfoque especial en rendimiento.
+El problema principal residía en Logstash, escrito en Java y con un propósito de
+uso general en vez de especializado en rendimiento y escalabilidad. La solución
+de Wayfair fue crear la alternativa \emph{Tremor}. Esta nueva herramienta está
+escrita con el lenguaje de programación Rust, que ofrece un rendimiento similar
+a C o C++ con una mayor seguridad. Adicionalmente, implementa técnicas para
+maximizar la eficiencia, como SIMD, asincronía o, en un futuro cercano,
+\emph{clustering}. Una vez la primera versión de Tremor fue publicada, su
+rendimiento se redujo a 780 dólares mensuales, 50 veces menos que el coste
+original~\cite{tremorcon_lll}.
 
-~\cite{tremorcon_lll}.
+Tremor ha evolucionado desde entonces, y ha expandido sus posibilidades más allá
+de logs a algo más abstracto, los \emph{eventos}. Ahora soporta una mayor
+cantidad de software de donde recibir y enviar eventos, e incluso implementa su
+propio lenguaje de procesado, reminiscente de SQL. El proyecto se lanzó como
+código abierto, y aunque el equipo de desarrollo sigue siendo principalmente de
+Wayfair, cualquiera puede contribuir.
 
-en colaboración con
-\emph{Tremor}\footnote{\url{https://tremor.rs}}, un sistema de procesado de
-eventos de alto rendimiento, escrito en el lenguaje de programación
-\emph{Rust}\footnote{\url{https://www.rust-lang.org}}. Tremor es un programa de
-código abierto bajo la fundación \emph{Cloud Native Computing
-Foundation~(CNCF)}\footnote{\url{https://www.cncf.io/}}, que es también parte de
-la organización \emph{Linux
-Foundation~(LFX)}\footnote{\url{https://www.linuxfoundation.org/}}.
+Posteriormente, Tremor se unió a la \emph{Cloud Native Computing
+Foundation~(CNCF)}\footnote{\url{https://www.cncf.io/}}, principalmente conocido
+por mantener \textcite{k8s}. Asimismo, CNCF es parte de la organización
+\emph{Linux Foundation~(LFX)}\footnote{\url{https://www.linuxfoundation.org/}},
+que además del famoso kernel también ayuda a todo tipo de proyectos, como
+Node.js o Let's Encrypt~\cite{lfx_projects}.
 
 Formalmente, el trabajo se ha llevado a cabo gracias a la iniciativa \emph{LFX
-Mentorship}, con el título ``CNCF -- Tremor: Add plugin support for tremor
-(PDK)''\footnote{Página oficial de la iniciativa:
+Mentorship}, que promueve el aprendizaje de desarrolladores de código abierto,
+proporcionando una plataforma transparente y facilitando un sistema de
+pagos~\cite{lfx_mentorship}. En ella, proyectos de código abierto especifican
+una tarea concreta a realizar, proporcionando a cambio un mentor que le guíe
+durante el proceso y una ayuda monetaria.
+
+TODO: debería especificar el dinero que recibí? O no importa?
+
+El título de este proyecto en la plataforma de LFX es ``CNCF -- Tremor: Add
+plugin support for tremor (PDK)''\footnote{Página oficial de la iniciativa:
 \url{https://mentorship.lfx.linuxfoundation.org/project/b90f7174-fc53-40bc-b9e2-9905f88c38ff}}\footnote{\emph{Tracking
 issue} en GitHub:
 \url{https://github.com/tremor-rs/tremor-runtime/issues/791}}\footnote{RFC en la
 documentación de Tremor:
-\url{https://www.tremor.rs/rfc/accepted/plugin-development-kit/}}. Esta
-iniciativa promueve el aprendizaje de desarrolladores de código abierto,
-proporcionando una plataforma transparente y facilitando un sistema de pagos.
+\url{https://www.tremor.rs/rfc/accepted/plugin-development-kit/}}, es decir,
+desarrollar un sistema de plugins para Tremor. La longitud original era de tres
+meses, pero se acabó alargando a unos diez meses. Disponía de tres mentores ---
+los desarrolladores principales de Tremor ---, que me ayudaron a entender el
+funcionamiento interno del programa y dieron consejo cuando era necesario.
 
 \section{Objetivo}
 
-La tarea a llevar a cabo es la implementación de un sistema de plugins,
+La tarea a llevar a cabo es la implementación de un sistema de plugins, también
 denominado \emph{Plugin Development Kit~(PDK)}, para la base de código ya
-existente en Tremor.
+existente de Tremor. El programa se dividirá en dos partes: la \emph{runtime} y
+los \emph{plugins}. Estos últimos son componentes individuales que implementan
+cualquier tipo de funcionalidad, y la runtime es capaz de cargarlos y usarlos
+dinámicamente en el programa. Una comparación de más alto nivel se podría dar en
+un móvil: el hecho de que el sistema operativo (runtime) pueda instalar
+cualquier aplicación (plugin) lo hace mucho más flexible que un dispositivo que
+únicamente tuviera una serie de aplicaciones predefinidas.
 
-Esto es una tarea no-trivial, dado que Rust no tiene un \emph{Application Binary
-Interface~(ABI)} estable. Es decir, que si se compila la \emph{runtime} (el
-binario principal encargado de cargar funcionalidad externa) y los
-\emph{plugins} (los binarios individuales con la funcionalidad) de forma
-separada, no hay garantía de que la representación binaria de los datos o la
-convención de llamada a funciones --- entre otros --- sea la misma.
+En el caso de Tremor, un plugin podría dar soporte para recibir eventos de
+Apache Kafka o para enviarlos a Postgres. La runtime debería ser capaz de cargar
+esa funcionalidad mientras se está ejecutando el programa, en vez de mientras se
+esté compilando. Dividir el binario de Tremor en varios componentes más pequeños
+compilables independientemente implican una reducción en los tiempos de
+compilación de cada uno de ellos, que era el objetivo principal del proyecto.
 
-Esto implica que \emph{dynamic loading} es imposible de forma segura puramente
-con Rust, debiéndose recurrir a otro ABI que sí sea estable, como el del
-lenguaje de programación C. Por tanto, se deben escribir \emph{bindings} (la
-definición de la interfaz compartida entre runtime y plugins) completas en C y
-transformar tipos de Rust a C y viceversa cuando se interactúe con plugins.
+Existen varias tecnologías disponibles para este sistema de plugins. Se
+investigarán las más importantes antes de implementarlo, pero el equipo de
+Tremor pensaba usar \emph{cargado dinámico} desde el principio. El concepto es
+simple: tanto la runtime como los plugins son binarios nativos (es decir, código
+máquina). Mediante una interfaz de acceso binario establecida, denominada
+\emph{Application Binary Interface~(ABI)}, la runtime es capaz de acceder a
+funciones y recursos en los plugins.
+
+El \emph{cargado dinámico} es un método especialmente popular en el lenguaje de
+programación C, dado que su interfaz de comunicación es relativamente sencilla.
+Asimismo, se trata de una solución altamente eficiente, dado que la comunicación
+es binaria y directa. Las características de Tremor implican que el método a
+usar debería tener un alto rendimiento, así que el cargado dinámico una de las
+mejores opciones disponibles.
+
+Sin embargo, lenguajes modernos como C++ o Rust no especifican estrictamente un
+ABI, dado que implementan características más complejas como excepciones o tipos
+genéricos. En el caso concreto de Rust, si se compila la \emph{runtime} y los
+\emph{plugins} separadamente, no existe ninguna garantía de que la
+representación binaria de los datos o de que la convención de llamada a
+funciones --- entre otros --- sea la misma.
+
+Por tanto, el cargado dinámicamente es imposible puramente con Rust. Se debe
+recurrir a otro ABI que sí sea estable, como el de C. Todas las funciones y
+tipos que se usen en la comunicación entre runtime y plugins deberán declararse
+siguiendo el estándar de C. Los tipos seguirán unas reglas que definen cómo se
+representan en memoria, y las funciones tendrán que seguir una convención
+específica.
+
+El problema principal con Tremor es que, al estar escrito puramente con Rust,
+todas sus funciones y tipos internos también se declaran con Rust. Este proyecto
+tendrá que desarrollar un método para transformar tipos de Rust a C y viceversa
+para poder interactuar con plugins, de forma que se pueda seguir usando Rust
+para todo lo demás en Tremor.
 
 \section{Motivación}
 
@@ -105,6 +160,10 @@ Los problemas relacionados con tiempos de compilación excesivamente largos no s
 limitan a Tremor. Es uno de las mayores críticas que recibe Rust y un 61\% de
 sus usuarios declaran que aún se necesita trabajo para mejorar la
 situación~\cite{rustsurvey}.
+
+\subsection{Extensibilidad}
+
+TODO
 
 \subsection{Modularidad}
 
@@ -189,6 +248,9 @@ implementar un sistema de plugins propio.
     \item La serie de artículos en mi blog personal:\\
         \url{https://nullderef.com/series/rust-plugins/}.
 \end{itemize}
+
+Se recomienda también consultar el Anexo~\ref{annex:contributions}, que lista
+todas las contribuciones de código abierto realizadas durante este proyecto.
 
 TODO: debería ser más específico sobre las horas? Mucha cuenta no he llevado
 pero vamos sí que estoy segurísimo de que han sido 300 horas y mucho más
