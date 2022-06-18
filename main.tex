@@ -57,6 +57,7 @@
 \usepackage{hyperref}
 
 % Better table formatting
+\usepackage{longtable}
 \usepackage{array}
 % Centered and maximum width
 \newcolumntype{P}[1]{>{\centering\arraybackslash}p{#1}}
@@ -297,6 +298,15 @@ Junio 2022\\
 \renewcommand{\contentsname}{Índice}
 \tableofcontents
 
+\newpage
+\renewcommand\listfigurename{Lista de Figuras}
+\listoffigures
+
+% TODO: quitar si no he acabado usando ninguna
+\newpage
+\renewcommand\listtablename{Lista de Tablas}
+\listoftables
+
 % Capitulos
 
 % Vuelta a configurar los párrafos para que no afecte al índice
@@ -315,15 +325,6 @@ Junio 2022\\
 % BIBLIOGRAFÍA Y REFERENCIAS
 \printbibliography%
 \nocite{*} % Include all the entries in the bibliography, even if not mentioned
-
-\newpage
-\renewcommand\listfigurename{Lista de Figuras}
-\listoffigures
-
-% TODO: quitar si no he acabado usando ninguna
-\newpage
-\renewcommand\listtablename{Lista de Tablas}
-\listoftables
 
 % ANEXOS
 
