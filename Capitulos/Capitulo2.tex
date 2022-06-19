@@ -1,6 +1,6 @@
 % vim: spelllang=es
 
-\chapter{Entendiendo Tremor}\label{ch:tremor}
+\chapter{¿Qué es Tremor?}\label{ch:tremor}
 
 \section{Procesado de Eventos}
 
@@ -13,7 +13,12 @@ complejos. Al contrario que esos programas, Tremor también tiene soporte para
 \emph{agregación} y \emph{rollups}, e incluye un lenguaje \emph{ad hoc} para
 \emph{Extract, Transform, and Load} (ETL).
 
-% TODO: hace falta esto?
+Para más información sobre Tremor se puede consultar \textcite{tremorintro}, que
+introduce sus conceptos más básicos y sus posibles usos --- o cuándo \emph{no}
+usarlo, en \textcite{tremorconstraints}. \textcite{tremorrecipes} lista un total
+de 32 ejemplos de cómo configurar y emplear el software. El
+Anexo~\ref{annex:tremor} entra en más detalles sobre su implementación interna.
+
 \textcite{robins2010complex} y \textcite{cugola2012processing} introducen en
 detalle los dos campos contenidos en Procesado de Eventos: \emph{Procesado de
 Eventos Complejos} y \emph{Procesado de Flujos de
@@ -74,42 +79,9 @@ Tremor se basa en los términos de \onramps o \sources y \offramps o \sinks:
 
     \item Una \pipeline es una lista de operaciones (transformación, agregación,
         eliminación, etc) a través de la cual se pueden encaminar los
-        eventos~\cite{tremorpipelines}. La Figura \ref{fig:tremor_pipeline}
-        muestra un ejemplo de una \pipeline, definida con Troy, su propio
-        lenguaje inspirado en SQL.
+        eventos~\cite{tremorpipelines}.
 
 \end{itemize}
-
-TODO: mover lo siguiente al anexo y mencionar el leerlo para más detalles?
-
-\begin{figure}
-    \centering
-    \begin{minted}[escapeinside=||]{mysql}
-|\textcolor{blue}{define pipeline}| main
-# The exit port is not a default port, so we have to overwrite the
-# built-in port selection
-into |out, exit|
-|\textcolor{blue}{pipeline}|
-  # Use the `std::string` module
-  use std::|string|;
-  use lib::scripts;
-
-  # Create our script
-  create |\textcolor{blue}{script}| punctuate from scripts::punctuate;
-
-  # Filter any event that just is `"exit"` and send it to the exit port
-  select {"graceful": false} from |in| where event == "exit" into |exit|;
-
-  # Wire our capitailized text to the script
-  select |string|::capitalize(event) from |in| where event != "exit"
-    into punctuate;
-  # Wire our script to the output
-  select event from punctuate into |out|;
-end;
-    \end{minted}
-    \caption{Ejemplo de una \pipeline definida para Tremor}%
-    \label{fig:tremor_pipeline}
-\end{figure}
 
 Estos \onramps u \offramps suelen contener una cantidad de información que es
 demasiado grande como para guardarla y debería tratarse en tiempo real. Su
@@ -139,7 +111,7 @@ Finalmente, otros términos misceláneos sobre Tremor:
 \begin{itemize}
     \item \emph{Códec}: describen cómo decodificar los datos del flujo y como
         volverlos a codificar. Por ejemplo, si los eventos de entrada usan JSON,
-        tendrá que especificarse ese códec para que lo pueda entender Tremor.
+        tendrá que especificarse ese códec para que Tremor lo pueda entender.
 
     \item \emph{Preprocesador} o \emph{postprocesador}: operadores sobre flujos
         de datos brutos. Un preprocesador aplicará esta operación antes del
@@ -151,17 +123,12 @@ Finalmente, otros términos misceláneos sobre Tremor:
 
 \end{itemize}
 
-Para más información sobre Tremor se puede consultar \textcite{tremorintro}, que
-introduce sus conceptos más básicos y sus posibles usos --- o cuándo \emph{no}
-usarlo, en \textcite{tremorconstraints}. \textcite{tremorrecipes} lista un total
-de 32 ejemplos de cómo configurar y emplear el software.
-
 \section{Conectores}
 
-Sin embargo, es posible que algunas \onramps no solo quieran recibir de sistemas
-externos, sino también responderles directamente, actuando como una \offramp y
-viceversa. Esto es especialmente útil para casos como REST y \websockets, donde
-el protocolo da la posibilidad de responder a eventos, por ejemplo con un ACK,
+Es posible que algunas \onramps no solo quieran recibir de sistemas externos,
+sino también responderles directamente, actuando como una \offramp y viceversa.
+Esto es especialmente útil para casos como REST y \websockets, donde el
+protocolo da la posibilidad de responder a eventos, por ejemplo con un ACK,
 usando la misma conexión. En la versión 0.11 --- la presente cuando me uní al
 proyecto --- este problema se solucionaba con el concepto de \emph{linked
 transports}.
@@ -171,24 +138,4 @@ Solucionan el problema desde el inicio, abstrayendo tanto los \onramps como los
 \offramps bajo el mismo concepto, incluyendo los \emph{linked transports}. Dado
 que estos ya estaban siendo desarrollados mientras 0.11 era la última versión,
 el sistema de plugins se enfocó a conectores desde el principio, en lugar de
-\onramps u \offramps, que actualmente están en desuso.
-
-A nivel de implementación, los conectores se definen con el \trait
-\rust{Connector}, incluido en la figura \ref{fig:tremor_connector_trait}.
-Esencialmente, los plugins de tipo conector exportarán públicamente esta
-interfaz en su binario, y la runtime deberá ser capaz de cargarlo dinámicamente.
-Actualmente, todos los conectores disponibles se listan y cargan de forma
-estática al inicio del programa.
-
-Por tanto, es importante mantener la interfaz de plugins lo más simple posible.
-Los detalles de comunicación deberían dejarse a la runtime, de forma que los
-plugins se limiten a exportar una lista de funciones síncronas. De esta forma,
-se podrá evitar pasar tipos complejos (\rust{async}, canales de comunicación,
-etc) entre la runtime y los plugins, que implicaría una carga de trabajo mucho
-más alta.
-
-Una vez esta interfaz de bajo nivel se defina, se puede crear un \emph{wrapper}
-de más alto nivel en la runtime que se encargue de la comunicación y de mejorar
-su usabilidad dentro de Tremor. Esto mismo lo hacen otras \crates como
-\cratelink{rdkafka}, que implementa una capa de abstracción asíncrona sobre su
-interfaz de C en \cratelink{rdkafka-sys}.
+\onramps u \offramps, que ahora han quedado en desuso.

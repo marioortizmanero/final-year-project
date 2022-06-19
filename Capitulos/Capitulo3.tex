@@ -1,6 +1,6 @@
 % vim: spelllang=es
 
-\chapter{Investigación previa}\label{sec:investigation}
+\chapter{Contexto}\label{sec:investigation}
 
 La propuesta para el sistema de plugins asumía que se iba a implementar con un
 método que cubriré posteriormente denominado \emph{cargado dinámico}. Esto se
@@ -9,7 +9,9 @@ importantes, principalmente relacionados con seguridad. Por ello, es una buena
 idea considerar las alternativas existentes para el PDK, en caso de que hubiera
 alguno con la misma eficiencia pero menos vulnerabilidades.
 
-Los requerimientos mínimos a tener en cuenta son los siguientes:
+\section{Requisitos}
+
+Los requerimientos a tener en cuenta para el proyecto son los siguientes:
 
 \begin{itemize}
     \item Debe ser posible añadir y quitar plugins tanto en el inicio del
@@ -56,11 +58,11 @@ Tremor en caso de tener que recurrir a \unsafe.
 \subsection{Resiliencia a errores}
 
 Rust no protege a sus usuarios de \leaks de memoria. De hecho, es tan sencillo
-como llamar a \rust{mem::forget}. Si un plugin tuviera un \leak, el proceso
-entero también se vería afectado; el rendimiento de Tremor se degradaría con
-plugins no desarrollados incorrectamente. Algo similar podría suceder en caso de
-que un plugin abortase o sufriese de un pánico, lo que terminaría la ejecución
-del programa por completo.
+como llamar a la función \rust{mem::forget}. Si un plugin tuviera un \leak, el
+proceso entero también se vería afectado; el rendimiento de Tremor se degradaría
+con plugins no desarrollados incorrectamente. Algo similar podría suceder en
+caso de que un plugin abortase o sufriese de un pánico, lo que terminaría la
+ejecución del programa por completo.
 
 Idealmente, Tremor debería poder detectar plugins que no rinden óptimamente y
 pararlos antes de que sea demasiado tarde. La runtime debería poder continuar

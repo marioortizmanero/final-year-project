@@ -48,6 +48,13 @@ corriendo en tareas diferentes, que se comunican asíncronamente con canales''.
 
 \section{Detalles de implementación}
 
+A nivel de implementación, los conectores se definen con el \trait
+\rust{Connector}, incluido en la figura \ref{fig:tremor_connector_trait}.
+Esencialmente, los plugins de tipo conector exportarán públicamente esta
+interfaz en su binario, y la runtime deberá ser capaz de cargarlo dinámicamente.
+Actualmente, todos los conectores disponibles se listan y cargan de forma
+estática al inicio del programa.
+
 El actor principal se llama \rust{World}. Contiene el estado del programa, como
 los artefactos disponibles (\emph{repositorios}) y los que se están ejecutando
 (\emph{registros}) y se usa para inicializar y controlar el programa.
@@ -162,6 +169,38 @@ como se muestra en la Figura~\ref{fig:tremor_initializing}.
     \label{fig:tremor_initializing}
 \end{figure}
 
+La Figura \ref{fig:tremor_pipeline} muestra un ejemplo de una \pipeline,
+definida con Troy, su propio lenguaje inspirado en SQL.
+
+\begin{figure}
+    \centering
+    \begin{minted}[escapeinside=||]{mysql}
+|\textcolor{blue}{define pipeline}| main
+# The exit port is not a default port, so we have to overwrite the
+# built-in port selection
+into |out, exit|
+|\textcolor{blue}{pipeline}|
+  # Use the `std::string` module
+  use std::|string|;
+  use lib::scripts;
+
+  # Create our script
+  create |\textcolor{blue}{script}| punctuate from scripts::punctuate;
+
+  # Filter any event that just is `"exit"` and send it to the exit port
+  select {"graceful": false} from |in| where event == "exit" into |exit|;
+
+  # Wire our capitailized text to the script
+  select |string|::capitalize(event) from |in| where event != "exit"
+    into punctuate;
+  # Wire our script to the output
+  select event from punctuate into |out|;
+end;
+    \end{minted}
+    \caption{Ejemplo de una \pipeline definida para Tremor}%
+    \label{fig:tremor_pipeline}
+\end{figure}
+
 \subsection{Configuración}
 
 Una vez haya un conector corriendo, la Figura \ref{fig:tremor_setting_up}
@@ -222,3 +261,4 @@ Ambos son relativamente simples y serán de gran ayuda para medir el efecto de
 los cambios sobre el rendimiento. De todos modos, el equipo de Tremor insistía
 que lo más importante primero es que funcione, y después me podría preocupar
 sobre eficiencia.
+

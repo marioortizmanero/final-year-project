@@ -112,6 +112,18 @@ nuestro propio tipo para usar con \abistable, ademaś de marcarlo con
 
 \subsection{Exportando un plugin}
 
+Es importante mantener la interfaz de plugins lo más simple posible. Los
+detalles de comunicación deberían dejarse a la runtime, de forma que los plugins
+se limiten a exportar una lista de funciones síncronas. De esta forma, se podrá
+evitar pasar tipos complejos (\rust{async}, canales de comunicación, etc) entre
+la runtime y los plugins, que implicaría una carga de trabajo mucho más alta.
+
+Una vez esta interfaz de bajo nivel se defina, se puede crear un \emph{wrapper}
+de más alto nivel en la runtime que se encargue de la comunicación y de mejorar
+su usabilidad dentro de Tremor. Esto mismo lo hacen otras \crates como
+\cratelink{rdkafka}, que implementa una capa de abstracción asíncrona sobre su
+interfaz de C en \cratelink{rdkafka-sys}.
+
 \subsection{Gestión de pánicos}
 
 Actualmente, lanzar pánicos a través del FFI es comportamiento no
