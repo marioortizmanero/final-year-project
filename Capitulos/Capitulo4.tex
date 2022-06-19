@@ -124,7 +124,8 @@ fork más moderno, está esforzándose por tener Lua como lenguaje de primera cl
 para su configuración~\cite{nvimlua}. Incluso Tremor tiene su propio lenguaje
 para configurarlo, Troy.
 
-% TODO: alguna traducción de 'embedding' decente?
+TODO: alguna traducción de 'embedding' decente?
+
 De todos los lenguajes disponibles, Lua sería una de las mejores opciones para
 este sistema de plugins en específico. Está hecho con \emph{embedding} en mente:
 es simple y únicamente alrededor de 220KB~\cite{ierusalimschy2006programming}.
@@ -179,7 +180,8 @@ unos u otros casos de uso. Por lo general, Wasmer es más adecuado para embebirl
 en programas nativos, mientras que Wasmtime se centra en programas individuales
 --- aunque los dos se pueden usar apara ambos casos~\cite{wasmwikiusage}.
 
-% TODO: quizá esta footnote es innecesaria; podría llamarlo `intérprete` y ya.
+TODO: quizá esta footnote es innecesaria? Podría llamarlo `intérprete` y ya.
+
 WebAssembly todavía es una tecnología relativamente nueva, así que algunas
 partes siguen bajo desarrollo continuo y necesitan mejoras, como en rendimiento.
 En comparación a JavaScript, \textcite{jangda2019not} muestra resultados
@@ -432,7 +434,8 @@ posible que este comportamiento sí que se rompa en el
 futuro~\cite{randomizelayout}, en cuyo caso el sistema de plugins tendría que
 reescribirse por completo.
 
-% TODO: a lo mejor lo de órdenes de magnitud se podría cambiar por algo mejor
+TODO: a lo mejor lo de órdenes de magnitud se podría cambiar por algo mejor?
+
 Descubrir esto implicó un cambio de planes y un aumento en la complejidad del
 proyecto de órdenes de magnitud. Ahora tendría que recurrirse a una ABI que sí
 que tuviera garantías de estabilidad, y traducir entre la de Rust y esta para
