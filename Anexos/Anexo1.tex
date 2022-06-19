@@ -1,3 +1,330 @@
 \chapter{Guía de Rust}\label{annex:rust}
 
-TODO
+\section{Primeros pasos}
+
+Comenzando por el clásico ``Hola Mundo'', se incluyen algunos ejemplos de cómo
+es la sintaxis de Rust más básica. Los binarios o librerías en Rust reciben el
+nombre de \crate. Nuestra \crate se podría ejecutar fácilmente con \emph{Cargo},
+el administrador de dependencias oficial, o específicamente con el comando
+\code{cargo run}.
+
+\begin{minted}{rust}
+fn main() {
+    println!("Hello World!");
+}
+\end{minted}
+
+\code{main} es nuestra función principal, que invoca al macro \code{println!}
+para escribir por pantalla. Notar que la invocación de macros, a diferencia de
+funciones, requiere un \rust{!} al final.
+
+\section{Conceptos principales}
+
+Los bloques básicos (\rust{if}, \rust{else}, \rust{while}, \rust{for}) son muy
+similares a en otros lenguajes. También existe \rust{match}, que permite extraer
+patrones de variables.
+
+\begin{minted}{rust}
+fn factorial(i: u64) -> u64 {
+    match i {
+        // Primer caso: i = 0
+        0 => 1,
+        // El resto de casos, asignado a una variable `n`
+        n => n * factorial(n-1)
+    }
+}
+\end{minted}
+
+Uso de variables y métodos:
+
+\begin{minted}{rust}
+fn main() {
+    // Declaración de una variable, cuyo tipo se infiere
+    // automáticamente.
+    let my_number = 1234;
+    // Declaración de una variable con un tipo especificado
+    // manualmente. Notar que se puede usar el mismo nombre, y la
+    // variable anterior será destruida.
+    let my_number: i32 = 4321;
+    // Invocación de la función estática (constructor) `new` dentro
+    // del tipo `String`. El uso de `mut` indica que la instancia del
+    // tipo se puede modificar. Funciona de forma inversa a C++, que
+    // por defecto es mutable y `const` indica que *no* se puede
+    // modificar.
+    let mut my_str = String::new();
+    // Invocación del método `push` de `my_str`, que añade un
+    // carácter al final de la cadena.
+    my_str.push('a');
+}
+\end{minted}
+
+Otros componentes principales de Rust son:
+
+\begin{itemize}
+    \item Estructuras de datos:
+
+\begin{minted}{rust}
+struct MessageA {
+    // Campo público con una cadena de caracteres
+    pub text: String,
+    // Campo privado con un entero
+    user_id: i32,
+}
+\end{minted}
+
+\begin{minted}{rust}
+// Sin nombres de campos; se pueden acceder con `data.0`
+// y `data.1`, respectivamente.
+struct MessageB(pub String, i32);
+\end{minted}
+
+    \item Enumeraciones, que también permiten contener datos:
+
+\begin{minted}{rust}
+enum MessageC {
+    Join,
+    Text(String, i32),
+    Leave(i32),
+}
+\end{minted}
+
+    \item \emph{Traits}, similares a las interfaces de Java en el sentido de que
+        son una serie de requerimientos y que un tipo puede implementar
+        múltiples \traits, pero también permiten implementaciones por defecto:
+
+\begin{minted}{rust}
+trait Sender {
+    // Los métodos requieren especificar `self` explícitamente,
+    // que es lo mismo que `this` en Java o C++. En este caso,
+    // `&send` tomará una referencia al tipo que implemente
+    // `Sender`. También podría ser una referencia mutable con
+    // `&mut self`, o el mismo tipo con `self`.
+    fn send(&self, msg: String);
+
+    // Implementación por defecto.
+    fn send_twice(&self, msg: String) {
+        self.send(msg);
+        self.send(msg.clone());
+    }
+}
+\end{minted}
+
+        Y para implementar un trait para un tipo:
+
+\begin{minted}{rust}
+impl Sender for MessageC {
+    fn send(&self, msg: String) {
+        match self {
+            Join => println!("Joined"),
+            Text(txt, id) => println!("{} sent: {}", id, txt),
+            // Las variables `_` son ignoradas
+            Leave(_) => println!("Left"),
+        }
+    }
+
+    // `send_twice` se implementará automáticamente.
+}
+\end{minted}
+
+    Notar que, sin embargo, Rust no es un lenguaje orientado a objetos. Un
+    \trait puede heredar de otro \trait, pero un \struct no puede heredar de
+    otro \struct.
+
+\end{itemize}
+
+\section{Genéricos y librería estándar}
+
+De forma similar a C++, Rust posee tipos genéricos. Esto permite la
+implementación de una librería estándar flexible, con varias estructuras de
+datos importantes a conocer:
+
+% NOTE: esto creo que lo puedo evitar si no incluyo cómo se usa async_ffi, que
+% me parece demasiado complejo para el documento.
+% \begin{minted}{rust}
+% // Función genérica, donde `ToString` es un trait
+% fn print<T: ToString>(t: T) {}
+
+% // Otra manera de especificar genéricos con diferencias
+% // menores que no se explicarán en esta introducción.
+% fn print(t: impl ToString) {}
+% \end{minted}
+
+\begin{itemize}
+    \item Tipos primitivos:
+        \begin{itemize}
+            \item Carácteres con \rust{char}.
+
+            \item Punto flotante con \rust{f32} y \rust{f64}.
+
+            \item Booleanos con \rust{bool}.
+
+            \item Enteros: \rust{u8}, \rust{i8}, \rust{u16}, \rust{i16},
+                \rust{u32}, \rust{i32}, \rust{u64}, \rust{i64}, e incluso
+                \rust{i128} y \rust{u128} en las arquitecturas que lo soportan.
+
+            \item Vectores de tamaño fijo: por ejemplo \rust{[1, 2, 3, 4, 5]}.
+
+            \item N-tuplas como \rust{(1, true, 9.2)}.
+
+            \item El tipo ``unidad'', \rust{()}, equivalente a \code{void} en C
+                o C++.
+
+            \item Punteros básicos con \rust{*const T} o \rust{*mut T}.
+
+        \end{itemize}
+
+    \item \rust{Vec<T>} representa un vector contiguo y redimensionable.
+
+    \item \rust{HashMap<K, V>} es una tabla hash, genérica respecto a su clave
+        \rust{K} y su valor \rust{V}. No se encuentra en el preludio, por lo que
+        requeriría la siguiente declaración, similar a un \code{import} de Java:
+
+\begin{minted}{rust}
+use std::collections::HashMap;
+\end{minted}
+
+    \item \rust{Box<T>}, usado para localizar un tipo \rust{T} no nulo en
+        memoria. Además de un \rust{*const T}, incluye el tamaño que ocupa
+        \rust{T} y tiene una interfaz limitada para que su uso sea siempre
+        seguro.
+
+    \item \rust{str} es una cadena UTF-8 de solo lectura, típicamente usada con
+        una referencia \rust{&str}. Va acompañada por su longitud, por lo que no
+        hace falta terminarla con \code{\0}, a diferencia de C. \rust{String} es
+        su versión modificable asignada en memoria.
+
+\end{itemize}
+
+\section{Gestión de errores}
+
+En Rust, los errores se indican con el tipo \rust{Result<T, E>}. Este se trata
+de una enumeración cuyo valor puede ser \rust{Ok(T)}, con el resultado obtenido
+satisfactoriamente, o \rust{Err(E)}, con el tipo de error que ha sucedido. Dado
+que el resultado está contenido dentro suyo, es imposible olvidar comprobar si
+se ha producido algún error. Se puede usar \rust{match} para comprobar el
+resultado, o una serie de funciones disponibles para hacer el proceso más
+ergonómico:
+
+\begin{minted}{rust}
+match load_file(input) {
+    Ok(data) => /* ... */,
+    Err(e) => eprintln!("Error: {e}"),
+}
+\end{minted}
+
+En caso de que se produjera un error del que el programa no se puediera
+recuperar, como quedarse sin memoria o un fallo inesperado en la implementación,
+se usa la funcionalidad de \emph{pánicos}. Un pánico se propaga de forma similar
+a una excepción de C++ o Java, y terminará la ejecución por completo. Se puede
+invocar con el macro \rust{panic!} o utilidades similares.
+
+\section{Macros}
+
+Rust cuenta con dos tipos de macros: \emph{declarativos} y \emph{procedurales}.
+Ambos permiten generar código a tiempo de compilación, pero se diferencian
+principalmente en la flexibilidad que ofrecen, a coste de un coste de desarrollo
+menor o mayor, respectivamente.
+
+Los macros declarativos se crean con una sintaxis especializada, similar a un
+\rust{match} con patrones de tokens (identificadores, tipos, etc) como entrada,
+y los tokens nuevos como salida. Son similares a los macros de C o C++, pero más
+potentes e higiénicos (i.e., su expansión no captura identificadores
+accidentalmente).
+
+Los macros procedurales se describen como extensiones del lenguaje.
+Esencialmente, ejecutan código en la compilación que consume y produce sintaxis
+de Rust; consisten en directamente transformar el Árbol de Sintaxis Abstracta
+(AST)~\cite[Procedural Macros]{rustref}. Consecuentemente, su complejidad es
+mucho mayor, pero expanden las posibilidades de los macros enormemente.
+
+\begin{minted}{rust}
+some_macro!(1, 2, 3); // Puede ser tanto declarativo como procedural
+\end{minted}
+
+\begin{minted}{rust}
+// Sintaxis típica de invocación de un macro
+some_macro! {
+    fn some_function() { /* ... */ }
+}
+
+// También permitido en el caso de los procedurales
+#[some_macro]
+fn some_function() { /* ... */ }
+\end{minted}
+
+Finalmente, los macros procedurales se pueden declarar de forma que
+\emph{deriven} (implementen automáticamente) un \trait. Esto evita escribir
+código repetitivo de forma muy sencilla:
+
+\begin{minted}{rust}
+// Con un macro `derive` para el trait `Debug`, que sirve para
+// mostrar variables por pantalla.
+#[derive(Debug)]
+struct X(i32);
+
+// Sin ellos sería lo siguiente. Como es trivial se puede
+// simplificar en un macro procedural de tipo `derive`.
+impl fmt::Debug for X {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self.0)
+    }
+}
+\end{minted}
+
+\section{Lifetimes}
+
+La seguridad que provee Rust en memoria se basa en un modelo a tiempo de
+compilación con \lifetimes. Una \lifetime es 
+
+TODO: esto depende de cómo se acaba incluyendo la sección de ``problemas con
+varianza y subtipado''.
+
+\section{Unsafe}
+
+Para poder mantener control completo a bajo nivel, es posible ignorar sus
+garantías de seguridad con el sub-lenguaje llamado \emph{unsafe Rust}. El
+análisis estático de Rust es conservativo; en algunas ocasiones es posible que
+rechace algunos programas correctos. El desarrollador puede indicar que es
+consciente de la situación y puede apagar este análisis para corregirlo por sí
+mismo, arriesgándose a cometer un error en su código.
+
+Se puede acceder a \emph{unsafe Rust} conteniendo el código dentro de un bloque
+\rust{unsafe { /* ... */ }} o una función \rust{unsafe fn name() { /* ... */ }}.
+Funciona igual que rust, pero incluye varias nuevas habilidades, entre otras:
+
+\begin{itemize}
+    \item Leer un puntero bruto en memoria
+
+    \item Acceder o modificar una variable estática mutable
+
+    \item Llamar a una función \unsafe
+
+\end{itemize}
+
+\section{Programación asíncrona}
+
+Como muchos lenguajes modernos, Rust da soporte a la programación asíncrona, un
+modelo de programación concurrente. Sin entrar en excesivo detalle, esta permite
+tener una gran cantidad de \emph{tareas} concurrentes ejecutándose sobre unos
+pocos hilos del Sistema Operativo. Su caso de uso principal es programas cuyo
+rendimiento está limitado por operaciones de entrada y salida, como servidores o
+bases de datos~\cite{rustasyncbook}.
+
+\begin{minted}{rust}
+// Con `async` se indica que la función es asíncrona.
+async fn get_two_sites_async() {
+    // Creación de dos "futuros" que, al completarse, descargarán
+    // asíncronamente las páginas web. Similar a la creación de
+    // un nuevo hilo.
+    let future_one = download_async("https://www.foo.com");
+    let future_two = download_async("https://www.bar.com");
+
+    // Ejecutar las dos tareas. Similar a esperar la terminación de
+    // los hilos.
+    join!(future_one, future_two);
+
+    // Con `.await` se puede esperar a la terminación de un futuro
+    // individual.
+    let future_three = download_async("https://www.bar.com").await;
+}
+\end{minted}
