@@ -1,3 +1,125 @@
 \chapter{Problemas con varianza y subtipado}\label{annex:covariance}
 
-TODO
+Otro problema inesperado tuvo que ver con la \emph{varianza} y \emph{subtipado}.
+Son dos conceptos de teoría de sistemas de tipos, especialmente conocidos por
+desarrolladores de lenguajes orientados a objetos como Java o C\#. En el caso de
+Rust solo se da en las \lifetimes, así que no es tan popular. Lo que lo hace más
+complicado de tratar es que es completamente implícito: mejora la usabilidad del
+lenguaje cuando \emph{funciona}; en caso contrario, resulta en errores
+intricados y difíciles de identificar.
+
+Este tema no se cubre en \textcite{rustbook}, sino en \textcite[Subtyping and
+Variance]{nomicon} y \textcite[Subtyping and Variance]{rustref}. También es
+recomendable consultar el artículo \textcite{lcnr_covandcontra} o a
+\textcite{video_covandcontra} para un formato en vídeo.
+
+Deriva también de los problemas encontrados con el tipo \rust{Value}. La
+historia completa se incluye en el issue \textcite{abi_covandcontra}. Al cambiar
+los tipos de la librería estándar a los de \abistable, se producían errores de
+\lifetimes \emph{inexplicables} (ver Figura~\ref{fig:errors}). Estuve bloqueado
+con dicho problema durante mucho tiempo, así que tras comentárselo a mis
+mentores, Heinz me ayudó a reproducir el problema de forma mínima. Por alguna
+razón que todavía desconocíamos, dos tipos supuestamente equivalentes diferían a
+la hora de compilar:
+
+\begin{minted}{rust}
+use abi_stable::std_types::RCow;
+use std::borrow::Cow;
+
+fn cmp_cow<'a, 'b>(left: &Cow<'a, ()>, right: &Cow<'b, ()>) -> bool {
+    left == right
+}
+
+// Este caso falla en compilación, pero es aparentemente igual
+fn cmp_rcow<'a, 'b>(left: &RCow<'a, ()>, right: &RCow<'b, ()>) -> bool {
+    left == right
+}
+\end{minted}
+
+\begin{minted}{text}
+$ cargo build
+error[E0623]: lifetime mismatch
+  --> src/lib.rs:10:10
+   |
+9  | fn cmp_rcow<'a, 'b>(
+   |        left: &RCow<'a, ()>, right: &RCow<'b, ()>) -> bool {
+   |              ------------          ------------
+   |              |
+   |              these two types are declared with
+   |              different lifetimes...
+10 |     left == right
+   |          ^^ ...but data from `left` flows into `right` here
+
+For more information about this error, try `rustc --explain E0623`.
+error: could not compile `repro` due to previous error
+\end{minted}
+
+Este tipo de error suele darse en caso de que la \lifetime de un valor no viva
+lo suficiente. Por ejemplo, el ejemplo de \code{rustc --explain E0623} es el
+siguiente. Se tienen dos \lifetimes \emph{sin relación entre sí}, \rust{'short}
+y \rust{'long}. La estructura \rust{Foo} que se pasa como parámetro tiene la
+\lifetime \rust{'short}, pero dentro de la función se le intenta asignar una
+\lifetime \rust{'long}, que es imposible porque el compilador no sabe cuál tiene
+un tiempo de vida mayor. Asignarle una \lifetime que viva más de lo que debe
+significaría que se podría seguir usando \rust{Foo} después de que \rust{'short}
+acabe, es decir, después de que \rust{Foo} haya sido destruido. Finalmente, esto
+causaría inconsistencias en memoria porque nuestra variable de tipo \rust{Foo}
+ya no existe, pero se está intentando acceder a ella.
+
+\begin{minted}{rust}
+struct Foo<'a> {
+    x: &'a isize,
+}
+
+fn bar<'short, 'long>(c: Foo<'short>, l: &'long isize) {
+    // Equivalente a asignarle otra lifetime a c
+    let c: Foo<'long> = c; // error!
+}
+\end{minted}
+
+Solucionarlo es tan simple como indicar que \rust{'short} tiene al menos el
+mismo tiempo de vida que \rust{'long}. Es decir, que no se podría dar el caso de
+que \rust{Foo} es usado después de destruirse:
+
+\begin{minted}{rust}
+// Notar que ahora `'short` se declara tal que `'short: 'long`
+fn bar<'short: 'long, 'long>(c: Foo<'short>, l: &'long isize) {
+    let c: Foo<'long> = c; // ok!
+}
+\end{minted}
+
+Por tanto, uno pensaría que tiene que ver con el operador \rust{==}, que se
+delega al \trait \rust{PartialEq}, así que dediqué tiempo intentando encontrar
+la diferencia entre su implementación en \rust{Cow<'a, T>} y la de
+\rust{RCow<'a, T>}. La mención anterior a estos errores como
+\emph{inexplicables} se debe a que en este caso únicamente existe una \lifetime
+\rust{'a}, así que no se podría arreglar indicando que \rust{'short: 'long}. No
+obstante, existía alguna pequeña diferencia sin relación a este problema entre
+las implementaciones, y al usar \emph{exactamente lo mismo} que en \rust{Cow<'a,
+T>}, compilaba correctamente.
+
+% TODO: credit properly
+Tras cambiar \rust{left == right} por \rust{left.cmp(right)} en la reproducción
+inicial, se repetía el problema, incluso con aparentemente la misma
+implementación de \rust{Ord} (el \trait con el método \rust{cmp}). No fue hasta
+que expliqué mi problema en un servidor de Discord con más desarrolladores de
+Rust que descubrí que el verdadero problema era un término llamado la
+\emph{varianza} de \rust{RCow<'a, T>}.
+
+Todo acabó reduciéndose a la única diferencia en la implementación del \trait
+\rust{Ord}. \rust{RCow<'a, T>} implementa un \trait llamado
+\rust{BorrowOwned<'a>} y \rust{Cow<'a, T>} implementa otro llamado
+\rust{ToOwned}. Ambos \traits son iguales, excepto que en \rust{BorrowOwned<'a>}
+se incluye funcionalidad adicional para \abistable. El problema no tiene que ver
+con esta diferencia en funcionalidad, sino que \rust{BorrowOwned<'a>} es
+genérico respecto a la \lifetime \rust{'a}, lo cual no es el caso de
+\rust{ToOwned}.
+
+Al implementar \rust{Ord}, se tenía que indicar que \rust{T: ToOwned} o \rust{T:
+BorrowOwned<'a>}. El problema era que al relacionar la \lifetime \rust{'a} de
+esta forma, estaba rompiendo una regla que hacía a \rust{RCow}
+\emph{invariante}, en vez de \emph{covariante}.
+
+TODO: es esta sección demasiado técnica? Debería continuar? Me falta explicar
+qué es invarianza y covarianza. La verdad que esto sí que me llevó mucho tiempo
+en su momento, así que me gustaría incluirlo de alguna forma.
