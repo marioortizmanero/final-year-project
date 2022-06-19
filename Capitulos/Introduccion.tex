@@ -76,7 +76,7 @@ issue} en GitHub:
 documentación de Tremor:
 \url{https://www.tremor.rs/rfc/accepted/plugin-development-kit/}}, es decir,
 desarrollar un sistema de plugins para Tremor. El plazo original era de tres
-meses comenzando en agosto, pero se acabó alargando a unos diez meses. Disponía
+meses comenzando en agosto, pero se acabó alargando a unos once meses. Disponía
 de tres mentores --- los desarrolladores principales de Tremor ---, que me
 ayudaron a entender el funcionamiento interno del programa y dieron consejo
 cuando era necesario.
@@ -158,29 +158,24 @@ hasta resultar en una pésima experiencia de desarrollo e imposibilitar la
 creación de nuevas prestaciones.
 
 Los problemas relacionados con tiempos de compilación excesivamente largos no se
-limitan a Tremor. Es uno de las mayores críticas que recibe Rust y un 61\% de
-sus usuarios declaran que aún se necesita trabajo para mejorar la
+limitan a Tremor. Es uno de las mayores críticas que recibe Rust: un 61\% de sus
+usuarios declaran que aún se necesita trabajo para mejorar la
 situación~\cite{rustsurvey}.
 
-\subsection{Extensibilidad}
-
-TODO
-
-\subsection{Modularidad}
+\subsection{Modularidad y flexibilidad}
 
 Otra ventaja que provee un sistema de plugins es modularidad; ser capaz de
 tratar la runtime y los plugins de forma separada suele resultar en una
-arquitectura más limpia~\cite{baldwin2000design}.
-
-También hace posible el desacoplamiento del ejecutable y sus componentes;
-algunas dependencias tienen un ciclo de versionado más rápido que otras.
-Generalmente, es más conveniente actualizar únicamente un plugin, en lugar del
+arquitectura más limpia~\cite{baldwin2000design}. Hace posible el
+desacoplamiento del ejecutable y sus componentes; algunas dependencias tienen un
+ciclo de versionado más rápido que otras. Generalmente, es más conveniente
+desarrollar, realizar tests o actualizar únicamente un plugin, en lugar del
 programa por completo.
 
 \subsection{Aprender de otros}
 
-Otros proyectos maduros con características similares a las de Tremor, como
-\textcite{nginx} o \textcite{apachehttpserver}, llevan beneficiándose de un
+Existen proyectos maduros con características similares a las de Tremor, como
+\textcite{nginx} o \textcite{apachehttpserver}, que llevan beneficiándose de un
 sistema de plugins desde hace mucho. Informan mejorías en flexibilidad,
 extensibilidad y facilidad de
 desarrollo~\cite{nginxPluginsAdvantages}\cite{apachePluginsAdvantages}. Aunque
@@ -192,15 +187,14 @@ menos considerarlo para Tremor.
 
 \subsection{Organización}
 
-El proyecto ha tenido una duración de unos 10 meses, comenzando en agosto de
-2021 y terminando en mayo/junio de 2022. Su realización ha sido completamente
-remota y con horarios muy flexibles. Se usó el servidor de Discord de
-Tremor\footnote{\url{https://discord.com/invite/Wjqu5H9rhQ}} como plataforma
+El proyecto ha tenido una duración de unos once meses, comenzando en agosto de
+2021 y terminando a principios de junio de 2022. Su realización ha sido
+completamente remota y con horarios muy flexibles. Se usó el servidor de Discord
+de Tremor\footnote{\url{https://discord.com/invite/Wjqu5H9rhQ}} como plataforma
 principal para comunicarse, tanto por texto como por videollamada. Se programó
-una llamada por semana, en la que explicaba mi progreso y recibía ayuda de mis
-mentores en caso de que me hubiera quedado atascado en algún momento.
+una llamada por semana, en la que explicaba mi progreso y recibía ayuda en caso
+de que me hubiera quedado atascado o necesitara alguna opinión adicional.
 
-% TODO: update Matthias' title
 Disponía de tres mentores, que me guiaban en el proceso de desarrollo: Darach
 Ennis (\emph{Principal Engineer and Director of Tremor Project}), Matthias Wahl
 (\emph{Staff Engineer}) y Heinz N. Gies (\emph{Senior Staff Engineer}), todos
@@ -215,7 +209,12 @@ GitHub\footnote{\url{https://github.com/marioortizmanero/tremor-runtime/projects
 
 Para reducir el coste de desarrollo y asegurarse de que el proceso sea
 completamente seguro (en memoria y concurrencia), el sistema de plugins
-aprovecha librerías existentes en Rust y herramientas como macros procedurales.
+aprovecha librerías existentes en Rust y herramientas como \emph{macros
+procedurales}. Los macros procedurales son mucho más potentes que los
+convencionales (\emph{declarativos}), puesto que directamente consumen y generan
+sintaxis de Rust a tiempo de compilación para implementar cualquier tipo de
+código trivial o repetitivo.
+
 El sistema de compilación usado es solución oficial de Rust: Cargo, que también
 incluye un \emph{formatter}, \emph{linter}, y extensiones instalables creadas
 por la comunidad. Adicionalmente, existe una gran cantidad de tests y
@@ -227,12 +226,13 @@ Coverage} (la cantidad de código cubierta por los tests) y el rendimiento.
 Este trabajo está disponible públicamente al completo. Además, a medida que he
 investigado e implementado el sistema de plugins, he ido escribiendo todo en mi
 blog personal, \emph{NullDeref}\footnote{\url{https://nullderef.com/}}. Dispone
-de una serie con un total de 6 artículos, con más detalles sobre la
-implementación final. La organización también difiere considerablemente, puesto
-que los artículos se escribieron a medida que se realizaba el proyecto,
-resultando en una estructura menos estricta. Esto toma un formato de tesis,
+de una serie con un total de seis\footnote{El último artículo será publicado
+poco después de la entrega de esta memoria.} artículos, con más detalles sobre
+la implementación final. La organización también difiere considerablemente,
+puesto que los artículos se escribieron a medida que se realizaba el proyecto,
+resultando en una estructura menos rigurosa. Esto toma un formato de tesis,
 mientras que el blog cuenta la historia cronológicamente y sirve mejor como un
-tutorial para alguien que quiera implementar un sistema de plugins propio.
+tutorial para alguien que quiera implementar su propio sistema de plugins.
 
 \begin{itemize}
     \item El repositorio de GitHub para el binario de Tremor:\\
@@ -248,5 +248,5 @@ tutorial para alguien que quiera implementar un sistema de plugins propio.
 
 Se recomienda también consultar el Anexo~\ref{annex:contributions}, que lista
 todas las contribuciones de código abierto realizadas durante este proyecto. El
-Anexo~\ref{annex:hours} especifica las horas dedicadas a cada una de las fases
-de desarrollo.
+Anexo~\ref{annex:hours} especifica cada fase de desarrollo junto a sus horas
+dedicadas y enlaces relacionados.
