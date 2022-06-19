@@ -14,24 +14,25 @@ aceptado, se comenzó el proyecto oficialmente en agosto.
 \textbf{Fase}
     & \textbf{Horas}
     & \textbf{Periodo} \\
-
 \hline
+\endhead
+
 Propuesta a Tremor: incluye una introducción sobre quién soy, qué proyecto
 quiero hacer y una breve planificación de la metodología a seguir.
 
-\vspace{5mm}
+\vspace{4mm}
 \emph{\url{https://nullderef.com/blog/gsoc-proposal/}}
-    & 5
+    & 6
     & Abr.~\textquotesingle21 \\
 
 \hline
 Investigación inicial de las tecnologías disponibles para el sistema de
-plugins y discusión con el equipo. Esto también formó parte de la propuesta, de
-forma no oficial.
+plugins y discusión con el equipo. Esto también formó parte de la propuesta,
+aunque de forma no oficial.
 
 \vspace{4mm}
 \emph{\url{https://nullderef.com/blog/plugin-tech/}}
-    & 52
+    & 36
     & Abr.~\textquotesingle21 -- May.~\textquotesingle21 \\
 
 \hline
@@ -43,78 +44,116 @@ Aceptación del proyecto. Introducción a Tremor y a su equipo.
     & Ago.~\textquotesingle21 \\
 
 \hline
-Implementación de los prototipos iniciales.
+Implementación de prototipos para el sistema de plugins, y medidas de
+rendimiento iniciales. También incluye otros experimentos menores para encontrar
+el mejor método para tener programación asíncrona o genéricos.
+
+\vspace{4mm}
+\emph{\url{https://github.com/marioortizmanero/pdk-experiments}}
 
 \vspace{4mm}
 \emph{\url{https://nullderef.com/blog/plugin-start/}}
 
 \vspace{4mm}
 \emph{\url{https://nullderef.com/blog/plugin-dynload/}}
-    & 25
-    & Ago.~\textquotesingle21 -- Oct.~\textquotesingle21 \\
+    & 51
+    & Ago.~\textquotesingle21 -- Feb.~\textquotesingle22 \\
 
 \hline
-Investigación en detalle de cargado dinámico.
-    & 20
+Investigación del funcionamiento interno de Tremor. Diseño de diagramas de
+secuencia.
+
+\vspace{4mm}
+\emph{\url{https://nullderef.com/blog/plugin-dynload/}}
+    & 13
+    & Sep.~\textquotesingle21 \\
+
+\hline
+Investigación en detalle de cargado dinámico en Rust.
+
+\vspace{4mm}
+\emph{\url{https://nullderef.com/blog/plugin-dynload/}}
+    & 22
     & Sep.\textquotesingle21 -- Oct.~\textquotesingle21 \\
 
 \hline
-Investigación del funcionamiento interno de Tremor.
-    & 15
-    & Oct.~\textquotesingle21 \\
-
-\hline
 Aprendizaje de la librería \abistable.
-    & 10
-    & Nov.~\textquotesingle21 \\
+
+\vspace{4mm}
+\emph{\url{https://nullderef.com/blog/plugin-abi-stable/}}
+    & 17
+    & Oct.~\textquotesingle21 -- Nov.~\textquotesingle21 \\
 
 \hline
-Soporte para programación asíncrona con \abistable.
-    & 10
-    & Ene.~\textquotesingle22 \\
+Soporte de \abistable para programación asíncrona con \code{async_ffi}.
+
+\vspace{4mm}
+\emph{\url{https://github.com/oxalica/async-ffi/pull/10}}
+    & 15
+    & Nov.~\textquotesingle21 -- Ene.~\textquotesingle22 \\
 
 \hline
 Primer diseño e implementación del sistema de plugins.
-    & 60
-    & Dic.~\textquotesingle22 -- Feb.~\textquotesingle22 \\
+
+\vspace{4mm}
+\emph{\url{https://github.com/tremor-rs/tremor-runtime/pull/1434}}
+    & 64
+    & Ene.~\textquotesingle22 -- Abr.~\textquotesingle22 \\
 
 \hline
 Mediciones de rendimiento.
-    & 7
-    & Feb.~\textquotesingle22 \\
+
+\vspace{4mm}
+\emph{\url{https://github.com/marioortizmanero/nullderef.com/pull/54} (artículo
+aún no publicado)}
+    & 14
+    & Ene.~\textquotesingle22 -- Jun.~\textquotesingle22 \\
 
 \hline
-Resolución de los problemas de covarianza y
-subtipado\footnote{\url{https://github.com/rodrimati1992/abi_stable_crates/issues/75}}.
-    & 20
-    & Feb.~\textquotesingle22 -- Mar.~\textquotesingle22\\
+Resolución de los problemas de covarianza y subtipado.
+
+\vspace{4mm}
+\emph{\url{https://github.com/rodrimati1992/abi_stable_crates/issues/75}}
+    & 26
+    & Ene.~\textquotesingle22 -- Mar.~\textquotesingle22\\
 
 \hline
-Añadir soporte de la librería \code{halfbrown} para
-\abistable\footnote{\url{https://github.com/rodrimati1992/abi_stable_crates/pull/83}}.
-    & 15
+Añadir soporte de la librería \code{halfbrown} para \abistable.
+
+\vspace{4mm}
+\emph{\url{https://github.com/rodrimati1992/abi_stable_crates/pull/83}}
+    & 19
     & Mar.~\textquotesingle22 -- Jun.~\textquotesingle22 \\
 
 \hline
 Segunda versión del sistema de plugins con las dos mejoras anteriores de
 rendimiento.
-    & 30
-    & Mar.~\textquotesingle22 -- Jun.~\textquotesingle22 \\
+
+\vspace{4mm}
+\emph{\url{https://github.com/tremor-rs/tremor-runtime/pull/1597}}
+    & 26
+    & May.~\textquotesingle22 -- Jun.~\textquotesingle22 \\
 
 \hline
 Documentación final para que Tremor pueda continuar con el desarrollo del
 proyecto.
-    & 5
+
+\vspace{4mm}
+\emph{\url{https://github.com/tremor-rs/tremor-runtime/pull/1597}}
+
+\vspace{4mm}
+\emph{\url{https://github.com/marioortizmanero/tremor-runtime/projects/1}}
+    & 6
     & Jun.~\textquotesingle22 \\
 
 \hline
-Memoria.
-    & 35
-    & Jun.~\textquotesingle22 \\
+Memoria del Trabajo de Fin de Grado.
+    & 41
+    & May.~\textquotesingle22 -- Jun.~\textquotesingle22 \\
 
 \hline
 \textbf{Total}
-    & \textbf{277}
+    & \textbf{364}
     & \textbf{Abr.~\textquotesingle21 --
 Jun.~\textquotesingle22} \\
 
