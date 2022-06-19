@@ -2,9 +2,26 @@
 
 \chapter{Conclusiones y trabajo futuro}
 
-TODO
-
 \section{Concusiones}
+
+Como se ha explicado, la complejidad del proyecto resultó ser mucho mayor que lo
+esperado por problemas con el ABI. Por tanto, resultó imposible desarrollar en
+el tiempo disponible un sistema de plugins tan completo y eficiente como se
+especificaba.
+
+La última versión del sistema de plugins es funcional y, mediante contribuciones
+de código abierto, ha hecho posible su futura inclusión en una versión de
+Tremor. Muchas de las librerías usadas no disponían de la funcionalidad
+necesaria para este proyecto, así como \code{async_ffi}, \code{abi_stable},
+\code{halfbrown} o \code{simd-json}.
+
+El problema principal tiene que ver con el rendimiento. Dada la naturaleza de
+Tremor, es un requerimiento imprescindible para poderlo incluir en una futura
+versión. Tras unas mediciones iniciales, se calculó que su inclusión reducía el
+rendimiento del programa un 30\%, así que los siguientes pasos consistieron en
+reducir dicha cifra.
+
+TODO: incluir todas las figuras de benchmarks con las explicaciones
 
 \section{Futuro}
 

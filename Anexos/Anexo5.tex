@@ -1,162 +1,194 @@
-\chapter{Fases de desarrollo}\label{annex:hours}
+\chapter{Contribuciones de código abierto}\label{annex:contributions}
 
-Este anexo lista las fases en las que se llevó a cabo el proyecto y las horas
-invertidas en cada una de ellas. Se incluye el periodo en el que se realizaron,
-comenzando en abril de 2021 con la propuesta a Tremor. Una vez aceptado, el
-inicio oficial se dio en agosto. Adicionalmente, junto a sus descripciones se
-añaden uno o más enlaces relacionados con la tarea.
+% # Code to convert URLs to the commands above
+%
+% import re
+% import fileinput
+% from github import Github
+%
+% URL_REGEX = r'https?://github\.com/([\w_-]+/[\w_-]+)/(\w+)/(\d+)'
+% AUTH = 'OMITTED'
+%
+%
+% def get_kind(base: str, state: str) -> str:
+%     if base == 'pull':
+%         return 'pr'
+%     else:
+%         return 'issue'
+%
+%
+% g = Github(AUTH)
+%
+% for url in fileinput.input():
+%     matches = re.search(URL_REGEX, url)
+%     if matches is None:
+%         print(f"`{url}` isn't an URL, skipping...")
+%         continue
+%
+%     repo_name = matches.group(1)
+%     kind_base = matches.group(2)
+%     number = int(matches.group(3))
+%
+%     repo = g.get_repo(repo_name)
+%     issue = repo.get_issue(number=number)
+%     kind = get_kind(kind_base, issue.state)
 
-\setlist{topsep=2pt,nosep}
 
-\begin{longtable}[H]{| m{9.7cm} | P{1.3cm} | P{3.4cm} |}
-\caption{Fases de desarrollo del proyecto}\\
+% Custom command for easy issue/pr formatting
+\newcommand{\issue} {\begingroup
+    \catcode`_=12 \github{issues}{Imagenes/issue.pdf}}
+\newcommand{\pr} {\begingroup
+    \catcode`_=12 \github{pull}{Imagenes/pr.pdf}}
+\newcommand{\github}[5] {%
+    \item \includegraphics{#2} \; \emph{``#5''}\\
+        GitHub \code{#3}~\##4\\
+        \url{github.com/#3/#1/#4}
+    \endgroup
+}
 
-\hline
-\textbf{Fase}
-    & \textbf{Horas}
-    & \textbf{Periodo} \\
-\hline
-\endhead
+Una de mis partes favoritas del proyecto ha sido poder contribuir tanto a
+diferentes dependencias de código abierto, así que he mantenido una lista de
+todas las ocurrencias. Algunas colaboraciones son más importantes que otras,
+pero sigue siendo una buena métrica de los resultados obtenidos. Esto no incluye
+aquellos issues o pull requests que:
 
-Propuesta a Tremor: incluye una introducción sobre quién soy, qué proyecto
-quiero hacer y una breve planificación de la metodología a seguir.
+\begin{itemize}
+    \item No contribuyeron nada (por ejemplo, preguntas o ideas descartadas).
 
-\vspace{4mm}
-\emph{\url{https://nullderef.com/blog/gsoc-proposal/}}
-    & 6
-    & Abr.~\textquotesingle21 \\
+    \item Fueron repetitivos (por ejemplo, tuve que realizar varios pull
+        requests idénticos en Tremor para lidiar con problemas con Git).
 
-\hline
-Investigación inicial de las tecnologías disponibles para el sistema de
-plugins y discusión con el equipo. Esto también formó parte de la propuesta,
-aunque de forma no oficial.
+\end{itemize}
 
-\vspace{4mm}
-\emph{\url{https://nullderef.com/blog/plugin-tech/}}
-    & 36
-    & Abr.~\textquotesingle21 -- May.~\textquotesingle21 \\
+\section{Contribuciones externas}
 
-\hline
-Aceptación del proyecto. Introducción a Tremor y a su equipo.
+En esta sección se incluyen todas aquellas contribuciones a repositorios que no
+tengan relación directa con Tremor.
 
-\vspace{4mm}
-\emph{\url{https://nullderef.com/blog/plugin-start/}}
-    & 8
-    & Ago.~\textquotesingle21 \\
+\begin{enumerate}
+    \issue{rust-lang/nomicon}{338}{Subtyping and Variance --- Trait variance not covered}
 
-\hline
-Implementación de prototipos para el sistema de plugins, y medidas de
-rendimiento iniciales. También incluye otros experimentos menores para encontrar
-el mejor método para tener programación asíncrona o genéricos.
+    \issue{szymonwieloch/rust-dlopen}{42}{\code{dlerror} *is* thread-safe on some platforms}
 
-\vspace{4mm}
-\emph{\url{https://github.com/marioortizmanero/pdk-experiments}}
+    \issue{wasmerio/wasmer}{2539}{Add deprecation notice to the crate \code{wasmer-runtime}}
 
-\vspace{4mm}
-\emph{\url{https://nullderef.com/blog/plugin-start/}}
+    \pr{oxalica/async-ffi}{10}{Support for \abistable}
 
-\vspace{4mm}
-\emph{\url{https://nullderef.com/blog/plugin-dynload/}}
-    & 51
-    & Ago.~\textquotesingle21 -- Feb.~\textquotesingle22 \\
+    \pr{oxalica/async-ffi}{11}{Cbindgen support}
 
-\hline
-Investigación del funcionamiento interno de Tremor. Diseño de diagramas de
-secuencia.
+    \issue{oxalica/async-ffi}{12}{Procedural macro for boilerplate}
 
-\vspace{4mm}
-\emph{\url{https://nullderef.com/blog/plugin-dynload/}}
-    & 13
-    & Sep.~\textquotesingle21 \\
+    \issue{rodrimati1992/abi_stable_crates}{52}{Generating C bindings}
 
-\hline
-Investigación en detalle de cargado dinámico en Rust.
+    \pr{rodrimati1992/abi_stable_crates}{55}{Fix `carte' typo}
 
-\vspace{4mm}
-\emph{\url{https://nullderef.com/blog/plugin-dynload/}}
-    & 22
-    & Sep.\textquotesingle21 -- Oct.~\textquotesingle21 \\
+    \pr{rodrimati1992/abi_stable_crates}{57}{Fix some more typos}
 
-\hline
-Aprendizaje de la librería \abistable.
+    \pr{rodrimati1992/abi_stable_crates}{58}{Add support for \code{.keys()} and \code{.values()} in RHashMap}
 
-\vspace{4mm}
-\emph{\url{https://nullderef.com/blog/plugin-abi-stable/}}
-    & 17
-    & Oct.~\textquotesingle21 -- Nov.~\textquotesingle21 \\
+    \pr{rodrimati1992/abi_stable_crates}{59}{Implement \code{Index} for slices and vectors}
 
-\hline
-Soporte de \abistable para programación asíncrona con \code{async_ffi}.
+    \issue{rodrimati1992/abi_stable_crates}{60}{Stable ABI for floating point numbers}
 
-\vspace{4mm}
-\emph{\url{https://github.com/oxalica/async-ffi/pull/10}}
-    & 15
-    & Nov.~\textquotesingle21 -- Ene.~\textquotesingle22 \\
+    \pr{rodrimati1992/abi_stable_crates}{61}{Support for \code{f32} and \code{f64}}
 
-\hline
-Primer diseño e implementación del sistema de plugins.
+    \pr{rodrimati1992/abi_stable_crates}{68}{Implement \code{ROption::as_deref}}
 
-\vspace{4mm}
-\emph{\url{https://github.com/tremor-rs/tremor-runtime/pull/1434}}
-    & 64
-    & Oct.~\textquotesingle21 -- Abr.~\textquotesingle22 \\
+    \pr{rodrimati1992/abi_stable_crates}{70}{Implement \code{RVec::append}}
 
-\hline
-Mediciones de rendimiento.
+    \pr{rodrimati1992/abi_stable_crates}{76}{Fix \code{R*} lifetimes}
 
-\vspace{4mm}
-\emph{\url{https://github.com/marioortizmanero/nullderef.com/pull/54} (artículo
-aún no publicado)}
-    & 14
-    & Ene.~\textquotesingle22 -- Jun.~\textquotesingle22 \\
+    \pr{rodrimati1992/abi_stable_crates}{77}{Fix inconsistencies with \code{RVec} in respect to \code{Vec}}
 
-\hline
-Resolución de los problemas de covarianza y subtipado.
+    \pr{rodrimati1992/abi_stable_crates}{82}{Implement \code{ROption::{ok_or,ok_or_else}}}
 
-\vspace{4mm}
-\emph{\url{https://github.com/rodrimati1992/abi_stable_crates/issues/75}}
-    & 26
-    & Ene.~\textquotesingle22 -- Mar.~\textquotesingle22\\
+    \pr{rodrimati1992/abi_stable_crates}{83}{\code{RHashMap::raw_entry[_mut]} support}
 
-\hline
-Añadir soporte de la librería \code{halfbrown} para \abistable.
+    \pr{rodrimati1992/abi_stable_crates}{85}{Fix hasher}
 
-\vspace{4mm}
-\emph{\url{https://github.com/rodrimati1992/abi_stable_crates/pull/83}}
-    & 19
-    & Mar.~\textquotesingle22 -- Jun.~\textquotesingle22 \\
+    \pr{rodrimati1992/abi_stable_crates}{88}{Only implement \code{Default} once}
 
-\hline
-Segunda versión del sistema de plugins con las dos mejoras anteriores de
-rendimiento.
+    \pr{simd-lite/simd-json-derive}{9}{Support for \abistable}
 
-\vspace{4mm}
-\emph{\url{https://github.com/tremor-rs/tremor-runtime/pull/1597}}
-    & 26
-    & May.~\textquotesingle22 -- Jun.~\textquotesingle22 \\
+    \pr{simd-lite/value-trait}{14}{Add support for StableAbi}
 
-\hline
-Documentación final para que Tremor pueda continuar con el desarrollo del
-proyecto.
+    \pr{simd-lite/value-trait}{16}{User friendliness for the win! (close \#15)}
 
-\vspace{4mm}
-\emph{\url{https://github.com/tremor-rs/tremor-runtime/pull/1597}}
+    \pr{simd-lite/value-trait}{18}{Update \abistable after upstreamed changes}
 
-\vspace{4mm}
-\emph{\url{https://github.com/marioortizmanero/tremor-runtime/projects/1}}
-    & 6
-    & Jun.~\textquotesingle22 \\
+    \pr{nagisa/rust_libloading}{94}{Small typo}
 
-\hline
-Memoria del Trabajo de Fin de Grado.
-    & 41
-    & May.~\textquotesingle22 -- Jun.~\textquotesingle22 \\
+    \pr{szymonwieloch/rust-dlopen}{40}{Fix typo}
 
-\hline
-\textbf{Total}
-    & \textbf{364}
-    & \textbf{Abr.~\textquotesingle21 --
-Jun.~\textquotesingle22} \\
+    \pr{Licenser/halfbrown}{13}{Implement \code{remove_entry}}
 
-\hline
-\end{longtable}
+    \pr{Licenser/halfbrown}{14}{Implement \code{Clone} and \code{Debug} for \code{Iter}}
+
+    \pr{Licenser/halfbrown}{16}{Relax constraints}
+
+    \pr{Licenser/halfbrown}{17}{Same \code{Default} constraints}
+
+    \pr{Licenser/halfbrown}{18}{Fix \code{Clone} requirements for \code{Iter}}
+
+\end{enumerate}
+
+\section{Contribuciones internas}
+
+Esta sección lista los pull requests o issues realizadas dentro de los
+repositorios de Tremor, tanto para el sistema de plugins, como para otras
+mejoras no relacionadas.
+
+\begin{enumerate}
+    \pr{tremor-rs/tremor-runtime}{1434}{PDK support}
+
+    \pr{marioortizmanero/tremor-runtime}{11}{PDK with a single value}
+
+    \pr{tremor-rs/tremor-runtime}{1447}{Fix \code{makefile bench}}
+
+    \pr{marioortizmanero/tremor-runtime}{2}{Adding \abistable support for \code{tremor-script}}
+
+    \pr{marioortizmanero/tremor-runtime}{1}{Adding \abistable support for \code{tremor-runtime}}
+
+    \pr{tremor-rs/tremor-runtime}{1303}{Adding \abistable support for \code{tremor-value}}
+
+    \pr{tremor-rs/tremor-runtime}{1287}{Plugin Development Kit: Connectors}
+
+    \issue{tremor-rs/tremor-runtime}{1353}{\code{deny} statemements in \code{lib.rs} should be enforced in the CI rather than in the code}
+
+    \pr{tremor-rs/tremor-www}{72}{Fix wrong links in getting started}
+
+    \issue{tremor-rs/tremor-www}{73}{Redirect \code{docs.tremor.rs} to \code{www.tremor.rs/docs}}
+
+    \pr{tremor-rs/tremor-www}{186}{Links pinned to 0.12 don't work}
+
+    \pr{tremor-rs/tremor-www}{187}{Small fix in code snippet}
+
+    \issue{tremor-rs/tremor-www}{195}{No margins in benchmark page}
+
+\end{enumerate}
+
+\section{Otras contribuciones}
+
+Otro logro del que me siento extrañamente orgulloso es de accidentalmente romper
+el mismo compilador de Rust, como se ve en la Figura~\ref{fig:rustc_crash}. El
+error ya había sido reportado hace unos meses, pero los intentos de arreglarlo
+parecían haber fallado, así que dejé un comentario indicando cómo me había
+ocurrido a mí. Debería estar arreglado en la siguiente versión del compilador, y
+no me ha vuelto a ocurrir desde entonces~\cite{rustc_fix}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{./Imagenes/rustc_crash.png}
+    \caption{Error de compilación de \code{rustc}, relacionado con la
+    compilación incremental y arreglado ya en una futura
+    versión.}%
+    \label{fig:rustc_crash}
+\end{figure}
+
+Adicionalmente, el programa \emph{LFX Mentorship} finaliza con un evento en
+enero en el que los participantes que quieran pueden mostrar su trabajo una vez
+terminado~\cite{lfx_showcase}. Consiste en realizar una presentación de 15
+minutos en la que explican su experiencia, lo cual es especialmente útil para
+aquellos que quieran unirse al programa en el futuro. No es lo suficientemente
+larga como para entrar en detalles de implementación, lo que la hace una buena
+introducción al proyecto: \url{https://youtu.be/htLCyqY0kt0?t=3166}.

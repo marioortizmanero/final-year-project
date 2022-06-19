@@ -1,125 +1,278 @@
-\chapter{Problemas con varianza y subtipado}\label{annex:covariance}
+\chapter{Conversión del ABI de Rust al ABI de C}\label{annex:abi}
 
-Otro problema inesperado tuvo que ver con la \emph{varianza} y \emph{subtipado}.
-Son dos conceptos de teoría de sistemas de tipos, especialmente conocidos por
-desarrolladores de lenguajes orientados a objetos como Java o C\#. En el caso de
-Rust solo se da en las \lifetimes, así que no es tan popular. Lo que lo hace más
-complicado de tratar es que es completamente implícito: mejora la usabilidad del
-lenguaje cuando \emph{funciona}; en caso contrario, resulta en errores
-intricados y difíciles de identificar.
-
-Este tema no se cubre en \textcite{rustbook}, sino en \textcite[Subtyping and
-Variance]{nomicon} y \textcite[Subtyping and Variance]{rustref}. También es
-recomendable consultar el artículo \textcite{lcnr_covandcontra} o a
-\textcite{video_covandcontra} para un formato en vídeo.
-
-Deriva también de los problemas encontrados con el tipo \rust{Value}. La
-historia completa se incluye en el issue \textcite{abi_covandcontra}. Al cambiar
-los tipos de la librería estándar a los de \abistable, se producían errores de
-\lifetimes \emph{inexplicables} (ver Figura~\ref{fig:errors}). Estuve bloqueado
-con dicho problema durante mucho tiempo, así que tras comentárselo a mis
-mentores, Heinz me ayudó a reproducir el problema de forma mínima. Por alguna
-razón que todavía desconocíamos, dos tipos supuestamente equivalentes diferían a
-la hora de compilar:
+El primer paso en el proceso es declarar toda la interfaz del PDK de forma que
+use el ABI de C, en vez del de Rust. Esto se puede hacer con el atributo
+\rust{#[repr(C)]} (en lugar del \rust{#[repr(Rust)]} implícito), pero el
+problema reside en que todos los tipos dentro suyo \emph{también} tendrán que
+haber sido declarados con dicho atributo. Para ilustrarlo mejor, la estructura
+más complicada al respecto fue \rust{Value}, usado para representar datos
+pseudo-JSON y definido a continuación de forma simplificada:
 
 \begin{minted}{rust}
-use abi_stable::std_types::RCow;
-use std::borrow::Cow;
-
-fn cmp_cow<'a, 'b>(left: &Cow<'a, ()>, right: &Cow<'b, ()>) -> bool {
-    left == right
-}
-
-// Este caso falla en compilación, pero es aparentemente igual
-fn cmp_rcow<'a, 'b>(left: &RCow<'a, ()>, right: &RCow<'b, ()>) -> bool {
-    left == right
+pub enum Value {
+    /// Valores estáticos (enteros, booleanos, etc)
+    Static(StaticNode),
+    /// Tipo para cadenas de caracteres
+    String(String),
+    /// Tipo para listas
+    Array(Vec<Value>),
+    /// Tipo para objetos (mapas clave-valor)
+    Object(Box<HashMap<String, Value>>),
+    /// Tipo para datos binarios
+    Bytes(Vec<u8>),
 }
 \end{minted}
 
-\begin{minted}{text}
-$ cargo build
-error[E0623]: lifetime mismatch
-  --> src/lib.rs:10:10
-   |
-9  | fn cmp_rcow<'a, 'b>(
-   |        left: &RCow<'a, ()>, right: &RCow<'b, ()>) -> bool {
-   |              ------------          ------------
-   |              |
-   |              these two types are declared with
-   |              different lifetimes...
-10 |     left == right
-   |          ^^ ...but data from `left` flows into `right` here
-
-For more information about this error, try `rustc --explain E0623`.
-error: could not compile `repro` due to previous error
-\end{minted}
-
-Este tipo de error suele darse en caso de que la \lifetime de un valor no viva
-lo suficiente. Por ejemplo, el ejemplo de \code{rustc --explain E0623} es el
-siguiente. Se tienen dos \lifetimes \emph{sin relación entre sí}, \rust{'short}
-y \rust{'long}. La estructura \rust{Foo} que se pasa como parámetro tiene la
-\lifetime \rust{'short}, pero dentro de la función se le intenta asignar una
-\lifetime \rust{'long}, que es imposible porque el compilador no sabe cuál tiene
-un tiempo de vida mayor. Asignarle una \lifetime que viva más de lo que debe
-significaría que se podría seguir usando \rust{Foo} después de que \rust{'short}
-acabe, es decir, después de que \rust{Foo} haya sido destruido. Finalmente, esto
-causaría inconsistencias en memoria porque nuestra variable de tipo \rust{Foo}
-ya no existe, pero se está intentando acceder a ella.
+Para poder usar \rust{Value} en la interfaz del sistema de plugins, se puede
+convertir a:
 
 \begin{minted}{rust}
-struct Foo<'a> {
-    x: &'a isize,
-}
-
-fn bar<'short, 'long>(c: Foo<'short>, l: &'long isize) {
-    // Equivalente a asignarle otra lifetime a c
-    let c: Foo<'long> = c; // error!
+#[repr(C)] // La representación en memoria de Value seguirá el ABI de C
+#[derive(StableAbi)] // Solo necesario cuando se usa abi_stable
+pub enum Value {
+    Static(StaticNode),
+    /// Ahora usa `RString`, la altenativa a `String` de abi_stable
+    String(RString),
+    /// De forma similar, usa `RVec` en vez de `Vec`
+    Array(RVec<Value>),
+    /// Cambio de `Box`, `HashMap` y `String` por sus alternativas
+    Object(RBox<RHashMap<RString, Value>>),
+    /// Otro cambio de `Vec`
+    Bytes(RVec<u8>),
 }
 \end{minted}
 
-Solucionarlo es tan simple como indicar que \rust{'short} tiene al menos el
-mismo tiempo de vida que \rust{'long}. Es decir, que no se podría dar el caso de
-que \rust{Foo} es usado después de destruirse:
+El primer problema surge en la variante \rust{Static}. Su tipo contenido
+internamente, \rust{StaticNode}, es externo y usa \rust{#[repr(Rust)]}. Se
+declara en el \crate \cratelink{value_trait}, que lo declara tal que:
 
 \begin{minted}{rust}
-// Notar que ahora `'short` se declara tal que `'short: 'long`
-fn bar<'short: 'long, 'long>(c: Foo<'short>, l: &'long isize) {
-    let c: Foo<'long> = c; // ok!
+pub enum StaticNode {
+    I64(i64),
+    U64(u64),
+    F64(f64),
+    Bool(bool),
+    Null,
 }
 \end{minted}
 
-Por tanto, uno pensaría que tiene que ver con el operador \rust{==}, que se
-delega al \trait \rust{PartialEq}, así que dediqué tiempo intentando encontrar
-la diferencia entre su implementación en \rust{Cow<'a, T>} y la de
-\rust{RCow<'a, T>}. La mención anterior a estos errores como
-\emph{inexplicables} se debe a que en este caso únicamente existe una \lifetime
-\rust{'a}, así que no se podría arreglar indicando que \rust{'short: 'long}. No
-obstante, existía alguna pequeña diferencia sin relación a este problema entre
-las implementaciones, y al usar \emph{exactamente lo mismo} que en \rust{Cow<'a,
-T>}, compilaba correctamente.
+Esto se podría arreglar siguiendo el mismo procedimiento recursivamente, hasta
+que todo sea \rust{#[repr(C)]}. Pero como se trata de una librería externa,
+tendrá que abrirse un nuevo pull request y esperar que al autor le parezcan bien
+los cambios~\cite{openstaticnode}. Será importante también que la estructura use
+\rust{#[repr(C)]} únicamente cuando opcionalmente se configure a tiempo de
+compilación como necesario. De esta forma, el resto de usuarios podrán seguir
+aprovechándose de las ventajas de rendimiento que ofrece \rust{#[repr(Rust)]}.
 
-% TODO: credit properly
-Tras cambiar \rust{left == right} por \rust{left.cmp(right)} en la reproducción
-inicial, se repetía el problema, incluso con aparentemente la misma
-implementación de \rust{Ord} (el \trait con el método \rust{cmp}). No fue hasta
-que expliqué mi problema en un servidor de Discord con más desarrolladores de
-Rust que descubrí que el verdadero problema era un término llamado la
-\emph{varianza} de \rust{RCow<'a, T>}.
+\section{Consecuencias del sistema de plugins}
 
-Todo acabó reduciéndose a la única diferencia en la implementación del \trait
-\rust{Ord}. \rust{RCow<'a, T>} implementa un \trait llamado
-\rust{BorrowOwned<'a>} y \rust{Cow<'a, T>} implementa otro llamado
-\rust{ToOwned}. Ambos \traits son iguales, excepto que en \rust{BorrowOwned<'a>}
-se incluye funcionalidad adicional para \abistable. El problema no tiene que ver
-con esta diferencia en funcionalidad, sino que \rust{BorrowOwned<'a>} es
-genérico respecto a la \lifetime \rust{'a}, lo cual no es el caso de
-\rust{ToOwned}.
+Por desgracia, este cambio no termina ahí; cambiar las variantes de \rust{Value}
+implica que el código que lo usaba se romperá de numerosas formas:
 
-Al implementar \rust{Ord}, se tenía que indicar que \rust{T: ToOwned} o \rust{T:
-BorrowOwned<'a>}. El problema era que al relacionar la \lifetime \rust{'a} de
-esta forma, estaba rompiendo una regla que hacía a \rust{RCow}
-\emph{invariante}, en vez de \emph{covariante}.
+\begin{minted}{rust}
+// No funcionará porque Value::Array contiene un RVec ahora
+let value = Value::Array(Vec::new());
+\end{minted}
 
-TODO: es esta sección demasiado técnica? Debería continuar? Me falta explicar
-qué es invarianza y covarianza. La verdad que esto sí que me llevó mucho tiempo
-en su momento, así que me gustaría incluirlo de alguna forma.
+Este caso es el más sencillo: simplemente hace falta cambiar \rust{Vec} por
+\rust{RVec}. La intención de los tipos de \abistable es que sean un reemplazo
+directo de los de la librería estándar, i.e., su interfaz será la misma:
+
+\begin{minted}{rust}
+let value = Value::Array(RVec::new());
+\end{minted}
+
+% TODO: 'return' es devolver o retornar?
+Es un poco más complicado cuando los tipos anteriores se exponían en métodos,
+porque requiere tomar una decisión entre expandir el límite de FFI del
+\emph{funcionamiento interno} de \rust{Value} a los \emph{usuarios} de
+\rust{Value}. Por ejemplo, la variante \rust{Value::Object} contiene un
+\rust{RHashMap} ahora, pero el método \rust{Value::as_object} solía devolver una
+referencia a \rust{HashMap}. Se producirá un error nuevo ahí y tendrá que
+tomarse la decisión de devolver \rust{RHashMap} o añadir una conversión interna
+a \rust{HashMap}:
+
+\begin{minted}{rust}
+impl Value {
+    // Código original
+    fn as_object(&self) -> Option<&HashMap<String, Value>> {
+        match self {
+            // Problema: `m` ahora es una `RHashMap`, pero la función
+            // devuelve un `HashMap`.
+            //
+            // Solución 1: cambiar el tipo devuelto a `RHashMap`
+            // Solución 2: convertir `m` a un `HashMap` con `m.into()`
+            Self::Object(m) => Some(m),
+            _ => None,
+        }
+    }
+}
+\end{minted}
+
+\begin{itemize}
+    \item Si se cambia el tipo devuelto a \rust{RHashMap}, casi todas las veces
+        que se llamaba a \rust{as_object} ahora dejarán de compilar porque se
+        esperan un \rust{HashMap}.
+
+        Esto puede ser complicado porque, para evitar realizar conversiones, el
+        sistema de plugins \emph{infectaría} la base de código por completo.
+        Tendría que propagarse el uso de \rust{RHashMap} por todo el programa,
+        incluso cuando el PDK no es importante. Por ejemplo, \rust{Value}
+        también se usaba en la implementación del lenguaje de Tremor, Troy.
+        Tener que usar un \rust{RHashMap} en esa situación sería confuso y
+        acabarían modificándose gran cantidad de ficheros sin relación al
+        sistema de plugins.
+
+    \item Si se realiza una conversión interna a \rust{HashMap} en
+        \rust{as_object}, evitaremos todos esos errores, con un pequeño coste de
+        rendimiento. Es la opción más fácil, pero si \rust{Value::as_object} se
+        usara frecuentemente, e.g., en el bucle principal, sí que podría causar
+        una degradación considerable.
+\end{itemize}
+
+Como indica la sección~\ref{abiperf}, las conversiones entre la librería
+estándar y \abistable son $O(1)$. Esto es dónde la metodología \work es
+relevante: simplemente dejaremos el límite del FFI en su mínimo y añadiremos
+conversiones cuanto antes sea posible. Al terminar, si se detectan problemas de
+rendimiento en un caso en concreto, se puede reconsiderar.
+
+\section{Problemas con tipos externos}
+
+En algunos casos, los tipos de \abistable no habían sido actualizados para
+incluir métodos nuevos de la librería estándar, por lo que era necesario un pull
+request para añadirlo\footnote{El anexo \ref{annex:contributions} lista todas
+las contribuciones de código abierto realizadas para este proyecto}. Pero por lo
+general, convertir los tipos \emph{de la librería a estándar a \abistable} es
+una tarea trivial, simplemente un tanto tedioso.
+
+Los problemas surgen cuando es necesario convertir \emph{tipos externos a
+\abistable}. La declaración anterior de \rust{Value} era una simplificación;
+realmente, Tremor usa la implementación de \cratelink{halfbrown} de
+\rust{HashMap<K, V>}. Esto se debe a que es más eficiente para su caso de uso, y
+que posee algunas funcionalidades adicionales necesarias. El mismo caso se da
+para otro tipo \rust{Cow}, cuya alternativa en la \crate \cratelink{beef} ocupa
+menos espacio en memoria y ofrece un mejor rendimiento en Tremor.
+
+Ninguno de estos dos tipos tienen soporte dentro de \abistable, y aunque estos
+tipos estén basados en otros de la librería estándar, la conversión no es
+directa. Se pueden tomar cuatro posibles alternativas:
+
+\subsection{Evitar el tipo externo}
+
+Basándose en \work, una solución perfectamente válida es eliminar las
+optimizaciones temporalmente y dejar un \code{TODO} para que se pueda revisar
+posteriormente. Es posible que el sistema de plugins tenga excesiva complejidad,
+y limitarse a usar tipos de la librería estándar podría ser suficiente.
+
+En el caso específico de \rust{Value}, eliminar las optimizaciones problemáticas
+parece la manera más fácil de arreglar el problema. Y lo sería, si no fuera
+porque eliminar código también puede ser complicado, como muestra la
+Figura~\ref{fig:errors}, especialmente cuando la funcionalidad extra del tipo
+externo no está disponible.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{./Imagenes/errors.png}
+    \caption{Al intentar evitar los tipos externos se produjeron más de 120
+    errores de compilación.}%
+    \label{fig:errors}
+\end{figure}
+
+\subsection{Encapsular el tipo externo}
+
+Otra opción es crear un \emph{wrapper} para \code{halfbrown}, de la misma forma
+que lo hace ya \abistable con otras librerías más conocidas. Este
+encapsulamiento hace posible su uso desde el ABI de C de forma segura. Sin
+embargo, estos ejemplos ya existentes son complejos~\cite{complexwrapper} y
+difíciles de mantener, ya que tendrán que actualizarme con cada nueva versión de
+\code{halfbrown}.
+
+\subsection{Reimplementar el tipo con el ABI de C desde cero}
+
+Similar a la solución anterior, pero con incluso más costoso, dado que también
+requeriría reimplementar la funcionalidad. Puede parecer indeseable, pero es la
+mejor forma de asegurar un rendimiento máximo. Los tipos externos mencionados
+son parte de optimizaciones; encapsularlos podría tener un impacto en su
+rendimiento y hacerlos inútiles.
+
+Si esta parte del proyecto es lo suficientemente importante y existen los
+recursos, debería considerarse. De hecho, el mismo tipo \rust{Value} en Tremor
+surgió por esta razón: ya existía \rust{simd_json::Value} de otra librería, pero
+carecía de la suficiente flexibilidad y el equipo implementó uno personalizado.
+
+\subsection{Simplificar el tipo para la interfaz}
+
+Esta última opción resultó ser la más sencilla de implementar: crear una copia
+de \rust{Value} cuyo único uso es para comunicarse entre runtime y plugins,
+ilustrado en la Figura~\ref{fig:simplify}.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=10cm]{./Imagenes/simplify.pdf}
+    \caption{Comunicación entre runtime y plugins en el PDK.}%
+    \label{fig:simplify}
+\end{figure}
+
+Ya que es un tipo nuevo, no se romperá nada del código ya existente, y
+únicamente hará falta cambiarlo donde se use la interfaz. Su implementación es
+sencilla (notar el cambio de nombre a \rust{PdkValue}):
+
+\begin{minted}{rust}
+pub enum PdkValue {
+    /// Valores estáticos (enteros, booleanos, etc)
+    Static(StaticNode),
+    /// Tipo para cadenas de caracteres
+    String(String),
+    /// Tipo para listas
+    Array(Vec<Value>),
+    /// Tipo para objetos (mapas clave-valor)
+    Object(Box<HashMap<String, PdkValue>>),
+    /// Tipo para datos binarios
+    Bytes(Vec<u8>),
+}
+\end{minted}
+
+No es necesario escribir métodos adicionales para el nuevo \rust{PdkValue}, solo
+sus conversiones desde y hasta el tipo original, \rust{Value}. Esto sería
+equivalente a, en vez de pasar un \rust{Vec<T>} al PDK, reemplzarlo con un
+\rust{*const u8} para los datos y un \rust{u32} para la longitud. Simplemente
+consiste en simplificar los tipos en la interfaz, y convertirlos de vuelta para
+usar la funcionalidad completa.
+
+El problema principal es que la conversión entre tipos es ahora $O(n)$ en vez de
+$O(1)$, dado que es necesario iterar los datos en los objetos y vectores para la
+conversión. Su uso sería el siguiente:
+
+TODO: mejor si omito el siguiente snippet de código?
+
+\begin{minted}{rust}
+// Esta función es exportada por el plugin. Funcionará porque
+// `PdkValue` está declarado con el ABI de C.
+pub extern "C" fn plugin_funfuncue: PdkValue) {
+    let value = Value::from(value);
+    value.do_func()
+}
+
+// Esto se puede implementar en la runtime para facilitar su uso,
+// convirtiendo al tipo original.
+fn runtime_wrapper(value: Value) {
+    plugin_func(value.into());
+}
+\end{minted}
+
+Es la alternativa más sencilla, pero implica un coste de rendimiento; dos
+conversiones implican iterar los datos dos veces. Tras mediciones posteriores,
+se verificó que convertir los datos era un 5-10\% de la ejecución del programa.
+Es menos de lo esperado, pero sigue sin ser suficiente para Tremor.
+
+También tiene un coste de usabilidad; en comparación con tener un único
+\rust{Value}, es necesario convertir los tipos y posiblemente crear encapsularlo
+con una función de más alto nivel (\rust{runtime_wrapper}). Es una tarea
+relativamente trivial, por lo que se podría automatizar con macros procedurales
+en Rust, pero esto debería dejarse para el final del proyecto.
+
+En conclusión, esta alternativa es la más fácil de implementar en el corto
+plazo y por tanto la que mejor sigue \work. Una vez esté terminado, se puede
+analizar el rendimiento y optar por una alternativa más eficiente, como
+reescribir los tipos para el caso de uso específico de Tremor.
+
