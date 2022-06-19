@@ -1,20 +1,28 @@
-\chapter{Guía de Tremor}\label{annex:tremor}
+\chapter{Funcionamiento interno de Tremor}\label{annex:tremor}
 
-\section{Arquitectura interna}
+\section{Arquitectura}
 
-Antes de comenzar a modificar el código existente en Tremor, es importante
+Antes de comenzar a modificar el código existente en Tremor, era importante
 conocer cómo funciona para evitar perder el tiempo. Tremor se basa en el modelo
 actor. Citando Wikipedia:
 
-% TODO: puedo hacer estas cosas? Me faltaría poner una citación a
-% https://en.wikipedia.org/wiki/Actor_model al final del quote, pero así me
-% ahorro explicarlo yo mismo.
-``[The actor model treats the] actor as the universal primitive of concurrent
-computation. In response to a message it receives, an actor can: make local
-decisions, create more actors, send more messages, and determine how to respond
-to the next message received. Actors may modify their own private state, but can
-only affect each other indirectly through messaging (removing the need for
-lock-based synchronization).''
+TODO: puedo citar Wikipedia?
+
+% ORIGINAL:
+% ``[The actor model treats the] actor as the universal primitive of concurrent
+% computation. In response to a message it receives, an actor can: make local
+% decisions, create more actors, send more messages, and determine how to
+% respond to the next message received. Actors may modify their own private
+% state, but can only affect each other indirectly through messaging (removing
+% the need for lock-based synchronization).''
+
+``[El modelo actor trata al] actor como el componente universal de computación
+concurrente. En respuesta a un mensaje que recibe, un actor puede: tomar
+decisiones locales, crear más actores, enviar más mensajes y determinar cómo
+responder al siguiente mensaje recibido. Los actores pueden modificar su propio
+estado privado, pero solo pueden afectarse entre sí indirectamente a través de
+mensajería (eliminando la necesidad de sincronización con
+\emph{locks}).''~\cite{wikiactor}
 
 No usa un lenguaje (e.g., Erlang) o framework (e.g., \cratelink{bastion}, quizá
 en el futuro) que siga estrictamente este modelo, pero re-implementa los mismos
@@ -23,12 +31,17 @@ asíncrona}, es decir, que en vez de hilos trabaja con \emph{tareas}, un concept
 de nivel más alto y especializado para entrada/salida. De la documentación de
 \cratelink{async-std}, la runtime asíncrona que usa Tremor:
 
-% TODO: faltaría referenciar
-% https://docs.rs/async-std/1.10.0/async_std/task/index.html
-``An executing asynchronous Rust program consists of a collection of native OS
-threads, on top of which multiple stackless coroutines are multiplexed. We refer
-to these as “tasks”. Tasks can be named, and provide some built-in support for
-synchronization.''
+% ORIGINAL:
+% ``An executing asynchronous Rust program consists of a collection of native OS
+% threads, on top of which multiple stackless coroutines are multiplexed. We
+% refer to these as “tasks”. Tasks can be named, and provide some built-in
+% support for synchronization.''
+
+``La ejecución de un programa asíncrono en Rust consiste en una recopilación de
+hilos nativos del Sistema Operativo, sobre los cuales múltiples corutinas no
+apilables (\emph{stackless}) son multiplexadas. Nos referimos a ellas como
+``tareas''. Las tareas pueden tener nombre e incluir soporte para
+sincronización.''~\cite{asyncstd_task}
 
 Podríamos resumir su arquitectura con la frase ``Tremor se basa en actores
 corriendo en tareas diferentes, que se comunican asíncronamente con canales''.
