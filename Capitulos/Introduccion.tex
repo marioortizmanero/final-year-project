@@ -5,9 +5,8 @@
 
 \section{Contexto}
 
-TODO: quizá algunos footnotes podrían cambiarse por referencias aquí?
-
-TODO: es ``fondos monetarios'' redundante? Se entiende con solo ``fondos''?
+TODO: quizá algunos footnotes podrían cambiarse por referencias en esta sección?
+No se muy bien cuándo usar cual.
 
 Este proyecto ha sido organizado y financiado por \emph{Wayfair}, una empresa
 estadounidense de comercio digital de muebles y artículos del
@@ -40,10 +39,10 @@ uso general en vez de especializado en rendimiento y escalabilidad. La solución
 de Wayfair fue crear la alternativa \emph{Tremor}. Esta nueva herramienta está
 escrita con el lenguaje de programación Rust, que ofrece un rendimiento similar
 a C o C++ con una mayor seguridad. Adicionalmente, implementa técnicas para
-maximizar la eficiencia, como SIMD, asincronía o, en un futuro cercano,
-\emph{clustering}. Una vez la primera versión de Tremor fue publicada, el coste
-de la infraestructura se redujo a 780 dólares mensuales, 50 veces menos que el
-valor original~\cite{tremorcon_lll}.
+maximizar la eficiencia, como SIMD, asincronía con hilos o, en un futuro
+cercano, \emph{clustering}. Una vez la primera versión de Tremor fue publicada,
+el coste de la infraestructura se redujo a 780 dólares mensuales, 50 veces menos
+que el valor original~\cite{tremorcon_lll}.
 
 Tremor ha evolucionado desde entonces, y ha expandido sus posibilidades más allá
 de logs a algo más abstracto, los \emph{eventos}. Ahora soporta una mayor
@@ -53,12 +52,12 @@ abierto y de forma independiente a Wayfair, y aunque el equipo de desarrollo
 sigue siendo principalmente suyo, cualquiera puede contribuir.
 
 Posteriormente, Tremor se unió a la \emph{Cloud Native Computing
-Foundation~(CNCF)}\footnote{\url{https://www.cncf.io/}}, principalmente conocido
+Foundation~(CNCF)}\footnote{\url{https://www.cncf.io/}}, principalmente conocida
 por mantener y gestionar \textcite{k8s}. Asimismo, CNCF es parte de la
 organización \emph{Linux
 Foundation~(LFX)}\footnote{\url{https://www.linuxfoundation.org/}}, que además
-del famoso kernel también ayuda a todo tipo de proyectos, como Node.js o Let's
-Encrypt~\cite{lfx_projects}.
+del famoso kernel también ayuda a todo tipo de proyectos de código abierto, como
+Node.js o Let's Encrypt~\cite{lfx_projects}.
 
 Formalmente, el trabajo se ha llevado a cabo gracias a la iniciativa \emph{LFX
 Mentorship}, que promueve el aprendizaje de desarrolladores de código abierto,
@@ -87,12 +86,12 @@ cuando era necesario.
 La tarea a llevar a cabo es la implementación de un sistema de plugins, también
 denominado \emph{Plugin Development Kit~(PDK)}, para la base de código ya
 existente de Tremor. El programa se dividirá en dos partes independientes: la
-\emph{runtime} y los \emph{plugins}. Los plugins son componentes individuales
-que implementan cualquier tipo de funcionalidad, y la runtime es capaz de
-cargarlos y usarlos dinámicamente en el programa. Una comparación de más alto
-nivel se podría dar en un móvil: el hecho de que el sistema operativo (runtime)
-pueda instalar cualquier aplicación (plugin) lo hace mucho más flexible que un
-dispositivo que únicamente tuviera una serie de aplicaciones predefinidas.
+\emph{runtime} y los \emph{plugins}. Los plugins son componentes que implementan
+cualquier tipo de funcionalidad, y la runtime es capaz de cargarlos y usarlos
+dinámicamente en el programa. Una comparación de más alto nivel se podría dar en
+un móvil: el hecho de que el sistema operativo (runtime) pueda instalar
+cualquier aplicación (plugin) lo hace mucho más flexible que un dispositivo que
+únicamente tuviera una serie de aplicaciones predefinidas.
 
 En el caso de Tremor, un plugin podría dar soporte para recibir eventos de
 Apache Kafka o para enviarlos a Postgres, por ejemplo. La runtime debería ser
@@ -117,35 +116,34 @@ programación C, dado que su interfaz de comunicación es relativamente sencilla
 está muy bien definida en su estándar. Asimismo, se trata de una solución
 altamente eficiente, dado que la comunicación es binaria y directa. Las
 características de Tremor implican que el método a usar debería tener un alto
-rendimiento, así que el cargado dinámico una de las mejores opciones
+rendimiento, así que el cargado dinámico es una de las mejores opciones
 disponibles.
 
 Sin embargo, lenguajes modernos como C++ o Rust no especifican estrictamente un
 ABI, dado que implementan características más complejas como excepciones o tipos
-genéricos. En el caso concreto de Rust, si se compila la \emph{runtime} y los
-\emph{plugins} separadamente, no existe ninguna garantía de que la
-representación binaria de los datos o de que la convención de llamada a
-funciones --- entre otros --- sea la misma.
+genéricos. En el caso concreto de Rust, si se compila la runtime y los plugins
+separadamente, no existe ninguna garantía de que la representación binaria de
+los datos o de que la convención de llamada a funciones --- entre otros --- sea
+la misma.
 
-Por tanto, el cargado dinámicamente es imposible puramente con Rust. Se debe
-recurrir a otro ABI que sí sea estable, como el de C. Todas las funciones y
-tipos que se usen en la comunicación entre runtime y plugins deberán declararse
+Por tanto, el cargado dinámico es imposible puramente con Rust. Se debe recurrir
+a otro ABI que sí sea estable, como el de C. Todas las funciones y tipos
+involucrados en la comunicación entre runtime y plugins deberán declararse
 siguiendo el estándar de C. Los tipos seguirán unas reglas que definen cómo se
 representan en memoria, y las funciones tendrán que seguir una convención
 específica.
 
 El problema principal con Tremor es que, al estar escrito puramente con Rust,
 todas sus funciones y tipos internos también se declaran con este lenguaje. Este
-proyecto tendrá que desarrollar un método para transformar tipos de Rust a C y
-viceversa para poder interactuar con plugins, de forma que se pueda seguir
-usando Rust para todo lo demás en Tremor.
+proyecto tendrá que desarrollar un método para transformar tipos complejos de
+Rust a C y viceversa para poder interactuar con plugins.
 
 \section{Motivación}
 
 \subsection{Tiempos de compilación}
 
-Actualmente, el problema más importante en Tremor es su tiempo de compilación.
-En mi portátil Dell Vostro 5481 de unos 600~€, compilar el binario \code{tremor}
+Uno de los problemas más importantes en Tremor es su tiempo de compilación. En
+mi portátil Dell Vostro 5481 de unos 600~€, compilar el binario \code{tremor}
 desde cero requiere de más de 7 minutos en modo \emph{debug}, y más de 13 en
 modo \emph{release} (con optimizaciones del compilador). Incluso en el caso de
 cambios incrementales (una vez las dependencias ya han sido compiladas), hay que
@@ -155,10 +153,9 @@ Puede que estas cifras no sean tan preocupantes en comparación con software de
 un tamaño mucho mayor. Pero debido a la naturaleza del programa, el problema
 solo empeorará con el tiempo. Tremor debe tener soporte para un gran número de
 protocolos (e.g., TCP o UDP), software (e.g., PostgreSQL o ElasticSearch) y
-códecs (e.g., JSON o YAML). Esto no es una buena experiencia de desarrollo e
-impide que nuevos programadores se unan a la comunidad de Tremor. El número de
-dependencias continuará incrementando hasta que imposibilite la creación de
-nuevas prestaciones.
+códecs (e.g., JSON o YAML). El número de dependencias continuará incrementando
+hasta resultar en una pésima experiencia de desarrollo e imposibilitar la
+creación de nuevas prestaciones.
 
 Los problemas relacionados con tiempos de compilación excesivamente largos no se
 limitan a Tremor. Es uno de las mayores críticas que recibe Rust y un 61\% de
@@ -173,10 +170,12 @@ TODO
 
 Otra ventaja que provee un sistema de plugins es modularidad; ser capaz de
 tratar la runtime y los plugins de forma separada suele resultar en una
-arquitectura más limpia~\cite{baldwin2000design}. También hace posible el
-desacoplamiento del ejecutable y sus componentes; algunas dependencias tienen un
-ciclo de versionado más rápido que otras y generalmente es más conveniente
-actualizar únicamente un plugin, en lugar del programa por completo.
+arquitectura más limpia~\cite{baldwin2000design}.
+
+También hace posible el desacoplamiento del ejecutable y sus componentes;
+algunas dependencias tienen un ciclo de versionado más rápido que otras.
+Generalmente, es más conveniente actualizar únicamente un plugin, en lugar del
+programa por completo.
 
 \subsection{Aprender de otros}
 
