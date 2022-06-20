@@ -12,18 +12,11 @@ puedan facilitar el desarrollo, o de forma más general, con la estrategia de
 trabajo a seguir. En esta sección se cubrirá lo último, dado que es menos un
 detalle de implementación.
 
-TODO: podría mencionar trucos relacionados con Rust en detalle (desactivar
-algunos warnings, o quitar statements \rust{use}), pero no creo que sea tan
-importante en este caso y el documento ya es bastante largo.
-
 La metodología fue insipirada por mis mentores, que lo denominaron el ``Just
 Make it Work'', o \work. Se basa en que, inicialmente, con lo que más problemas
 tenía era el perderme en los detalles. Pero ciertamente, primero de todo lo
 importante es que ``funcione''. Siempre y cuando el sistema de plugins se pueda
 compilar y ejecutar, lo siguiente es secundario:
-
-TODO: alguna traducción de "just make it work" un poco más natural? "Solo que
-funcione"? "No te líes, que funcione primero"?
 
 \begin{itemize}
     \item Código ``feo'' (no idiomático, repetitivo o desordenado).
@@ -32,25 +25,19 @@ funcione"? "No te líes, que funcione primero"?
 
     \item Documentación pobre.
 
-    \item No tener tests.
+    \item No tener tests prematuros.
 
     \item No aplicar sugerencias recomendadas por \emph{linters} (en el caso de
         Rust, \emph{Clippy}).
 
 \end{itemize}
 
-TODO: el siguiente párrafo puede no gustarle a alguno de ingeniería del software
-porque rompe todas las metodologías de desarrollo que tienen, pero fue como
-sinceramente ocurrió.
-
-El no trabajar con tests es discutible, dado que depende de si el programador
-prefiere seguir un desarrollo basado en tests. Sin embargo, personalmente no
-sentí la necesidad de escribir ningún test en este caso, al menos al principio.
-Gracias al sistema fuertemente tipado de Rust, fue principalmente un
-\emph{desarrollo basado en el compilador}. Mi progreso se basaba en realizar
-algunos cambios y posteriormente intentar que los aceptara el compilador,
-repetidamente. Únicamente avancé a la parte de tests cuando todo parecía
-funcionar manualmente y estaba lo suficientemente satisfecho con el resultado.
+El propio desarrollo invitaba a aprovechar las ventajas de un lenguaje
+fuertemente tipado como Rust, evitando realizar testing posiblemente prematuro.
+Esto consistía en realizar cambios y posteriormente trabajar en que los aceptara
+el compilador, repetidamente. Únicamente se procedió al testing exhaustivo una
+vez la interfaz final del sistema de plugins compilaba, pasadas las fases
+tempranas o incluso medias.
 
 Adicionalmente, las optimizaciones prematuras son la fuente de todos los
 problemas. No es algo que sea importante aún. Solo una vez terminada la primera
@@ -76,18 +63,14 @@ necesario para llegar a la solución final. Pero es doloroso tener que eliminar
 código al que le has dedicado tiempo, así que al menos debería intentarse
 minimizar el impacto que esto tenga.
 
-\section{\abistable}
+\section{Versionado en \abistable}
 
 Dado que \abistable va a ser la librería principal en la que se basará el
 sistema de plugins, es importante entender cómo funciona al completo. Además de
 conocer los detalles de implementación, es importante conocer cómo \abistable
 soluciona los problemas a tener en cuenta para implementar un sistema de
-plugins:
-
-\subsection{Versionado}
-
-\abistable especifica lo siguiente respecto a su sistema de
-seguridad~\cite{abistable_safety}:
+plugins. La librería especifica lo siguiente respecto a su sistema de
+compatibilidad de tipos~\cite{abistable_safety}:
 
 \begin{itemize}
     \item El ABI de \abistable se comprueba siempre. Cada versión \code{0.y.0} y
@@ -99,22 +82,28 @@ seguridad~\cite{abistable_safety}:
 
 \end{itemize}
 
-Todo esto se basa en el \trait \rust{StableAbi}, indicador de que un tipo es
-seguro para FFI. Contiene información sobre la estructura en memoria y puede ser
-derivado automáticamente. Todos los tipos exportados por \abistable, además de
-usar el ABI de C, implementan dicho \trait. Por tanto, si queremos declarar
-nuestro propio tipo para usar con \abistable, ademaś de marcarlo con
-\rust{#[repr(C)]}, tendremos que añadir \rust{#[derive(StableAbi)]}.
+Todo esto se basa en el \trait (equivalente en este caso a una clase abstracta
+de Java) \rust{StableAbi}, indicador de que un tipo es seguro para cargado
+dinámico. Contiene información como su disposición en memoria y puede ser
+implementado automáticamente con un macro. Al cargar un plugin con \abistable,
+se comprobará que sus tipos sean compatibles con aquellos de la runtime.
 
-\subsection{Cargado de plugins}
+Sin este mecanismo, sería posible cargar un plugin con una interfaz diferente a
+la runtime, resultando en violaciones de acceso a memoria. Pongamos un caso en
+el que una estructura en la interfaz de la runtime tuviese un campo adicional.
+El plugin exportará esa estructura sin el campo nuevo, puesto que usa una
+interfaz anticuada. Cuando la runtime intente acceder a la estructura del
+plugin, se leerá un campo que no existe y que por tanto es parte de memoria no
+definida.
 
-\subsection{Exportando un plugin}
+\section{Conversión de la interfaz a C}
 
 Es importante mantener la interfaz de plugins lo más simple posible. Los
 detalles de comunicación deberían dejarse a la runtime, de forma que los plugins
 se limiten a exportar una lista de funciones síncronas. De esta forma, se podrá
-evitar pasar tipos complejos (\rust{async}, canales de comunicación, etc) entre
-la runtime y los plugins, que implicaría una carga de trabajo mucho más alta.
+evitar en lo posible pasar tipos complejos (programación asíncrona, canales de
+comunicación, etc) entre la runtime y los plugins, que implicaría una carga de
+trabajo mucho más alta.
 
 Una vez esta interfaz de bajo nivel se defina, se puede crear un \emph{wrapper}
 de más alto nivel en la runtime que se encargue de la comunicación y de mejorar
@@ -122,9 +111,57 @@ su usabilidad dentro de Tremor. Esto mismo lo hacen otras \crates como
 \cratelink{rdkafka}, que implementa una capa de abstracción asíncrona sobre su
 interfaz de C en \cratelink{rdkafka-sys}.
 
-\subsection{Gestión de pánicos}
+El primer paso consiste en declarar la interfaz del PDK de forma que use el ABI
+de C, en vez del de Rust. Esto se puede hacer con el atributo \rust{#[repr(C)]}
+(en lugar del \rust{#[repr(Rust)]} implícito). Para usar \abistable también
+tendrá que implementarse el \trait \rust{StableAbi}.
 
-Actualmente, lanzar pánicos a través del FFI es comportamiento no
+La dificultad reside en que todos los tipos dentro de la interfaz \emph{también}
+tendrán que haber sido declarados con tanto \rust{#[repr(C)]} como
+\rust{StableAbi}, recursivamente. Esto puede convertirse en un problema si
+alguno de los tipos a convertir es externo y no se tiene acceso directo. Tendrá
+que abrirse un pull request para añadir soporte, o crear un \emph{wrapper} que
+envuelva la funcionalidad de forma opaca a su distribución en memoria. Se
+incluye la explicación completa respecto a Tremor en el Anexo~\ref{annex:abi},
+con más detalles sobre la implementación.
+
+\section{Cargado de plugins}
+
+Afortunadamente, \abistable ya se encarga de la mayoría del trabajo en este
+aspecto. Lo único que hace falta implementar es una manera en la que
+\emph{encontrar} los plugins en el sistema. Para ello, se introduce una nueva
+variable de entorno \code{TREMOR_PLUGIN_PATH} que liste todos los directorios
+que pueden contener plugins. De forma similar a \code{PATH}, los directorios se
+separan con dos puntos.
+
+Una vez se tiene la lista de directorios, se comprobarán también sus
+subdirectorios, recursivamente. Es importante añadir un límite de profundidad
+aquí para evitar que el programa se quede atascado, por ejemplo si el usuario
+incluyese el directorio raíz (\code{/}) accidentalmente. Tampoco deberían
+seguirse enlaces simbólicos por simplicidad.
+
+Todos aquellos archivos encontrados cuya extensión sea la de una librería
+dinámica tendrán que añadirse a la lista de posibles plugins. Esta extensión
+varía según el sistema operativo: en Linux es \code{.so}, en Windows es
+\code{.dll}, y en MacOS es \code{.dylib}.
+
+Finalmente, si al intentar cargar uno de los plugins encontrados la operación
+falla, se mostrará una advertencia y se continuará hasta probar con todas las
+ocurrencias. Un método más robusto para evitar cargar ficheros que no sean
+plugins de Tremor sería usar una extensión personalizada, o algun tipo de
+convención para el nombre. Sin embargo, al personalizarse manualmente los
+directorios, se asume que la gran mayoría de las librerías dinámicas serán
+plugins.
+
+\section{Gestión de pánicos}
+
+Los pánicos en Rust se usan para expresar errores de los que un programa no se
+puede recuperar. Por ejemplo, acceder a un índice inexistente en una lista, o
+quedarse sin memoria. Su funcionamiento es similar a una excepción de C++ o
+Java: se propagarán hasta llegar a la función principal y parar la ejecución del
+programa.
+
+Actualmente, lanzar pánicos a través de la interfaz C es comportamiento no
 definido~\cite[FFI and Panics]{nomicon}. Aunque el programa aborte en la mayoría
 de los casos, no existe ninguna garantía de que vaya a suceder así; podría
 continuar en un estado inválido, con cualquier tipo de consecuencia.
@@ -132,26 +169,27 @@ continuar en un estado inválido, con cualquier tipo de consecuencia.
 La solución más directa es usar la función \rust{std::panic::catch_unwind}, que,
 para casos excepcionales como este, puede parar la propagación de pánicos cuando
 sea llamada. Se podría usar en todas las funciones exportadas por el plugin
-internamente, y en caso de producirse un pánico se abortaría el programa, en
-lugar de dejar que se propague a la runtime, que sería indefinido.
+internamente, y en caso de producirse un pánico se terminaría el programa
+manualmente, en lugar de dejar que se propague a la runtime, que sería
+indefinido.
 
-También es posible configurar el programa para que aborte cuando se produzca un
-pánico, en vez de propagarlo. De esta forma, no se llegaría a invocar
-comportamiento no definido y se mantendría un rendimiento máximo --- capturar
-pánicos tiene un coste. Sin embargo, implica varias desventajas importantes: al
-abortar, no se tendrá acceso a la información de \emph{debug} que dan los
-pánicos, tampoco se limpiará el estado del programa, y desde la runtime es
-imposible saber si el plugin ha configurado los pánicos para que aborten. Esto
-último será posible en el futuro, una vez \textcite{pluggablepanic} llegue a una
-versión estable.
+También es posible configurar el programa por completo para que aborte cuando se
+produzca un pánico, en vez de propagarlo. De esta forma, no se llegaría a
+invocar comportamiento no definido y se mantendría un rendimiento máximo ---
+capturar pánicos tiene un coste. Sin embargo, implica varias desventajas
+importantes: al abortar, no se tendrá acceso a la información de \emph{debug}
+que dan los pánicos, tampoco se limpiará el estado del programa, y desde la
+runtime es imposible saber si el plugin ha configurado los pánicos para que
+aborten. Esto último será posible en el futuro, una vez
+\textcite{pluggablepanic} llegue a una versión estable.
 
 Esto es algo que \abistable ha tenido en cuenta desde el principio. Antes de que
 un pánico se vaya a propagar de plugin a runtime, la librería abortará el
-programa por completo. Esta parte se realiza de forma transparente; no hace
-falta que el desarrollador se preocupe en ningún momento por ello.
+programa por completo. Esta parte se realiza transparentemente; no hace falta
+que el desarrollador se preocupe en ningún momento por ello.
 
-La solución de \abistable no es perfecta por tener un pequeño coste de
-rendimiento y por imposibilitar el recuperarse de errores en los plugins. En una
+La solución de \abistable no es perfecta, ya que tiene un pequeño coste de
+rendimiento e imposibilita el recuperarse de errores en los plugins. En una
 futura versión de Tremor, podría ser posible reiniciar plugins en caso de que
 dejen de funcionar para mejorar la resiliencia a fallos.
 
@@ -159,91 +197,77 @@ El equipo de Rust conoce esta limitación y está trabajando en mejorar la
 situación. En una futura versión, planea definir cuándo se puede propagar un
 pánico de forma más precisa~\cite{cunwind}.
 
-\subsection{Programación asíncrona}
+\section{Programación asíncrona}
 
 El objetivo inicial era simplificar la interfaz lo suficiente como para que no
 sea necesario tratar aspectos como programación asíncrona en el PDK. Esto
 terminó siendo inevitable, dado que la asincronía es uno de los pilares de
 Tremor.
 
-TODO: podría poner un ejemplo de cómo se usa esta librería (está en un
-comentario aquí), pero creo que es demasiado detalle.
+Para poder usar programación asíncrona con el ABI de C se puede recurrir a la
+\crate \cratelink{async_ffi}, cuyo único problema era no tener soporte para
+\abistable en concreto. Al no implementar el \trait \rust{StableAbi}, no se
+podía usar en la interfaz del PDK, por lo que tuve que abrir un pull request
+para hacerlo yo mismo~\cite{asyncfficontrib}. El uso de esta librería resulta en
+código más verboso, pero esto se podría mejorar en el futuro con
+macros~\cite{asyncffimacro}.
 
-% \begin{minted}{rust}
-% // Así funciona la programación asíncrona en Rust; la primera
-% // función es prácticamente equivalente a la segunda.
-% async fn example() -> String {
-%     read_file().await
-% }
-% fn example() -> impl Future<Output = String> {
-%     async {
-%         read_file().await
-%     }
-% }
-%
-% // No pueden haber genéricos en FFI, por lo que ahora `Future`
-% // es un tipo concreto `FfiFuture` en vez de un trait. La
-% // conversión de `Future` a `FfiFuture` se puede realizar con
-% // `into_ffi`.
-% fn example() -> FfiFuture<String> {
-%     async move {
-%         read_file().await
-%     }
-%     .into_ffi()
-% }
-% // `FfiFuture<T>` implementa `Future<Output = T>`, por lo que
-% // su uso es el mismo.
-% async fn user() {
-%     example().await
-% }
-% \end{minted}
-
-Para poder usar \rust{async} con el ABI de C se puede recurrir a la \crate
-\cratelink{async_ffi}, cuyo único problema era no tener soporte para \abistable.
-Al no implementar el \trait \rust{StableAbi}, no se podía usar en la interfaz
-del PDK, por lo que tuve que abrir un pull request para hacerlo yo
-mismo~\cite{asyncfficontrib}. El uso de esta librería resulta en código más
-verboso, pero esto se podría mejorar en el futuro con un macro
-procedural~\cite{asyncffimacro}.
-
-\subsection{Seguridad en hilos}
+\section{Seguridad en hilos}
 
 \abistable utiliza la \crate \cratelink{libloading} internamente, cuya gestión
 de errores no es segura en hilos en algunas plataformas, como \code{dlerror} en
 FreeBSD~\cite{thsafe_libloading}\cite{thsafe_openbsd}. Sí que lo es en
 Linux~\cite{thsafe_linux}, macOS~\cite{thsafe_macos} y Windows~\cite{thsafe_ms},
-así que en el caso de Tremor no hace falta preocuparse por esto.
+así que en el caso de Tremor no es un problema.
 
-Será importante tener esto en cuenta en el futuro; al añadir soporte para un
-nuevo sistema operativo habrá que asegurarse de que su gestión de errores sea
-segura en hilos. En caso contrario, deberá actualizarse \code{libloading} para
+Será importante tenerlo en cuenta en el futuro; al añadir soporte para un nuevo
+sistema operativo habrá que asegurarse de que su gestión de errores sea segura
+en hilos. En caso contrario, deberá actualizarse \code{libloading} para
 sincronizar el acceso con un mútex interno, como lo hace la \crate
-\cratelink{dlopen}~\cite{thsafe_dlopen}. Notar que esta librería es también
-mejorable, dado que usa el mútex siempre, incluso en sistemas operativos donde
-el sistema de errores sí es seguro en hilos~\cite{thsafe_dlopen_issue}.
+\cratelink{dlopen}~\cite{thsafe_dlopen}. Notar que \code{dlopen} es también
+mejorable, dado que usa el mútex \emph{siempre}, incluso en sistemas operativos
+donde la gestión de errores sí es segura en hilos~\cite{thsafe_dlopen_issue}.
 
-\subsection{Rendimiento}\label{abiperf}
+\section{Rendimiento}\label{abiperf}
 
-Un último punto vital a tener en cuenta es el coste de realizar conversiones
-entre tipos de la librería estándar y tipos de \abistable. Esto se dará en
-numerosas ocasiones, dado que usar \abistable cuando no es necesario es
-subóptimo para tanto el rendimiento como la usabilidad. Y si, por ejemplo,
-convertir un \rust{Vec<T>} a un \rust{RVec<T>} tuviese complejidad $O(n)$,
-probablemente \abistable tendría que ser descartado como la solución escogida.
+Un punto vital a tener en cuenta es el coste de realizar conversiones entre
+tipos de la librería estándar y tipos de \abistable. Esto se dará en numerosas
+ocasiones, dado que usar \abistable cuando no es necesario es subóptimo para
+tanto el rendimiento como la usabilidad. Y si, por ejemplo, convertir un
+\rust{Vec<T>} a un \rust{RVec<T>} tuviese complejidad $O(n)$, probablemente
+\abistable tendría que ser descartado como la solución escogida.
 
 Afortunadamente, tras analizar la implementación de tipos como \rust{RVec<T>},
 \rust{RSlice<T>}, \rust{RStr} o \rust{RString}, estas conversiones únicamente
 consisten en transferir un puntero con los datos, sin necesidad de copiar nada.
 Es decir, las conversiones que realizaremos serán $O(1)$.
 
-\section{Conversión al ABI de C}
+\section{Problemas con varianza y subtipado}
 
-TODO: resumir y enlazar al anexo
+Una complicación a la que se dedicó una cantidad considerable de tiempo tiene
+que ver con el concepto de \emph{varianza} y \emph{subtipado}. En resumen, si un
+tipo es \emph{covariante}, el modelo de memoria de Rust será mucho más flexible
+al usarlo. Todo este mecanismo es implícito, es decir, en ningún momento el
+desarrollador especifica manualmente la varianza del tipo; el compilador de Rust
+lo infiere automáticamente.
 
-\subsection{Problemas con varianza y subtipado}
+Sin embargo, un tipo puede dejar de ser covariante si incumple una serie de
+reglas preestablecidas. En ese caso, la flexibilidad adicional se pierde y se
+producen errores casi imposibles de entender si uno no es familiar con el
+término \emph{varianza}. Los tipos definidos en \abistable, a diferencia de
+aquellos en la librería estándar, no eran covariantes, lo cual fue especialmente
+complicado de descubrir y requirió reescribir algunas partes suyas por completo.
 
-TODO: resumir y enlazar al anexo
+Afortunadamente, una futura versión de Rust hará el debugging de estos errores
+mucho más intuitivo~\cite{smarterchecker}. Es un tema que requiere conocimientos
+más avanzados de Rust, por lo que se incluye en el Anexo~\ref{annex:covariance}
+al completo para más información.
 
-\subsection{Optimizaciones}
+\section{Optimizaciones}
+
+Una vez implementada la primera versión del sistema de plugins, se realizaron
+varias medidas de rendimiento.
+
+También se incluye en~\ref{annex:abi_ext}.
 
 TODO: mencionar arreglos de halfbrown y similares

@@ -1,12 +1,9 @@
 \chapter{Conversión del ABI de Rust al ABI de C}\label{annex:abi}
 
-El primer paso en el proceso es declarar toda la interfaz del PDK de forma que
-use el ABI de C, en vez del de Rust. Esto se puede hacer con el atributo
-\rust{#[repr(C)]} (en lugar del \rust{#[repr(Rust)]} implícito), pero el
-problema reside en que todos los tipos dentro suyo \emph{también} tendrán que
-haber sido declarados con dicho atributo. Para ilustrarlo mejor, la estructura
-más complicada al respecto fue \rust{Value}, usado para representar datos
-pseudo-JSON y definido a continuación de forma simplificada:
+Para ilustrar mejor el problema de conversión de ABIs, se introduce la
+estructura más complicada al respecto, \rust{Value}. Esta estructura sirve para
+representar datos pseudo-JSON y es definido a continuación de forma
+simplificada:
 
 \begin{minted}{rust}
 pub enum Value {
@@ -188,6 +185,42 @@ embargo, estos ejemplos ya existentes son complejos~\cite{complexwrapper} y
 difíciles de mantener, ya que tendrán que actualizarme con cada nueva versión de
 \code{halfbrown}.
 
+
+\begin{figure}
+    \centering
+    \begin{minted}{rust}
+// Así funciona la programación asíncrona en Rust; la primera
+// función es prácticamente equivalente a la segunda.
+async fn example() -> String {
+    read_file().await
+}
+fn example() -> impl Future<Output = String> {
+    async {
+        read_file().await
+    }
+}
+
+// No pueden haber genéricos en FFI, por lo que ahora `Future`
+// es un tipo concreto `FfiFuture` en vez de un trait. La
+// conversión de `Future` a `FfiFuture` se puede realizar con
+// `into_ffi`.
+fn example() -> FfiFuture<String> {
+    async move {
+        read_file().await
+    }
+    .into_ffi()
+}
+// `FfiFuture<T>` implementa `Future<Output = T>`, por lo que
+// su uso es el mismo.
+async fn user() {
+    example().await
+}
+    \end{minted}
+    \caption{Interfaz modificada para la programación asíncrona en el sistema de
+    plugins con la \crate \code{async_ffi}.}%
+    \label{fig:async_ffi}
+\end{figure}
+
 \subsection{Reimplementar el tipo con el ABI de C desde cero}
 
 Similar a la solución anterior, pero con incluso más costoso, dado que también
@@ -244,8 +277,6 @@ El problema principal es que la conversión entre tipos es ahora $O(n)$ en vez d
 $O(1)$, dado que es necesario iterar los datos en los objetos y vectores para la
 conversión. Su uso sería el siguiente:
 
-TODO: mejor si omito el siguiente snippet de código?
-
 \begin{minted}{rust}
 // Esta función es exportada por el plugin. Funcionará porque
 // `PdkValue` está declarado con el ABI de C.
@@ -276,4 +307,3 @@ En conclusión, esta alternativa es la más fácil de implementar en el corto
 plazo y por tanto la que mejor sigue \work. Una vez esté terminado, se puede
 analizar el rendimiento y optar por una alternativa más eficiente, como
 reescribir los tipos para el caso de uso específico de Tremor.
-

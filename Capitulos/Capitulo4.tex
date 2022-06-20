@@ -5,7 +5,9 @@
 \section{Arquitectura}
 
 Para el sistema de plugins final, la estructura de Tremor debería ser la
-ilustrada en la Figura~\ref{fig:separation}:
+ilustrada en la Figura~\ref{fig:separation}. Notar que una \crate es el nombre
+que recibe un binario o librería en Rust, tanto local como externo (en cuyo caso
+sería una dependencia).
 
 \begin{figure}
     \centering
@@ -85,11 +87,11 @@ sistema de plugins basado en iteraciones (o pull requests):
         se puede dejar como una prueba de concepto por el momento y se pueden
         incluir algunos plugins externos para demostrar su funcionamiento.
 
-        Esta iteración se podrá mergear con la rama principal, ya que el
+        Esta iteración se podrá fusionar con la rama principal, ya que el
         programa seguirá funcionando de la misma forma, simplemente con una
         interfaz distinta para los conectores internamente.
 
-    \item \textbf{Realmente hacer los plugins externos}: dado que los plugins
+    \item \textbf{Hacer los plugins externos}: dado que los plugins
         desarrollados usan la nueva interfaz, este paso debería ser sencillo.
         Únicamente implicará una gran cantidad de cambios, ya que implica
         reorganizar el repositorio con \crates nuevas, arreglar el sistema de
@@ -469,24 +471,17 @@ pub static cached: Event = Event {
 \begin{figure}
     \centering
     \begin{minted}{rust}
-// Using C's memory layout with `#[repr]`
 #[repr(C)]
 pub struct Event {
-    // We can't have types from the standard library anymore, only
-    // either basic ones...
     pub count: i32,
-    // ...or types from C itself
     pub name: *const std::os::raw::char_c,
 }
 
-// Using C's calling conventions with `extern "C"`
 pub extern "C" fn transform(x: Event) -> i32 {
     println!("Received an event with count {}", x.count);
     x.count
 }
 
-// Disabling mangling so that the resource's name is known when
-// loading the plugin.
 #[no_mangle]
 pub static cached: Event = Event {
     count: 0,
@@ -524,8 +519,6 @@ deberá tenerse en cuenta en la decisión final también.
 \begin{figure}
     \centering
     \begin{minted}{rust}
-// Now we also "derive" the trait StableAbi, i.e., it's implemented
-// automatically.
 #[repr(C)]
 #[derive(StableAbi)]
 pub struct Event {
@@ -534,7 +527,6 @@ pub struct Event {
     pub name: RStr<'static>,
 }
 
-// Using C's calling conventions with `extern "C"`
 #[sabi_extern_fn]
 pub fn transform(x: Event) -> i32 {
     println!("Received an event with count {}", x.count);
