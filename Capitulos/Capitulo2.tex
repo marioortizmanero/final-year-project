@@ -27,7 +27,8 @@ Processing} respectivamente, siguiendo la terminología anglosajona.}, ambos
 relevantes a Tremor. \textcite{dayarathna2018recent} y
 \textcite{tawsif2018review} resumen los avances más recientes en el campo,
 analizan su evolución, y clasifican sus subáreas. La mayoría de la información
-teórica en esta sección se extrae de estas fuentes.
+teórica tanto en esta sección como en el Anexo~\ref{annex:tremor} se extrae de
+estas fuentes.
 
 \section{Casos de uso}
 
@@ -93,11 +94,11 @@ procesado se basa en las siguientes operaciones:
         que no se considera relevante.
 
     \item \emph{Transformaciones}: conversión de los datos de un formato a otro,
-        así como incrementar un campo con un contador, reemplazar valores, o
-        reorganizar su estructura.
+        como por ejemplo incrementar un campo con un contador, reemplazar
+        valores, o reorganizar su estructura.
 
-    \item \emph{Matching}: búsqueda de partes de los eventos que siguen un
-        patrón en específico (e.g., un campo \code{"id"} con un valor númerico)
+    \item \emph{Matching}: búsqueda de partes de eventos que siguen un patrón en
+        específico (por ejemplo, un campo \code{"id"} con un valor númerico)
         para transformarlo o descartarlo.
 
     \item \emph{Agregación} o \emph{rollups}: recolección de múltiples eventos
@@ -137,5 +138,5 @@ El término \emph{conector} se introdujo en mayo de 2022 con la versión 0.12.
 Solucionan el problema desde el inicio, abstrayendo tanto los \onramps como los
 \offramps bajo el mismo concepto, incluyendo los \emph{linked transports}. Dado
 que estos ya estaban siendo desarrollados mientras 0.11 era la última versión,
-el sistema de plugins se enfocó a conectores desde el principio, en lugar de
+el sistema de plugins se enfocó a los conectores desde el principio, en lugar de
 \onramps u \offramps, que ahora han quedado en desuso.

@@ -28,10 +28,8 @@ Los requerimientos principales para el proyecto son los siguientes:
         Tremor está dispuesto a sufrir una degradación de rendimiento siempre y
         cuando esta sea menor. La definición de `menor' es flexible;
         aproximadamente un máximo de 10-20\% de reducción en eficiencia para
-        poderse incluir en producción.
-
-        Copiar eventos en cualquier momento implicaría la rotura de este
-        requerimiento.
+        poderse incluir en producción. Copiar eventos, por ejemplo, implicaría
+        la rotura de este requerimiento.
 
 \end{itemize}
 
@@ -46,7 +44,7 @@ finalizar el proyecto:
         para evitar roturas inesperadas, como indica la Sección
         \ref{sec:compat}.
 
-    \item Minimizar el esfuerzo necesario para reescribir los conectores para el
+    \item Minimizar el esfuerzo necesario de reescribir los conectores para el
         nuevo sistema de plugins.
 
     \item Gestionar correctamente plugins con identificadores conflictivos.
@@ -67,7 +65,7 @@ finalizar el proyecto:
 Muchas de las tecnologías que se pueden aplicar para un sistema de plugins usan
 código \unsafe. El código \unsafe consiste en una sección que ignora el modelo
 de memoria y concurrencia de Rust, permitiendo por ejemplo el uso de punteros
-nulos o referencias colgantes. Se usa normalmente por maximizar el control y
+nulos o referencias colgantes. Se suele usar para maximizar el control y
 rendimiento del programa.
 
 \begin{minted}{rust}
@@ -106,12 +104,13 @@ reiniciándolo para seguir funcionando.
 
 Uno de los casos más notorios se dio con Internet Explorer, que usaba COM y
 ActiveX, los cuales no disponían de una \sandbox. Dicho mecanismo aisla por
-completo parte del programa, de forma que no pueda acceder a memoria externa
-(evitando acceder a información que no es suya), ni a recursos del sistema (como
-ficheros). Por tanto, extensiones maliciosas para el navegador podían ejecutar
-código arbitrario en la máquina en la que estuviera instalado~\cite{iesandbox}.
-Este problema puede ser menos grave si solo se instalan extensiones de confianza
-con firmas digitales, pero sigue siendo un vector de ataque importante.
+completo parte del programa, de forma que no pueda leer ni escribir a memoria
+externa (prohibiendo el acceso a información que no es suya), ni a recursos del
+sistema (como ficheros). Por tanto, extensiones maliciosas para el navegador
+podían ejecutar código arbitrario en la máquina en la que estuviera
+instalado~\cite{iesandbox}. Este problema puede ser menos grave si solo se
+instalan extensiones de confianza con firmas digitales, pero sigue siendo un
+vector de ataque importante.
 
 Se podría aplicar lo mismo a Tremor. El usuario del producto --- aquellos que
 añadan plugins a su configuración ---, es un desarrollador, que debería ser más
@@ -128,13 +127,14 @@ deberían ser de confianza por defecto.
 
 TODO: puedo usar expresiones como 'terreno pantanoso' o es demasiado informal?
 
-Una alternativa mejorada a Node y npm sería algo como
-Deno\footnote{\url{https://github.com/denoland/deno}}, que es una runtime segura
-por defecto. Esto es posible gracias a \sandboxing, y requiere que el
-desarrollador active manualmente, por ejemplo, acceso al sistema de ficheros o a
-la red. No es una solución infalible porque puede que los desarrolladores acaben
+Una mejora respecto a Node y npm sería algo como
+Deno\footnote{\url{https://github.com/denoland/deno}}, una runtime segura por
+defecto. Esto es posible gracias a \sandboxing, y requiere que el desarrollador
+configure manualmente, por ejemplo, el acceso al sistema de ficheros o a la red.
+No es una solución infalible porque puede que los desarrolladores acaben
 activando los permisos que necesitan sin pensarlo, pero es un mecanismo similar
-a \unsafe: al menos te hace consciente de que estás en terreno pantanoso.
+a \unsafe: al menos te hace consciente de que estás en terreno pantanoso y
+facilita la búsqueda de vulnerabilidades.
 
 Se podría discutir que, realísticamente, el programa va a ejecutarse la mayoría
 de los casos en una máquina virtual o un contenedor, donde este problema no es
@@ -142,7 +142,7 @@ tan peligroso. Pero, ¿debería la seguridad del usuario recaer en el hecho de q
 el kernel está isolado? Por no mencionar que un contenedor afecta mucho más al
 rendimiento que algunos métodos de \sandboxing. Aunque el sistema por completo
 estuviera isolado, seguiría habiendo una posibilidad de \leaks internos: el
-plugin de Postgres tiene acceso a todo lo que esté usando el plugin de Apacha
+plugin de Postgres tiene acceso a todo lo que esté usando el plugin de Apache
 Kafka, que posiblemente tenga \emph{logs} sensitivos.
 
 \section{Retro-compatibilidad}\label{sec:compat}
@@ -151,7 +151,8 @@ Será necesario incluir algún tipo de gestión de versiones en el proyecto. Es
 probable que la interfaz de Tremor cambie con frecuencia, lo que romperá plugins
 basados en versiones previas. Si un plugin recibe una estructura de la runtime,
 pero esta estructura perdiese uno de sus campos en una nueva versión, se estará
-invocando comportamiento no definido.
+invocando comportamiento no definido por intentar acceder a un campo ahora
+inexistente.
 
 \subsection{Posibles soluciones}
 
@@ -168,20 +169,21 @@ incluyen~\cite{swiftabi}:
     \item Reservar espacio en la estructura para uso futuro.
 
     \item Hacer la estructura un tipo opaco, es decir, que sólo se puede acceder
-        a sus campos con llamadas a funciones, en lugar de directamente.
+        a sus campos con llamadas a funciones, en lugar de directamente en
+        memoria.
 
-    \item Dar a la estructura un puntero a sus datos en la ``segunda versión''
-        (lo cual sería opaco en la ``primera versión'').
+    \item Declarar la estructura con un puntero con sus datos de la ``segunda
+        versión'' (lo cual sería opaco en la ``primera versión'').
 
 \end{itemize}
 
-\subsection{Resiliencia a errores}
+\subsection{Control de versiones}
 
 Hay casos donde un error inevitable. Es posible que Tremor quiera reescribir
 parte de su interfaz o finalmente eliminar una funcionalidad deprecada sin tener
 que preocuparse por romper todos los plugins desarrollados previamente.
 
-Para ello, los plugins deben incluir metadatos sobre las diferentes versiones
-de rustc/interfaz/etc para las que fue desarrollado. Después, cuando sean
+Para ello, los plugins deben incluir metadatos sobre las diferentes versiones de
+rustc o de la interfaz para la que fue desarrollado. Después, cuando sean
 cargados por Tremor, se podrá comprobar su compatibilidad, en vez de romperse de
 formas misteriosas.
