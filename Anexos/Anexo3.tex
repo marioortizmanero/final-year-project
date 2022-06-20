@@ -134,7 +134,7 @@ relevante: simplemente dejaremos el límite del FFI en su mínimo y añadiremos
 conversiones cuanto antes sea posible. Al terminar, si se detectan problemas de
 rendimiento en un caso en concreto, se puede reconsiderar.
 
-\section{Problemas con tipos externos}
+\section{Problemas con tipos externos}\label{sec:abi_ext}
 
 En algunos casos, los tipos de \abistable no habían sido actualizados para
 incluir métodos nuevos de la librería estándar, por lo que era necesario un pull
@@ -303,7 +303,7 @@ con una función de más alto nivel (\rust{runtime_wrapper}). Es una tarea
 relativamente trivial, por lo que se podría automatizar con macros procedurales
 en Rust, pero esto debería dejarse para el final del proyecto.
 
-En conclusión, esta alternativa es la más fácil de implementar en el corto
-plazo y por tanto la que mejor sigue \work. Una vez esté terminado, se puede
-analizar el rendimiento y optar por una alternativa más eficiente, como
-reescribir los tipos para el caso de uso específico de Tremor.
+En conclusión, esta alternativa es la más fácil de implementar en el corto plazo
+y por tanto la que mejor sigue \work. Se puede visualizar la diferencia de
+rendimiento entre usar \code{PdkValue} y reimplementar el tipo con C ``desde
+cero'' --- hecho para la segunda versión --- en el Anexo~\ref{annex:benchmarks}.

@@ -153,7 +153,7 @@ convención para el nombre. Sin embargo, al personalizarse manualmente los
 directorios, se asume que la gran mayoría de las librerías dinámicas serán
 plugins.
 
-\section{Gestión de pánicos}
+\section{Gestión de pánicos}\label{sec:panics}
 
 Los pánicos en Rust se usan para expresar errores de los que un programa no se
 puede recuperar. Por ejemplo, acceder a un índice inexistente en una lista, o
@@ -228,7 +228,7 @@ sincronizar el acceso con un mútex interno, como lo hace la \crate
 mejorable, dado que usa el mútex \emph{siempre}, incluso en sistemas operativos
 donde la gestión de errores sí es segura en hilos~\cite{thsafe_dlopen_issue}.
 
-\section{Rendimiento}\label{abiperf}
+\section{Complejidad de las conversiones}\label{abiperf}
 
 Un punto vital a tener en cuenta es el coste de realizar conversiones entre
 tipos de la librería estándar y tipos de \abistable. Esto se dará en numerosas
@@ -265,9 +265,20 @@ al completo para más información.
 
 \section{Optimizaciones}
 
+Una vez implementada la primera versión del sistema de plugins, se realizan
+optimizaciones iterativamente hasta alcanzar un rendimiento lo suficientemente
+bueno.
+
+Ahora que la base del sistema de plugins ya está implementada, lo siguiente es
+realizar optimizaciones iterativamente hasta alcanzar un rendimiento lo
+suficientemente bueno.
+
+En general, el rendimiento de Tremor tras la primera versión de Tremor fue
+reducido en un 30\%.
+
 Una vez implementada la primera versión del sistema de plugins, se realizaron
 varias medidas de rendimiento.
 
-También se incluye en~\ref{annex:abi_ext}.
+También se incluye en la Sección~\ref{sec:abi_ext}.
 
 TODO: mencionar arreglos de halfbrown y similares
