@@ -23,7 +23,7 @@ Los logs no suelen seguir un formato único ni necesariamente estructurado (es
 decir, texto plano en vez de JSON o XML). Por tanto, para poderlos usar es
 necesario algún tipo de procesado, que también puede incluir ignorar información
 redundante o transformar ciertos valores. Este paso se llevaba a cabo con el
-sistema de procesado de datos \textcite{logstash}.
+sistema de procesado de datos \textcite{logstash}, entre otros.
 
 A medida que crecía la empresa, estas herramientas de observabilidad dejaban de
 ser apropiadas. Cada día, Wayfair procesaba 100 \emph{terabytes} de logs. Para
@@ -32,7 +32,7 @@ sería de unos 5.400 kilómetros, o en otras palabras, 5 idas y vueltas a la
 Estación Espacial Internacional. El coste mensual de esta infraestructura
 alcanzaba unos 40,000 dólares\footnote{Las cantidades mencionadas en esta
 sección son aproximadas, para dar una representación del tamaño de datos
-procesados y su coste.}.
+procesados y su coste sin comprometer la privacidad de Wayfair.}.
 
 El problema principal residía en Logstash, escrito en Java y con un propósito de
 uso general en vez de especializado en rendimiento y escalabilidad. La solución
@@ -44,12 +44,13 @@ cercano, \emph{clustering}. Una vez la primera versión de Tremor fue publicada,
 el coste de la infraestructura se redujo a 780 dólares mensuales, 50 veces menos
 que el valor original~\cite{tremorcon_lll}.
 
-Tremor ha evolucionado desde entonces, y ha expandido sus posibilidades más allá
+Tremor ha evolucionado desde entonces, y expandiendo sus posibilidades más allá
 de logs a algo más abstracto, los \emph{eventos}. Ahora soporta una mayor
-cantidad de software de donde recibir y enviar eventos, e incluso implementa su
-propio lenguaje de configuración y procesado. El proyecto se lanzó como código
-abierto y de forma independiente a Wayfair, y aunque el equipo de desarrollo
-sigue siendo principalmente suyo, cualquiera puede contribuir.
+cantidad de protocolos, formatos y software de donde recibir y enviar eventos, e
+incluso implementa su propio lenguaje de configuración y procesado. El proyecto
+se lanzó como código abierto y de forma independiente a Wayfair, y aunque el
+equipo de desarrollo sigue siendo principalmente suyo, cualquiera puede
+contribuir.
 
 Posteriormente, Tremor se unió a la \emph{Cloud Native Computing
 Foundation~(CNCF)}\footnote{\url{https://www.cncf.io/}}, principalmente conocida
@@ -114,7 +115,7 @@ plugins.
 El \emph{cargado dinámico} es un método especialmente popular en el lenguaje de
 programación C, dado que su interfaz de comunicación es relativamente sencilla y
 está muy bien definida en su estándar. Asimismo, se trata de una solución
-altamente eficiente, dado que la comunicación es binaria y directa. Las
+especialmente eficiente, dado que la comunicación es binaria y directa. Las
 características de Tremor implican que el método a usar debería tener un alto
 rendimiento, así que el cargado dinámico es una de las mejores opciones
 disponibles.
@@ -130,7 +131,7 @@ Por tanto, el cargado dinámico es imposible puramente con Rust. Se debe recurri
 a otro ABI que sí sea estable, como el de C. Todas las funciones y tipos
 involucrados en la comunicación entre runtime y plugins deberán declararse
 siguiendo el estándar de C. Los tipos seguirán unas reglas que definen cómo se
-representan en memoria, y las funciones tendrán que seguir una convención
+representan en memoria y las funciones tendrán que seguir una convención
 específica.
 
 El problema principal con Tremor es que, al estar escrito puramente con Rust,
@@ -144,8 +145,8 @@ Rust a C y viceversa para poder interactuar con plugins.
 
 Uno de los problemas más importantes en Tremor es su tiempo de compilación. En
 mi portátil Dell Vostro 5481 de unos 600~€, compilar el binario \code{tremor}
-desde cero requiere de más de 7 minutos en modo \emph{debug}, y más de 13 en
-modo \emph{release} (con optimizaciones del compilador). Incluso en el caso de
+desde cero requiere de más de 7 minutos en modo \emph{debug}, y sobre 13 en modo
+\emph{release} (con optimizaciones del compilador). Incluso en el caso de
 cambios incrementales (una vez las dependencias ya han sido compiladas), hay que
 esperar unos 10 segundos.
 
@@ -180,20 +181,25 @@ sistema de plugins desde hace mucho. Informan mejorías en flexibilidad,
 extensibilidad y facilidad de
 desarrollo~\cite{nginxPluginsAdvantages}\cite{apachePluginsAdvantages}. Aunque
 las desventajas también mencionen un pequeño impacto en el rendimiento y la
-posibilidad de caer en un \emph{dependency hell}, sigue siendo una buena idea al
-menos considerarlo para Tremor.
+posibilidad de caer en un ``infierno de dependencias'' (relacionado con plugins
+que dependen de otros), sigue siendo una buena idea al menos considerarlo para
+Tremor.
 
 \section{Metodología}
 
 \subsection{Organización}
 
-El proyecto ha tenido una duración de unos once meses, comenzando en agosto de
-2021 y terminando a principios de junio de 2022. Su realización ha sido
-completamente remota y con horarios muy flexibles. Se usó el servidor de Discord
-de Tremor\footnote{\url{https://discord.com/invite/Wjqu5H9rhQ}} como plataforma
-principal para comunicarse, tanto por texto como por videollamada. Se programó
-una llamada por semana, en la que explicaba mi progreso y recibía ayuda en caso
-de que me hubiera quedado atascado o necesitara alguna opinión adicional.
+
+
+El proyecto ha tenido una duración de unos once meses. La propuesta a Tremor se
+realizó de abril a mayo de 2021, pero no se comenzó el desarrollo hasta
+aceptarse en agosto del mismo año, y se terminó en junio de 2022. Su realización
+ha sido completamente remota y con horarios muy flexibles. Se usó el servidor de
+Discord de Tremor\footnote{\url{https://discord.com/invite/Wjqu5H9rhQ}} como
+plataforma principal de comunicación, tanto por texto como por videollamada. Se
+programó una llamada por semana, en la que explicaba mi progreso y recibía ayuda
+en caso de que me hubiera quedado atascado o necesitara alguna opinión
+adicional.
 
 Disponía de tres mentores, que me guiaban en el proceso de desarrollo: Darach
 Ennis (\emph{Principal Engineer and Director of Tremor Project}), Matthias Wahl
@@ -215,9 +221,9 @@ convencionales (\emph{declarativos}), puesto que directamente consumen y generan
 sintaxis de Rust a tiempo de compilación para implementar cualquier tipo de
 código trivial o repetitivo.
 
-El sistema de compilación usado es solución oficial de Rust: Cargo, que también
-incluye un \emph{formatter}, \emph{linter}, y extensiones instalables creadas
-por la comunidad. Adicionalmente, existe una gran cantidad de tests y
+El sistema de compilación usado es la solución oficial de Rust, Cargo, que
+también incluye un \emph{formatter}, \emph{linter}, y extensiones instalables
+creadas por la comunidad. Adicionalmente, existe una gran cantidad de tests y
 \emph{benchmarks} que se han de tener en cuenta para mantener el \emph{Code
 Coverage} (la cantidad de código cubierta por los tests) y el rendimiento.
 
