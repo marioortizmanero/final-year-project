@@ -10,9 +10,9 @@ tanto, ha resultado imposible desarrollar en el tiempo disponible un sistema de
 plugins tan completo y eficiente como se especificaba inicialmente.
 
 El problema principal tiene que ver con el rendimiento. Dada la naturaleza de
-Tremor, es un requerimiento imprescindible para poderlo incluir en una futura
-versión. Tras las pruebas realizadas en el Anexo~\ref{annex:benchmarks}, se ha
-calculado que reduce el rendimiento del programa un 30\%.
+Tremor, es un requerimiento imprescindible para poderlo incluir en producción.
+Tras las pruebas realizadas en el Anexo~\ref{annex:benchmarks}, se ha calculado
+que el sistema de plugins reduce el rendimiento un 30\%.
 
 No obstante, la última versión del sistema de plugins es perfectamente funcional
 y, mediante su investigación, el diseño de su arquitectura y contribuciones de
@@ -23,7 +23,12 @@ Parte de esta ralentización en el desarrollo se debe también a Rust. Al ser un
 lenguaje tan inmaduro es frecuente encontrar documentación pobre o librerías
 incompletas. Muchas de las \crates usadas no disponían inicialmente de la
 funcionalidad necesaria para un sistema de plugins, como \code{async_ffi},
-\code{abi_stable}, \code{halfbrown} o \code{simd-json}.
+\code{abi_stable}, \code{halfbrown} o \code{simd-json}. Se han resuelto
+problemas importantes en el entorno, extendiendo el soporte para el ABI de C,
+resolviendo tipos con varianzas inflexibles y elaborando conversiones de tipos
+no triviales, todo ello manteniendo la máxima seguridad y eficiencia posible.
+Con esfuerzos como estos, el desarrollo de proyectos similares en el futuro
+resultará mucho más accesible.
 
 \section{Futuro}
 
@@ -31,7 +36,7 @@ Se ha documentado tanto el proceso seguido como lo que queda pendiente, de forma
 que el equipo de Tremor pueda continuar trabajando en el sistema de plugins para
 su futuro lanzamiento. Sin embargo, aun después de esto el PDK nunca parará de
 evolucionar: su uso se extenderá en la base de código y se perfeccionarán otras
-características con el tiempo. Algunas ideas de mejoras son las siguientes:
+características con el tiempo. Algunas ideas son las siguientes:
 
 \begin{itemize}
     \item \textbf{Mejoras de rendimiento}: el enfoque principal para el primer
@@ -43,8 +48,8 @@ características con el tiempo. Algunas ideas de mejoras son las siguientes:
         códecs, preprocesadores, postprocesadores, operadores, funciones,
         extractores, etc.
 
-    \item \textbf{Mejora de la experiencia de usuario}: creación de proyectos
-        modelo como base para plugins nuevos, ejemplos de uso, macros,
+    \item \textbf{Refinamiento de la experiencia de usuario}: creación de
+        proyectos modelo como base para plugins nuevos, ejemplos de uso, macros,
         documentación exhaustiva y de más alto nivel, frameworks de testing,
         etc.
 
@@ -54,7 +59,7 @@ características con el tiempo. Algunas ideas de mejoras son las siguientes:
         método de configuración iterativo, en el que se cargan y configuran los
         plugins uno a uno, y finalmente se exporta la composición final.
 
-    \item \textbf{Paquetes de plugins}: en ciertos casos, sería más eficiente
+    \item \textbf{Paquetes de plugins}: en ciertos casos, sería más conveniente
         exportar un plugin que implemente más de un componente. Por ejemplo,
         podrían juntarse los conectores de TCP y UDP en único plugin, dado que
         probablemente compartan partes de su código y dependencias.
@@ -62,13 +67,13 @@ características con el tiempo. Algunas ideas de mejoras son las siguientes:
     \item \textbf{Gestión de versiones alternativas}: la implementación de
         \abistable para comprobar las versiones es rudimentaria y poco
         eficiente; se limita a comprobarlos todos recursivamente. Otra opción
-        más simple sería únicamente comprobar una única cadena con el versionado
-        global, por ejemplo.
+        más simple sería únicamente comprobar una cadena con el versionado
+        global para la interfaz, por ejemplo.
 
     \item \textbf{Registro centralizado de plugins}: en el futuro a largo plazo,
         se podría desarrollar una funcionalidad similar a los repositorios de
         Maven o Cargo. Allí se podrían guardar todos los plugins de la comunidad
-        para descargarlos automáticamente.
+        para gestionarlos automáticamente.
 
     \item \textbf{Eliminación de plugins en tiempo de ejecución}: es
         especialmente complejo de implementar, dado que \abistable
@@ -91,4 +96,4 @@ Estoy muy satisfecho con haber conseguido lo que he conseguido, y aún más por
 haberlo poder hecho junto al increíble equipo que es el de Tremor. Trabajar con
 ellos me ha ayudado a descubrir qué quiero hacer tras la graduación, y con qué
 tipo de empresa y personas quiero trabajar. Me mantendré en contacto con ellos
-para ver cómo progresa el sistema de plugins.
+para seguir el progreso del sistema de plugins.
