@@ -24,12 +24,12 @@ estado privado, pero solo pueden afectarse entre sí indirectamente a través de
 mensajería (eliminando la necesidad de sincronización con
 \emph{locks}).''~\cite{wikiactor}
 
-No usa un lenguaje (e.g., Erlang) o framework (e.g., \cratelink{bastion}, quizá
+No usa un lenguaje (e.g., Erlang) o framework (e.g., \namecite{bastion}, quizá
 en el futuro) que siga estrictamente este modelo, pero re-implementa los mismos
 patrones frecuentemente de forma manual. Tremor se basa en \emph{programación
 asíncrona}, es decir, que en vez de hilos trabaja con \emph{tareas}, un concepto
 de nivel más alto y especializado para entrada/salida. De la documentación de
-\cratelink{async-std}, la runtime asíncrona que usa Tremor:
+\namecite{async_std}, la runtime asíncrona que usa Tremor:
 
 % ORIGINAL:
 % ``An executing asynchronous Rust program consists of a collection of native OS

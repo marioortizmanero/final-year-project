@@ -112,6 +112,29 @@
 \def\dontdofcolorbox{\renewcommand\fcolorbox[4][]{##4}}
 \makeatother
 
+% Cite the name instead of the author when referencing it
+%
+% https://tex.stackexchange.com/a/459977
+\makeatletter
+\newbibmacro*{namecite}{%
+  \printfield[citetitle]{labeltitle}%
+  \setunit*{\addnbspace}%
+  \printtext{\bibopenbracket}\global\booltrue{cbx:parens}%
+  \usebibmacro{cite}%
+  \setunit{%
+    \ifbool{cbx:parens}
+      {\bibclosebracket\global\boolfalse{cbx:parens}}
+      {}%
+    \multicitedelim}}
+
+\DeclareCiteCommand{\namecite}
+  {\usebibmacro{prenote}}
+  {\usebibmacro{citeindex}%
+   \usebibmacro{namecite}}
+  {}
+  {\usebibmacro{textcite:postnote}}
+\makeatother
+
 % Command for inline code
 \newmintinline[code]{text}{fontsize=\normalsize}
 \newmintinline[rust]{rust}{fontsize=\normalsize}
@@ -123,9 +146,6 @@
 }
 % Shortcuts
 \newcommand{\cpp}{C\texttt{++}}
-\newcommand{\cratelink}[1] {%
-    \code{#1}\footnote{\url{https://crates.io/crates/#1}}\xspace%
-}
 \newcommand{\work}{``Primero haz que Funcione''\xspace}
 \newcommand{\unsafe}{\code{unsafe}\xspace}
 \newcommand{\abistable}{\code{abi_stable}\xspace}

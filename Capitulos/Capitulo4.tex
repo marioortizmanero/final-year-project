@@ -121,10 +121,10 @@ de escribir ninguna línea de código.
 Gran cantidad de proyectos usan lenguajes interpretados para extender su
 funcionalidad a tiempo de ejecución, con Python, Ruby, Perl, Bash, o JavaScript,
 entre otros. Particularmente, el editor de texto Vim creó su propio lenguaje,
-Vimscript, para poderlo personalizar por completo~\cite{vimscript}. Ahora
-NeoVim, un fork más moderno, está esforzándose por tener Lua como lenguaje de
-primera clase para su configuración~\cite{nvimlua}. Incluso Tremor tiene su
-propio lenguaje para configurarlo, Troy.
+\namecite{vimscript}, para poderlo personalizar por completo. Ahora NeoVim, un
+fork más moderno, está esforzándose por tener Lua como lenguaje de primera clase
+para su configuración~\cite{nvimlua}. Incluso Tremor tiene su propio lenguaje
+para configurarlo, Troy.
 
 TODO: alguna traducción de 'embedding' decente que reemplace su ocurrencia en el
 siguiente párrafo?
@@ -139,22 +139,22 @@ garantías de seguridad de Lua son más fuertes que otros lenguajes, dado que no
 requiere \unsafe y por incluir una \sandbox (aunque es ``delicado y difícil de
 configurar correctamente'')~\cite{luasandboxes}.
 
-Rust dispone de librerías como \cratelink{rlua}, con bindings para interoperar
+Rust dispone de librerías como \namecite{rlua}, con bindings para interoperar
 con Lua. \code{rlua} en particular parece enfocar su interfaz en ser idiomática
 y segura, que es un punto positivo para una librería fuertemente relacionada con
 C. Desgraciadamente, parece estar semi-abandonada y fue reemplazada por
-\cratelink{mlua}. Por lo general, el ecosistema de Lua en Rust no parece lo
+\namecite{mlua}. Por lo general, el ecosistema de Lua en Rust no parece lo
 suficientemente maduro para un proyecto como este; aún queda trabajo para
 mejorar su estabilidad.
 
 También sería posible usar uno de los lenguajes interpretados creados
-específicamente para Rust: \textcite{cratesiogluon}, \textcite{cratesiorhai} o
-\textcite{cratesiorune}. Usarlos posiblemente resulte en código más limpio y
-simple. Sin embargo, el ecosistema todavía está en su infancia y ninguna de las
-opciones son tan estables o seguras como lenguajes de programación de propósito
-general. Rhai, el más usado, anunció su versión v1.0 en julio de 2021 y no
-sobrepasa las 200.000 descargas, mientras que Lua fue creado en 1993 y es uno de
-los 20 lenguajes más famosos, según el \textcite{tiobe}.
+específicamente para Rust: \namecite{gluon}, \namecite{rhai} o \namecite{rune}.
+Usarlos posiblemente resulte en código más limpio y simple. Sin embargo, el
+ecosistema todavía está en su infancia y ninguna de las opciones son tan
+estables o seguras como lenguajes de programación de propósito general. Rhai, el
+más usado, anunció su versión v1.0 en julio de 2021 y no sobrepasa las 200.000
+descargas, mientras que Lua fue creado en 1993 y es uno de los 20 lenguajes más
+famosos, según el \namecite{tiobe}.
 
 De cualquier manera, portar el código a este sistema de plugins sería un trabajo
 excesivamente laborioso. Todos los conectores tendrían que reescribirse por
@@ -163,12 +163,12 @@ interesante, pero ciertamente no lo es en el caso de Tremor.
 
 \subsection{WebAssembly}
 
-\textcite{wasm}, también conocido como Wasm, es esencialmente un formato binario
+\namecite{wasm}, también conocido como Wasm, es esencialmente un formato binario
 abierto y portable. A diferencia de binarios normales, el mismo ejecutable Wasm
 puede correr en cualquier plataforma, siempre y cuando exista una runtime que lo
 soporte. Comenzó como una alternativa a JavaScript exclusiva a la web, pero ha
 evolucionado con el tiempo y ahora es posible usarlo en el escritorio gracias a
-\textcite{wasi}.
+\namecite{wasi}.
 
 Los objetivos de Wasm son maximizar la portabilidad y seguridad, sin un coste de
 rendimiento excesivo. Su diseño incluye una \sandbox para lidiar con programas
@@ -177,8 +177,8 @@ no fiables, como es el caso en sistemas de plugins, y apenas no requiere usar
 código existente en Tremor podría ser reusado (lo cual era imposible con
 lenguajes interpretados).
 
-Existen dos runtimes principales para Rust: \textcite{wasmer} y
-\textcite{wasmtime}. Ambas son implementaciones competitivas enfocadas a unos u
+Existen dos runtimes principales para Rust: \namecite{wasmer} y
+\namecite{wasmtime}. Ambas son implementaciones competitivas enfocadas a unos u
 otros casos de uso. Por lo general, Wasmer es más adecuado para embebirlo en
 programas nativos, mientras que Wasmtime se centra en programas individuales,
 aunque los dos se pueden usar apara ambos casos~\cite{wasmwikiusage}.
@@ -211,7 +211,7 @@ disponibles~\cite{wasmertypes}. Existen algunas maneras de tratar tipos
 compuestos, como estructuras o enumeraciones:
 
 \begin{itemize}
-    \item A través de la \textcite{wasminterfacetypes}. Esta define un formato
+    \item A través de la \namecite{wasminterfacetypes}. Esta define un formato
         binario para codificar y decodificar los nuevos tipos que define: tipos
         de números más especializados, caracteres individuales, listas,
         estructuras y enumeraciones. También especifica una lista de
@@ -222,7 +222,7 @@ compuestos, como estructuras o enumeraciones:
 
         Adicionalmente, las interfaces se pueden definir independientemente del
         lenguaje de programación que se esté usando, gracias al formato
-        \code{witx}~\cite{witx}, como muestra la Figura~\ref{fig:witx_example}.
+        \namecite{witx}, como muestra la Figura~\ref{fig:witx_example}.
 
         El mayor problema de esta solución es que aún está en ``Fase 1'': aún
         necesita mucho trabajo y su especificación no es estable. Ninguna de las
@@ -293,7 +293,7 @@ El problema principal con eBPF es que su suporte es carente. La mayoría de sus
 usuarios usan C y lo muestra la poca cantidad de tutoriales, guías, artículos o
 incluso librerías disponibles para Rust. No es posible compilar Rust a
 instrucciones eBPF de forma oficial y la única runtime disponible es
-\cratelink{rbpf} y derivados como \cratelink{solana_rbpf}, ya que este primero
+\namecite{rbpf} y derivados como \namecite{solana_rbpf}, ya que este primero
 parece estar obsoleto. Además, supondría un esfuerzo mucho mayor que
 WebAssembly, ya que también requeriría implementar una \sandbox personalizada.
 
@@ -306,8 +306,8 @@ fase de \emph{linking}, mediante el cargado dinámico. Es una de las opciones m�
 eficientes porque no impone casi ningún coste adicional tras el cargado de la
 librería dinámica, y no requiere crear procesos nuevos en el sistema operativo.
 
-La \crate principal para este método es \cratelink{libloading}, aunque también
-existen las menos conocidas \cratelink{dlopen} y \cratelink{sharedlib}, con
+La \crate principal para este método es \namecite{libloading}, aunque también
+existen las menos conocidas \namecite{dlopen} y \namecite{sharedlib}, con
 pequeñas diferencias~\cite{cratesdynloadcompare}. Todas ellas requieren de uso
 extensivo de \unsafe, son complicadas de usar
 correctamente~\cite{hardplugins1}\cite{hardplugins2}, incluyendo sutiles
@@ -412,25 +412,24 @@ pub static cached: Event = Event {
 \subsubsection{Herramientas disponibles}
 
 Todo este proyecto va a ser posible gracias a una \crate de más alto nivel,
-\cratelink{abi_stable}. Esta usa \code{libloading} internamente y exporta una
+\namecite{abi_stable}. Esta usa \code{libloading} internamente y exporta una
 gran cantidad de macros y herramientas para facilitar el desarrollo. Incluye una
 copia de la librería estándar de Rust declarada con el ABI de C, con nombres
 generalmente precedidos por la letra \code{R}. Por tanto, en vez del vector
 \rust{Vec<T>}, podremos usar \rust{RVec<T>}; en caso contrario habría que
 recurrir a punteros (\rust{*const T}) o tendríamos que reescribir los tipos
 desde cero nosotros. También da soporte para librerías externas muy conocidas en
-la comunidad, como \cratelink{crossbeam} o \cratelink{serde_json}. La
+la comunidad, como \namecite{crossbeam} o \namecite{serde_json}. La
 Figura~\ref{fig:rustabi_stable} demuestra parte de la simplificación respecto al
 código en la Figura~\ref{fig:rustffi}.
 
 Existen más alternativas o extensiones para el cargado dinámico que se tuvieron
-en cuenta, como
-\code{lccc}\footnote{\url{https://github.com/LightningCreations/lccc}},
-\cratelink{safer_ffi} o \cratelink{cglue}, pero no son soluciones tan completas
-ni maduras, por lo que no se usarán en este proyecto. \abistable se trata de una
-librería grande, con más de 50.000 líneas de código en Rust (como referencia,
-Tremor tiene unas 35.000 líneas), por lo que el aumento de complejidad deberá
-tenerse en cuenta en la decisión de la tecnología final a usar.
+en cuenta, como \namecite{lccc}, \namecite{safer_ffi} o \namecite{cglue}, pero
+no son soluciones tan completas ni maduras, por lo que no se usarán en este
+proyecto. \abistable se trata de una librería grande, con más de 50.000 líneas
+de código en Rust (como referencia, Tremor tiene unas 35.000 líneas), por lo que
+el aumento de complejidad deberá tenerse en cuenta en la decisión de la
+tecnología final a usar.
 
 \begin{figure}
     \centering
@@ -462,10 +461,9 @@ Otra opción popular para sistemas de plugins es la \emph{Comunicación
 Inter-Proceso}, que divide el programa en procesos distintos de tipo cliente y
 servidor. El cliente actuaría como runtime y estaría conectado a múltiples
 servidores que proporcionan la funcionalidad. Se podría comparar con el
-\emph{Language Server
-Protocol}\footnote{\url{https://microsoft.github.io/language-server-protocol/}},
-basado en JSON-RPC y usado por la mayoría de editores de texto para tener
-soporte especializado para cualquier lenguaje de programación.
+\emph{Language Server Protocol}~\cite{lsp}, basado en JSON-RPC y usado por la
+mayoría de editores de texto para tener soporte especializado para cualquier
+lenguaje de programación.
 
 Una ventaja común para todos los métodos de esta familia es que, de forma
 similar a WebAssembly, los plugins se podrán escribir en Rust, así que el código
@@ -499,7 +497,7 @@ disponibles.
 
 Usar \sockets también requiere un paso de serialización, dado que los datos se
 envían en paquetes. Formatos como JSON son los más flexibles, pero otros como
-\textcite{protobuf} son ligeros y tienen mejor rendimiento.
+\namecite{protobuf} son ligeros y tienen mejor rendimiento.
 
 \subsubsection{Pipes}
 
@@ -510,15 +508,14 @@ plugins en ordenadores distintos. Esto no es algo necesario para el caso de
 Tremor, y ya que las \pipes ofrecen un mejor rendimiento, posiblemente sean una
 mejor opción por lo general.
 
-Por ejemplo, el gestor de archivos
-nnn\footnote{\url{https://github.com/jarun/nnn}} usa este método: los plugins
+Por ejemplo, el gestor de archivos nnn~\cite{nnn} usa este método: los plugins
 pueden leer de una FIFO (una \pipe con nombre) para recibir las selecciones de
 archivos o directorios que realice el usuario e implementar su funcionalidad
 adicional.
 
 La única desventaja es que no parecen haber librerías populares para la
-funcionalidad genérica de \pipes (quizá \cratelink{interprocess} o
-\cratelink{ipipe}). Sin embargo, esto podría ser innecesario si se usaran las
+funcionalidad genérica de \pipes (quizá \namecite{interprocess} o
+\namecite{ipipe}). Sin embargo, esto podría ser innecesario si se usaran las
 \pipes de \stdin, \stdout o \stderr implícitamente, ya que tienen soporte en la
 librería estándar al ejecutar comandos \emph{shell}~\cite{rustpipes}.
 
@@ -538,8 +535,8 @@ inicialización de las páginas compartidas en el sistema operativo, que se debe
 hacer únicamente al principio~\cite{sharedmemperf}.
 
 Desgraciadamente, el soporte para memoria compartida en Rust es casi
-inexistente. Las únicas \crates disponibles son \cratelink{shared_memory} y
-\cratelink{raw_sync}, que no superan las 150.000 descargas en total y usan gran
+inexistente. Las únicas \crates disponibles son \namecite{shared_memory} y
+\namecite{raw_sync}, que no superan las 150.000 descargas en total y usan gran
 cantidad de \unsafe. Esto probablemente tenga que ver con el hecho de que
 comparte los mismos problemas que cargado dinámico respecto a estabilidad de ABI
 (explicado en la sección~\ref{sec:dynload}). No parece ofrecer nada mejor que el
@@ -551,39 +548,36 @@ Otro punto de estudio importante es qué plugins ya hay existentes en Rust y có
 se han realizado:
 
 \begin{itemize}
-	\item El mismo Cargo\footnote{\url{https://github.com/rust-lang/cargo}} o
-		\code{mdbook}\footnote{\url{https://github.com/rust-lang/mdBook}}
-		implementan un sistema de extensiones a través de la línea de comandos.
-		Añadir un subcomando nuevo es tan sencillo como crear un binario con un
-		prefijo establecido (por ejemplo, \code{cargo-expand}). Si este binario
-		está disponible en la variable de entorno \code{PATH} al ejecutar
-		\code{cargo}, se podrá invocar al plugin con \code{cargo expand}
-		también. Es una implementación especialmente simple con \pipes e IPC,
-		dado que usa \stdin y \stdout para comunicarse con la runtime.
+    \item El mismo \namecite{cargo} o \namecite{mdbook} implementan un sistema
+        de extensiones a través de la línea de comandos. Añadir un subcomando
+        nuevo es tan sencillo como crear un binario con un prefijo establecido
+        (por ejemplo, \code{cargo-expand}). Si este binario está disponible en
+        la variable de entorno \code{PATH} al ejecutar \code{cargo}, se podrá
+        invocar al plugin con \code{cargo expand} también. Es una implementación
+        especialmente simple con \pipes e IPC, dado que usa \stdin y \stdout
+        para comunicarse con la runtime.
 
-    \item \code{zellij}\footnote{\url{https://github.com/zellij-org/zellij}} es
-        un entorno de trabajo en el terminal con ``un sistema de plugins que
-        permite crear plugins en cualquier lenguaje que compile a WebAssembly''.
-		De forma similar al caso anterior, funciona un binario distinto para
-		cada plugin y la runtime ejecuta el código en WebAssembly, comunicándose
-		con \stdin y \stdout.
+    \item \citetitle{zellij} es un entorno de trabajo en el terminal con ``un
+        sistema de plugins que permite crear plugins en cualquier lenguaje que
+        compile a WebAssembly''. De forma similar al caso anterior, funciona un
+        binario distinto para cada plugin y la runtime ejecuta el código en
+        WebAssembly, comunicándose con \stdin y \stdout.
 
-	\item \code{xi}\footnote{\url{https://github.com/xi-editor/xi-editor}} es un
-		editor de texto moderno ahora abandonado. Usaba RPC con mensajes JSON
-		para comunicarse con plugins en procesos distintos~\cite{xiplugin},
-		método también usado en Visual Studio Code~\cite{vscodeplugin} o
-		Eclipse~\cite{eclipseplugin}.
+    \item \citetitle{xi} es un editor de texto moderno ahora abandonado. Usaba
+        RPC con mensajes JSON para comunicarse con plugins en procesos
+        distintos~\cite{xiplugin}, método también usado en Visual Studio
+        Code~\cite{vscodeplugin} o Eclipse~\cite{eclipseplugin}.
 
-    \item \cratelink{bevy} es un motor de videojuegos prometedor cuyas
+    \item \citetitle{bevy} es un motor de videojuegos prometedor cuyas
         prestaciones se implementan como plugins. En la mayoría de los casos, se
-        cargan en tiempo de compilación, pero \rust{bevy::dynamic_plugin}
-		da la posibilidad de hacerlo dinámicamente. \code{bevy} se basa en la
-		falsa estabilidad del ABI explicado en la Sección~\ref{sec:abi}, así que
-		podría romperse en un futuro.
+        cargan en tiempo de compilación, pero \rust{bevy::dynamic_plugin} da la
+        posibilidad de hacerlo dinámicamente. \code{bevy} se basa en la falsa
+        estabilidad del ABI explicado en la Sección~\ref{sec:abi}, así que
+        podría romperse en un futuro.
 
         Otras fuentes como \textcite{dynloading1} o \textcite{dynloading2}
         también intentan usar cargado dinámico para funcionalidades similares.
-        Este último se trata de \cratelink{amethyst}, el predecesor de
+        Este último se trata de \namecite{amethyst}, el predecesor de
         \code{bevy}, que acabó rindiéndose debido a la inestabilidad del
         ABI~\cite{dynloading_giveup1}\cite{dynloading_giveup2}.
 

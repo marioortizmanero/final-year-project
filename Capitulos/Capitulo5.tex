@@ -108,8 +108,8 @@ trabajo mucho más alta.
 Una vez esta interfaz de bajo nivel se defina, se puede crear un \emph{wrapper}
 de más alto nivel en la runtime que se encargue de la comunicación y de mejorar
 su usabilidad dentro de Tremor. Esto mismo lo hacen otras \crates como
-\cratelink{rdkafka}, que implementa una capa de abstracción asíncrona sobre su
-interfaz de C en \cratelink{rdkafka-sys}.
+\namecite{rdkafka}, que implementa una capa de abstracción asíncrona sobre su
+interfaz de C en \namecite{rdkafka-sys}.
 
 El primer paso consiste en declarar la interfaz del PDK de forma que use el ABI
 de C, en vez del de Rust. Esto se puede hacer con el atributo \rust{#[repr(C)]}
@@ -181,7 +181,7 @@ importantes: al abortar, no se tendrá acceso a la información de \emph{debug}
 que dan los pánicos, tampoco se limpiará el estado del programa, y desde la
 runtime es imposible saber si el plugin ha configurado los pánicos para que
 aborten. Esto último será posible en el futuro, una vez
-\textcite{pluggablepanic} llegue a una versión estable.
+\namecite{pluggablepanic} llegue a una versión estable.
 
 Esto es algo que \abistable ha tenido en cuenta desde el principio. Antes de que
 un pánico se vaya a propagar de plugin a runtime, la librería abortará el
@@ -205,7 +205,7 @@ terminó siendo inevitable, dado que la asincronía es uno de los pilares de
 Tremor.
 
 Para poder usar programación asíncrona con el ABI de C se puede recurrir a la
-\crate \cratelink{async_ffi}, cuyo único problema era no tener soporte para
+\crate \namecite{async_ffi}, cuyo único problema era no tener soporte para
 \abistable en concreto. Al no implementar el \trait \rust{StableAbi}, no se
 podía usar en la interfaz del PDK, por lo que tuve que abrir un pull request
 para hacerlo yo mismo~\cite{asyncfficontrib}. El uso de esta librería resulta en
@@ -214,7 +214,7 @@ macros~\cite{asyncffimacro}.
 
 \section{Seguridad en hilos}
 
-\abistable utiliza la \crate \cratelink{libloading} internamente, cuya gestión
+\abistable utiliza la \crate \namecite{libloading} internamente, cuya gestión
 de errores no es segura en hilos en algunas plataformas, como \code{dlerror} en
 FreeBSD~\cite{thsafe_libloading}\cite{thsafe_openbsd}. Sí que lo es en
 Linux~\cite{thsafe_linux}, macOS~\cite{thsafe_macos} y Windows~\cite{thsafe_ms},
@@ -224,7 +224,7 @@ Será importante tenerlo en cuenta en el futuro; al añadir soporte para un nuev
 sistema operativo habrá que asegurarse de que su gestión de errores sea segura
 en hilos. En caso contrario, deberá actualizarse \code{libloading} para
 sincronizar el acceso con un mútex interno, como lo hace la \crate
-\cratelink{dlopen}~\cite{thsafe_dlopen}. Notar que \code{dlopen} es también
+\namecite{dlopen}~\cite{thsafe_dlopen}. Notar que \code{dlopen} es también
 mejorable, dado que usa el mútex \emph{siempre}, incluso en sistemas operativos
 donde la gestión de errores sí es segura en hilos~\cite{thsafe_dlopen_issue}.
 

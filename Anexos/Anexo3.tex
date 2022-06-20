@@ -41,7 +41,7 @@ pub enum Value {
 
 El primer problema surge en la variante \rust{Static}. Su tipo contenido
 internamente, \rust{StaticNode}, es externo y usa \rust{#[repr(Rust)]}. Se
-declara en el \crate \cratelink{value_trait}, que lo declara tal que:
+declara en el \crate \namecite{value_trait}, que lo declara tal que:
 
 \begin{minted}{rust}
 pub enum StaticNode {
@@ -145,10 +145,10 @@ una tarea trivial, simplemente un tanto tedioso.
 
 Los problemas surgen cuando es necesario convertir \emph{tipos externos a
 \abistable}. La declaración anterior de \rust{Value} era una simplificación;
-realmente, Tremor usa la implementación de \cratelink{halfbrown} de
+realmente, Tremor usa la implementación de \namecite{halfbrown} de
 \rust{HashMap<K, V>}. Esto se debe a que es más eficiente para su caso de uso, y
 que posee algunas funcionalidades adicionales necesarias. El mismo caso se da
-para otro tipo \rust{Cow}, cuya alternativa en la \crate \cratelink{beef} ocupa
+para otro tipo \rust{Cow}, cuya alternativa en la \crate \namecite{beef} ocupa
 menos espacio en memoria y ofrece un mejor rendimiento en Tremor.
 
 Ninguno de estos dos tipos tienen soporte dentro de \abistable, y aunque estos

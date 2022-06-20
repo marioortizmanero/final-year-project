@@ -10,9 +10,9 @@ No se muy bien cuándo usar cual.
 
 Este proyecto ha sido organizado y financiado por \emph{Wayfair}, una empresa
 estadounidense de comercio digital de muebles y artículos del
-hogar\footnote{\url{https://www.wayfair.com/}}. Ingresó 13.700 millones de
-dólares en 2021~\cite{wayfairRevenue} y actualmente ofrece 14 millones de ítems
-de más de 11.000 proveedores globales~\cite{wayfairItems}.
+hogar~\cite{wayfair}. Ingresó 13.700 millones de dólares en
+2021~\cite{wayfairRevenue} y actualmente ofrece 14 millones de ítems de más de
+11.000 proveedores globales~\cite{wayfairItems}.
 
 Se trata de una entidad de gran tamaño, lo que se refleja en su cantidad
 disponible de datos o \emph{logs} para describir el comportamiento de sus
@@ -23,7 +23,7 @@ Los logs no suelen seguir un formato único ni necesariamente estructurado (es
 decir, texto plano en vez de JSON o XML). Por tanto, para poderlos usar es
 necesario algún tipo de procesado, que también puede incluir ignorar información
 redundante o transformar ciertos valores. Este paso se llevaba a cabo con el
-sistema de procesado de datos \textcite{logstash}, entre otros.
+sistema de procesado de datos \namecite{logstash}, entre otros.
 
 A medida que crecía la empresa, estas herramientas de observabilidad dejaban de
 ser apropiadas. Cada día, Wayfair procesaba 100 \emph{terabytes} de logs. Para
@@ -52,13 +52,12 @@ se lanzó como código abierto y de forma independiente a Wayfair, y aunque el
 equipo de desarrollo sigue siendo principalmente suyo, cualquiera puede
 contribuir.
 
-Posteriormente, Tremor se unió a la \emph{Cloud Native Computing
-Foundation~(CNCF)}\footnote{\url{https://www.cncf.io/}}, principalmente conocida
-por mantener y gestionar \textcite{k8s}. Asimismo, CNCF es parte de la
-organización \emph{Linux
-Foundation~(LFX)}\footnote{\url{https://www.linuxfoundation.org/}}, que además
-del famoso kernel también ayuda a todo tipo de proyectos de código abierto, como
-Node.js o Let's Encrypt~\cite{lfx_projects}.
+Posteriormente, Tremor se unió a la \emph{Cloud Native Computing Foundation
+(CNCF)}~\cite{cncf}, principalmente conocida por mantener y gestionar
+\namecite{k8s}. Asimismo, CNCF es parte de la organización \emph{Linux
+Foundation~(LFX)}~\cite{lfx}, que además del famoso kernel también ayuda a todo
+tipo de proyectos de código abierto, como Node.js o Let's
+Encrypt~\cite{lfx_projects}.
 
 Formalmente, el trabajo se ha llevado a cabo gracias a la iniciativa \emph{LFX
 Mentorship}, que promueve el aprendizaje de desarrolladores de código abierto,
@@ -70,17 +69,11 @@ durante el proceso y una ayuda monetaria.
 TODO: debería especificar el dinero que recibí? O no importa?
 
 El título de este proyecto en la plataforma de LFX es ``CNCF -- Tremor: Add
-plugin support for tremor (PDK)''\footnote{Página oficial de la iniciativa:
-\url{https://mentorship.lfx.linuxfoundation.org/project/b90f7174-fc53-40bc-b9e2-9905f88c38ff}}\footnote{\emph{Tracking
-issue} en GitHub:
-\url{https://github.com/tremor-rs/tremor-runtime/issues/791}}\footnote{RFC en la
-documentación de Tremor:
-\url{https://www.tremor.rs/rfc/accepted/plugin-development-kit/}}, es decir,
-desarrollar un sistema de plugins para Tremor. El plazo original era de tres
-meses comenzando en agosto, pero se acabó alargando a unos once meses. Disponía
-de tres mentores --- los desarrolladores principales de Tremor ---, que me
-ayudaron a entender el funcionamiento interno del programa y dieron consejo
-cuando era necesario.
+plugin support for tremor (PDK)'', es decir, desarrollar un sistema de plugins
+para Tremor. El plazo original era de tres meses comenzando en agosto, pero se
+acabó alargando a unos once meses. Disponía de tres mentores --- los
+desarrolladores principales de Tremor ---, que me ayudaron a entender el
+funcionamiento interno del programa y dieron consejo cuando era necesario.
 
 \section{Objetivo}
 
@@ -176,7 +169,7 @@ programa por completo.
 \subsection{Aprender de otros}
 
 Existen proyectos maduros con características similares a las de Tremor, como
-\textcite{nginx} o \textcite{apachehttpserver}, que llevan beneficiándose de un
+\namecite{nginx} o \namecite{apachehttpserver}, que llevan beneficiándose de un
 sistema de plugins desde hace mucho. Informan mejorías en flexibilidad,
 extensibilidad y facilidad de
 desarrollo~\cite{nginxPluginsAdvantages}\cite{apachePluginsAdvantages}. Aunque
@@ -195,11 +188,10 @@ El proyecto ha tenido una duración de unos once meses. La propuesta a Tremor se
 realizó de abril a mayo de 2021, pero no se comenzó el desarrollo hasta
 aceptarse en agosto del mismo año, y se terminó en junio de 2022. Su realización
 ha sido completamente remota y con horarios muy flexibles. Se usó el servidor de
-Discord de Tremor\footnote{\url{https://discord.com/invite/Wjqu5H9rhQ}} como
-plataforma principal de comunicación, tanto por texto como por videollamada. Se
-programó una llamada por semana, en la que explicaba mi progreso y recibía ayuda
-en caso de que me hubiera quedado atascado o necesitara alguna opinión
-adicional.
+Discord de Tremor~\cite{tremor_discord} como plataforma principal de
+comunicación, tanto por texto como por videollamada. Se programó una llamada por
+semana, en la que explicaba mi progreso y recibía ayuda en caso de que me
+hubiera quedado atascado o necesitara alguna opinión adicional.
 
 Disponía de tres mentores, que me guiaban en el proceso de desarrollo: Darach
 Ennis (\emph{Principal Engineer and Director of Tremor Project}), Matthias Wahl
@@ -209,7 +201,7 @@ empleados por Wayfair.
 La organización de forma más estructurada para las tareas que tenía pendientes,
 en las que estaba trabajando en ese momento, y las que ya había realizado, se
 basó principalmente en un Kanban en
-GitHub\footnote{\url{https://github.com/marioortizmanero/tremor-runtime/projects/1}}.
+GitHub.
 
 \subsection{Desarrollo}
 
@@ -231,25 +223,40 @@ Coverage} (la cantidad de código cubierta por los tests) y el rendimiento.
 
 Este trabajo está disponible públicamente al completo. Además, a medida que he
 investigado e implementado el sistema de plugins, he ido escribiendo todo en mi
-blog personal, \emph{NullDeref}\footnote{\url{https://nullderef.com/}}. Dispone
-de una serie con un total de seis\footnote{El último artículo será publicado
-poco después de la entrega de esta memoria.} artículos, con más detalles sobre
-la implementación final. La organización también difiere considerablemente,
-puesto que los artículos se escribieron a medida que se realizaba el proyecto,
-resultando en una estructura menos rigurosa. Esto toma un formato de tesis,
-mientras que el blog cuenta la historia cronológicamente y sirve mejor como un
-tutorial para alguien que quiera implementar su propio sistema de plugins.
+blog personal, \namecite{nullderef}. Dispone de una serie con un total de
+seis\footnote{El último artículo será publicado poco después de la entrega de
+esta memoria.} artículos, con más detalles sobre la implementación final. La
+organización también difiere considerablemente, puesto que los artículos se
+escribieron a medida que se realizaba el proyecto, resultando en una estructura
+menos rigurosa. Esto toma un formato de tesis, mientras que el blog cuenta la
+historia cronológicamente y sirve mejor como un tutorial para alguien que quiera
+implementar su propio sistema de plugins.
 
 \begin{itemize}
     \item El repositorio de GitHub para el binario de Tremor:\\
         \url{https://github.com/tremor-rs/tremor-runtime}
+
     \item Mi \emph{fork}, con ramas adicionales usadas durante el desarrollo:\\
         \url{https://github.com/marioortizmanero/tremor-runtime}
+
     \item Mi repositorio con experimentos antes de implementar la versión
         definitiva:\\
         \url{https://github.com/marioortizmanero/pdk-experiments}
+
     \item La serie de artículos en mi blog personal:\\
         \url{https://nullderef.com/series/rust-plugins/}.
+
+    \item Página oficial de la iniciativa:\\
+        \url{https://mentorship.lfx.linuxfoundation.org/project/b90f7174-fc53-40bc-b9e2-9905f88c38ff}
+
+    \item \emph{Tracking issue} en GitHub:\\
+        \url{https://github.com/tremor-rs/tremor-runtime/issues/791}
+
+    \item RFC en la documentación de Tremor:\\
+        \url{https://www.tremor.rs/rfc/accepted/plugin-development-kit/}
+
+    \item Kanban con las tareas para el sistema de plugins:\\
+        \url{https://github.com/marioortizmanero/tremor-runtime/projects/1}
 \end{itemize}
 
 Se recomienda también consultar el Anexo~\ref{annex:contributions}, que lista

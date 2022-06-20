@@ -83,8 +83,8 @@ mantenimiento de la librería.
 
 Asegurarse de que la implementación es segura implica una cantidad
 considerablemente mayor de trabajo, aun cuando existen herramientas como
-MIRI\footnote{\url{https://github.com/rust-lang/miri}} --- que sería integrado
-en Tremor en caso de tenerse que recurrir a \unsafe.
+\namecite{miri} --- que sería integrado en Tremor en caso de tenerse que
+recurrir a \unsafe.
 
 \subsection{Resiliencia a errores}
 
@@ -118,23 +118,21 @@ consciente sobre lo que incluye en sus proyectos. Sin embargo, en la práctica
 esto no es cierto.
 
 Podría compararse con cómo funcionan los administradores de paquetes como
-npm\footnote{\url{https://www.npmjs.com/}}. Su infraestructura se suele basar
-por completo en cadenas de confianza; no hay nadie que te impida crear un
-paquete malicioso para ejecutar código remoto o robar
-credenciales~\cite{npm1}\cite{npm2}. Los plugins son como dependencias en este
-caso; tienen acceso completo a la máquina donde se ejecutan, y por tanto no
-deberían ser de confianza por defecto.
+\namecite{npm}. Su infraestructura se suele basar por completo en cadenas de
+confianza; no hay nadie que te impida crear un paquete malicioso para ejecutar
+código remoto o robar credenciales~\cite{npm1}\cite{npm2}. Los plugins son como
+dependencias en este caso; tienen acceso completo a la máquina donde se
+ejecutan, y por tanto no deberían ser de confianza por defecto.
 
 TODO: puedo usar expresiones como 'terreno pantanoso' o es demasiado informal?
 
-Una mejora respecto a Node y npm sería algo como
-Deno\footnote{\url{https://github.com/denoland/deno}}, una runtime segura por
-defecto. Esto es posible gracias a \sandboxing, y requiere que el desarrollador
-configure manualmente, por ejemplo, el acceso al sistema de ficheros o a la red.
-No es una solución infalible porque puede que los desarrolladores acaben
-activando los permisos que necesitan sin pensarlo, pero es un mecanismo similar
-a \unsafe: al menos te hace consciente de que estás en terreno pantanoso y
-facilita la búsqueda de vulnerabilidades.
+Una mejora respecto a Node y npm sería algo como \namecite{deno}, una runtime
+segura por defecto. Esto es posible gracias a \sandboxing, y requiere que el
+desarrollador configure manualmente, por ejemplo, el acceso al sistema de
+ficheros o a la red. No es una solución infalible porque puede que los
+desarrolladores acaben activando los permisos que necesitan sin pensarlo, pero
+es un mecanismo similar a \unsafe: al menos te hace consciente de que estás en
+terreno pantanoso y facilita la búsqueda de vulnerabilidades.
 
 Se podría discutir que, realísticamente, el programa va a ejecutarse la mayoría
 de los casos en una máquina virtual o un contenedor, donde este problema no es
