@@ -66,8 +66,6 @@ pagos~\cite{lfx_mentorship}. En ella, proyectos de código abierto especifican
 una tarea concreta a realizar, proporcionando a cambio un mentor que le guíe
 durante el proceso y una ayuda monetaria.
 
-TODO: debería especificar el dinero que recibí? O no importa?
-
 El título de este proyecto en la plataforma de LFX es ``CNCF -- Tremor: Add
 plugin support for tremor (PDK)'', es decir, desarrollar un sistema de plugins
 para Tremor. El plazo original era de tres meses comenzando en agosto, pero se
@@ -136,12 +134,15 @@ Rust a C y viceversa para poder interactuar con plugins.
 
 \subsection{Tiempos de compilación}
 
+TODO: vuelvo a poner lo de gama media-baja? Asi de primeras no creo que se sepa
+como de bueno es el hardware.
+
 Uno de los problemas más importantes en Tremor es su tiempo de compilación. En
-mi portátil Dell Vostro 5481 de unos 600~€, compilar el binario \code{tremor}
-desde cero requiere de más de 7 minutos en modo \emph{debug}, y sobre 13 en modo
-\emph{release} (con optimizaciones del compilador). Incluso en el caso de
-cambios incrementales (una vez las dependencias ya han sido compiladas), hay que
-esperar unos 10 segundos.
+mi portátil Dell Vostro 5481 con un Intel i5-8265U y Linux 5.18, compilar el
+binario \code{tremor} desde cero requiere de más de 7 minutos en modo
+\emph{debug}, y sobre 13 en modo \emph{release} (con optimizaciones del
+compilador). Incluso en el caso de cambios incrementales (una vez las
+dependencias ya han sido compiladas), hay que esperar unos 10 segundos.
 
 Puede que estas cifras no sean tan preocupantes en comparación con software de
 un tamaño mucho mayor. Pero debido a la naturaleza del programa, el problema
@@ -182,8 +183,6 @@ Tremor.
 
 \subsection{Organización}
 
-
-
 El proyecto ha tenido una duración de unos once meses. La propuesta a Tremor se
 realizó de abril a mayo de 2021, pero no se comenzó el desarrollo hasta
 aceptarse en agosto del mismo año, y se terminó en junio de 2022. Su realización
@@ -193,10 +192,14 @@ comunicación, tanto por texto como por videollamada. Se programó una llamada p
 semana, en la que explicaba mi progreso y recibía ayuda en caso de que me
 hubiera quedado atascado o necesitara alguna opinión adicional.
 
+TODO: cómo prefieres que te mencione? Javier Fabra? Nombre completo? Eres
+doctor?
+
 Disponía de tres mentores, que me guiaban en el proceso de desarrollo: Darach
 Ennis (\emph{Principal Engineer and Director of Tremor Project}), Matthias Wahl
 (\emph{Staff Engineer}) y Heinz N. Gies (\emph{Senior Staff Engineer}), todos
-empleados por Wayfair.
+empleados por Wayfair. Y en el plano académico, Francisco Javier Fabra Caro de
+la Universidad de Zaragoza fue el director del proyecto.
 
 La organización de forma más estructurada para las tareas que tenía pendientes,
 en las que estaba trabajando en ese momento, y las que ya había realizado, se

@@ -1,142 +1,185 @@
 % vim: spelllang=es
 
-\chapter{¿Qué es Tremor?}\label{ch:tremor}
+\chapter{Contexto}\label{sec:investigation}
 
-\section{Procesado de Eventos}
+La propuesta para el sistema de plugins asumía que se iba a implementar con un
+método que cubriré posteriormente, denominado \emph{cargado dinámico}. Esto se
+debe a razones de rendimiento, pero el método también incluye otros problemas
+importantes, principalmente relacionados con seguridad. Por ello, es una buena
+idea considerar las alternativas existentes para el PDK, en caso de que hubiera
+alguno con la misma eficiencia pero menos vulnerabilidades.
 
-\citetitle{tremor} es un \emph{Sistema de Procesado de Eventos}, que consiste en
-``el monitorizado y análisis (procesado) de flujos de información (datos) sobre
-cosas que pasan (eventos)''~\cite{luckham2011event}. Tremor fue creado como una
-alternativa de alto rendimiento a herramientas como \citetitle{logstash} o
-\citetitle{telegraf}, pero ha evolucionado para soportar casos de uso más
-complejos. Al contrario que esos programas, Tremor también tiene soporte para
-\emph{agregación} y \emph{rollups}, e incluye un lenguaje \emph{ad hoc} para
-\emph{Extract, Transform, and Load} (ETL).
+\section{Requisitos}
 
-Para más información sobre Tremor se puede consultar \citetitle{tremorintro},
-que introduce sus conceptos más básicos y sus posibles usos --- o cuándo
-\emph{no} usarlo, en \namecite{tremorconstraints}. \namecite{tremorrecipes}
-lista un total de 32 ejemplos de cómo configurar y emplear el software. El
-Anexo~\ref{annex:tremor} entra en más detalles sobre su implementación interna.
-
-\textcite{robins2010complex} y \textcite{cugola2012processing} introducen en
-detalle los dos campos contenidos en Procesado de Eventos: \emph{Procesado de
-Eventos Complejos} y \emph{Procesado de Flujos de
-Eventos}\footnote{\emph{Complex Event Processing} y \emph{Event Stream
-Processing} respectivamente, siguiendo la terminología anglosajona.}, ambos
-relevantes a Tremor. \textcite{dayarathna2018recent} y
-\textcite{tawsif2018review} resumen los avances más recientes en el campo,
-analizan su evolución, y clasifican sus subáreas. La mayoría de la información
-teórica tanto en esta sección como en el Anexo~\ref{annex:tremor} se extrae de
-estas fuentes.
-
-\section{Casos de uso}
-
-La Figura~\ref{fig:tremor_example} ilustra uno de los casos de uso más básicos
-de Tremor:
-
-\begin{enumerate}
-    \item Recibir \emph{logs} (eventos) de aplicaciones en diferentes protocolos
-        o formatos. Es posible que esta heterogeneidad se deba a que algunas
-        aplicaciones son legadas y no se puedan reducir a un único protocolo o
-        formato, o que esta tarea es demasiado compleja como para gestionarse a
-        nivel de aplicación.
-
-    \item Filtrar los eventos redundantes, añadir campos nuevos o eliminar
-        aquellos innecesarios y transformar todo a un mismo formato. El uso de
-        una herramienta ineficiente o \emph{ad hoc} por la empresa podría ser
-        inviable dada una cantidad de datos suficientemente grande o demasiados
-        protocolos y formatos como para implementarlos todos.
-
-    \item Enviar todos los logs estructurados a una base de datos para
-        analizarlos posteriormente.
-
-\end{enumerate}
-
-\begin{figure}
-    \centering
-    \includegraphics[width=\textwidth]{./Imagenes/example.pdf}
-    \caption{Ejemplo de uso básico de Tremor}%
-    \label{fig:tremor_example}
-\end{figure}
-
-Sin embargo, este caso subestima el potencial de Tremor. La entrada y salida del
-sistema se pueden abstraer más, por ejemplo implementando un chatbot que
-reproduce música. Este podría tomar mensajes de Discord como su entrada, y
-enviar comandos con el API de Spotify como salida.
-
-\section{Conceptos básicos}
-
-Tremor se basa en los términos de \onramps o \sources y \offramps o \sinks:
+Los requerimientos principales para el proyecto son los siguientes:
 
 \begin{itemize}
-    \item Una \onramp especifica cómo Tremor se conecta con el mundo exterior (o
-        una \pipeline) para \textbf{recibir} de sistemas externos. Por ejemplo
-        TCP, periódicamente o PostgreSQL~\cite{tremoronramps}.
+    \item Debe ser posible añadir y quitar plugins tanto en el inicio del
+        programa como durante su ejecución.
 
-    \item Una \offramp especifica cómo Tremor se conecta con el mundo exterior
-        (o una \pipeline) para \textbf{enviar} a sistemas externos. Por ejemplo,
-        \emph{stdout}, Kafka o ElasticSearch~\cite{tremorofframps}.
+    \item Disponibilidad y madurez de la tecnología en el ecosistema de Rust.
+        Debería ser viable en el largo plazo y no quedar obsoleto.
 
-    \item Una \pipeline es una lista de operaciones (transformación, agregación,
-        eliminación, etc) a través de la cual se pueden encaminar los
-        eventos~\cite{tremorpipelines}.
+    \item Soporte multi-plataforma. Tremor actualmente da soporte a Windows,
+        MacOS y Linux, así que debería estar disponible para al menos todas
+        ellas.
+
+    \item No debe tener un impacto excesivo en el rendimiento. El equipo de
+        Tremor está dispuesto a sufrir una degradación de rendimiento siempre y
+        cuando esta sea menor. La definición de `menor' es flexible;
+        aproximadamente un máximo de 10-20\% de reducción en eficiencia para
+        poderse incluir en producción. Copiar y serializar eventos, por ejemplo,
+        implicaría la rotura de este requerimiento.
 
 \end{itemize}
 
-Estos \onramps u \offramps suelen contener una cantidad de información que es
-demasiado grande como para guardarla y debería tratarse en tiempo real. Su
-procesado se basa en las siguientes operaciones:
+También existe una lista de tareas opcionales que se pueden tener en cuenta al
+finalizar el proyecto:
 
 \begin{itemize}
-    \item \emph{Filtros}: descarte de eventos completos a partir de reglas
-        configuradas, con el objetivo de eliminar información de la \pipeline
-        que no se considera relevante.
+    \item Maximizar la seguridad en lo posible, como se especifica en la Sección
+        \ref{sec:security}.
 
-    \item \emph{Transformaciones}: conversión de los datos de un formato a otro,
-        como por ejemplo incrementar un campo con un contador, reemplazar
-        valores, o reorganizar su estructura.
+    \item Debería ser retro-compatible e implementar algún tipo de versionado
+        para evitar roturas inesperadas, como indica la Sección
+        \ref{sec:compat}.
 
-    \item \emph{Matching}: búsqueda de partes de eventos que siguen un patrón en
-        específico (por ejemplo, un campo \code{"id"} con un valor númerico)
-        para transformarlo o descartarlo.
+    \item Minimizar el esfuerzo necesario de reescribir los conectores para el
+        nuevo sistema de plugins.
 
-    \item \emph{Agregación} o \emph{rollups}: recolección de múltiples eventos
-        para producir otros nuevos (e.g., la media o máximo de un campo), de
-        forma que la información útil se reduzca en tamaño.
+    \item Gestionar correctamente plugins con identificadores conflictivos.
+
+    \item Desarrollar un sistema de tests que compruebe las invariantes de los
+        plugins y proporcione mecanismos de testing para desarrolladores de
+        plugins.
+
+    \item Considerar la generación de documentación para plugins y herramientas
+        para mejorar la experiencia de desarrollo.
 
 \end{itemize}
 
-Finalmente, otros términos misceláneos sobre Tremor:
+\section{Seguridad}\label{sec:security}
+
+\subsection{Código unsafe}
+
+Muchas de las tecnologías que se pueden aplicar para un sistema de plugins usan
+código \unsafe. El código \unsafe consiste en una sección que ignora el modelo
+de memoria y concurrencia de Rust, permitiendo por ejemplo el uso de punteros
+nulos o referencias colgantes. Se suele usar para maximizar el control y
+rendimiento del programa.
+
+\begin{minted}{rust}
+let p = std::ptr::null::<i32>();
+unsafe {
+    // Imposible sin un bloque `unsafe`:
+    println!("Mi número: {}", *p); // Segmentation fault!
+}
+\end{minted}
+
+Técnicamente, esto no es necesariamente un problema si la implementación está
+autocontenida y su corrección es auditada exhaustivamente. Pero al perderse
+garantías importantes proporcionadas por Rust, incrementa el coste de
+mantenimiento de la librería.
+
+Asegurarse de que la implementación es segura implica una cantidad
+considerablemente mayor de trabajo, aun cuando existen herramientas como
+\namecite{miri} --- que sería integrado en Tremor en caso de tenerse que
+recurrir a \unsafe.
+
+\subsection{Resiliencia a errores}
+
+Rust no protege a sus usuarios de \leaks de memoria. De hecho, es tan sencillo
+como llamar a la función \rust{mem::forget}. Si un plugin tuviera un \leak, el
+proceso entero también se vería afectado; el rendimiento de Tremor se degradaría
+con plugins no desarrollados incorrectamente. Algo similar podría suceder en
+caso de que un plugin abortase o sufriese de un pánico, lo que terminaría la
+ejecución del programa por completo.
+
+Idealmente, Tremor debería poder detectar plugins que no rinden óptimamente y
+pararlos antes de que sea demasiado tarde. La runtime debería poder continuar
+corriendo aun cuando falle un plugin, posiblemente avisando al usuario o
+reiniciándolo para seguir funcionando.
+
+\subsection{Ejecución de código remota a través de plugins}
+
+Uno de los casos más notorios se dio con Internet Explorer, que usaba COM y
+ActiveX, los cuales no disponían de una \sandbox. Dicho mecanismo aisla por
+completo parte del programa, de forma que no pueda leer ni escribir a memoria
+externa (prohibiendo el acceso a información que no es suya), ni a recursos del
+sistema (como ficheros). Por tanto, extensiones maliciosas para el navegador
+podían ejecutar código arbitrario en la máquina en la que estuviera
+instalado~\cite{iesandbox}. Este problema puede ser menos grave si solo se
+instalan extensiones de confianza con firmas digitales, pero sigue siendo un
+vector de ataque importante.
+
+Se podría aplicar lo mismo a Tremor. El usuario del producto --- aquellos que
+añadan plugins a su configuración ---, es un desarrollador, que debería ser más
+consciente sobre lo que incluye en sus proyectos. Sin embargo, en la práctica
+esto no es cierto.
+
+Podría compararse con cómo funcionan los administradores de paquetes como
+\namecite{npm}. Su infraestructura se suele basar por completo en cadenas de
+confianza; no hay nadie que te impida crear un paquete malicioso para ejecutar
+código remoto o robar credenciales~\cite{npm1}\cite{npm2}. Los plugins son como
+dependencias en este caso; tienen acceso completo a la máquina donde se
+ejecutan, y por tanto no deberían ser de confianza por defecto.
+
+Una mejora respecto a Node y npm sería algo como \namecite{deno}, una runtime
+segura por defecto. Esto es posible gracias a \sandboxing, y requiere que el
+desarrollador configure manualmente, por ejemplo, el acceso al sistema de
+ficheros o a la red. No es una solución infalible porque puede que los
+desarrolladores acaben activando los permisos que necesitan sin pensarlo, pero
+es un mecanismo similar a \unsafe: al menos te hace consciente de que estás en
+terreno pantanoso y facilita la búsqueda de vulnerabilidades.
+
+Se podría discutir que, realísticamente, el programa va a ejecutarse la mayoría
+de los casos en una máquina virtual o un contenedor, donde este problema no es
+tan peligroso. Pero, ¿debería la seguridad del usuario recaer en el hecho de que
+el kernel está isolado? Por no mencionar que un contenedor afecta mucho más al
+rendimiento que algunos métodos de \sandboxing. Aunque el sistema por completo
+estuviera isolado, seguiría habiendo una posibilidad de \leaks internos: el
+plugin de Postgres tiene acceso a todo lo que esté usando el plugin de Apache
+Kafka, que posiblemente tenga \emph{logs} sensitivos.
+
+\section{Retro-compatibilidad}\label{sec:compat}
+
+Será necesario incluir algún tipo de gestión de versiones en el proyecto. Es
+probable que la interfaz de Tremor cambie con frecuencia, lo que romperá plugins
+basados en versiones previas. Si un plugin recibe una estructura de la runtime,
+pero esta estructura perdiese uno de sus campos en una nueva versión, se estará
+invocando comportamiento no definido por intentar acceder a un campo ahora
+inexistente.
+
+\subsection{Posibles soluciones}
+
+La idea más sencilla para arreglar problemas con retrocompatibilidad es
+serializar y deserializar los datos con un protocolo flexible, en vez de usando
+su representación binaria directamente. Si se usara un protocolo como JSON para
+comunicarse entre la runtime y los plugins, añadir un campo no rompería nada, y
+eliminar uno puede ocurrir mediante un proceso de deprecación. Por desgracia,
+esto implicaría una degradación en el rendimiento que posiblemente no interese
+en la aplicación. Otros arreglos más elaborados para representaciones binarias
+incluyen~\cite{swiftabi}:
 
 \begin{itemize}
-    \item \emph{Códec}: describen cómo decodificar los datos del flujo y como
-        volverlos a codificar. Por ejemplo, si los eventos de entrada usan JSON,
-        tendrá que especificarse ese códec para que Tremor lo pueda entender.
+    \item Reservar espacio en la estructura para uso futuro.
 
-    \item \emph{Preprocesador} o \emph{postprocesador}: operadores sobre flujos
-        de datos brutos. Un preprocesador aplicará esta operación antes del
-        códec y un postprocesador después. Por ejemplo, \code{base64} codifica o
-        decodifica la información con ese protocolo.
+    \item Hacer la estructura un tipo opaco, es decir, que sólo se puede acceder
+        a sus campos con llamadas a funciones, en lugar de directamente en
+        memoria.
 
-    \item \emph{Artefacto}: término genérico para hablar de \sinks, \sources,
-        códecs, preprocesadores y postprocesadores.
+    \item Declarar la estructura con un puntero con sus datos de la ``segunda
+        versión'' (lo cual sería opaco en la ``primera versión'').
 
 \end{itemize}
 
-\section{Conectores}
+\subsection{Control de versiones}
 
-Es posible que algunas \onramps no solo quieran recibir de sistemas externos,
-sino también responderles directamente, actuando como una \offramp y viceversa.
-Esto es especialmente útil para casos como REST y \websockets, donde el
-protocolo da la posibilidad de responder a eventos, por ejemplo con un ACK,
-usando la misma conexión. En la versión 0.11 --- la presente cuando me uní al
-proyecto --- este problema se solucionaba con el concepto de \emph{linked
-transports}.
+Hay casos donde un error inevitable. Es posible que Tremor quiera reescribir
+parte de su interfaz o finalmente eliminar una funcionalidad deprecada sin tener
+que preocuparse por romper todos los plugins desarrollados previamente.
 
-El término \emph{conector} se introdujo en mayo de 2022 con la versión 0.12.
-Solucionan el problema desde el inicio, abstrayendo tanto los \onramps como los
-\offramps bajo el mismo concepto, incluyendo los \emph{linked transports}. Dado
-que estos ya estaban siendo desarrollados mientras 0.11 era la última versión,
-el sistema de plugins se enfocó a los conectores desde el principio, en lugar de
-\onramps u \offramps, que ahora han quedado en desuso.
+Para ello, los plugins deben incluir metadatos sobre las diferentes versiones de
+rustc o de la interfaz para la que fue desarrollado. Después, cuando sean
+cargados por Tremor, se podrá comprobar su compatibilidad, en vez de romperse de
+formas misteriosas.
