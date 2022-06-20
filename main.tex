@@ -19,6 +19,7 @@
 %   - 'Artifacto'
 %   - Eliminar e.g. y i.e.
 %   - Eliminar misusos de `así como`
+%   - Revisar referencias no usadas
 %
 % * Debería tener palabras anglosajonas con `\emph` siempre?
 %
@@ -72,6 +73,7 @@
     sorting=none % Sort by appearance in the document
 ]{biblatex}
 \bibliography{Bibliografia_TFG}
+\renewcommand\namelabeldelim{\addnbspace} % https://tex.stackexchange.com/a/74932
 
 % Easier to read font
 \usepackage{fourier} % For math
@@ -151,7 +153,6 @@
 \newcommand{\structs}{\emph{structs}\xspace}
 \newcommand{\leak}{\emph{leak}\xspace}
 \newcommand{\leaks}{\emph{leaks}\xspace}
-\newcommand{\scripting}{\emph{scripting}\xspace}
 \newcommand{\sandbox}{\emph{sandbox}\xspace}
 \newcommand{\sandboxing}{\emph{sandboxing}\xspace}
 \newcommand{\socket}{\emph{socket}\xspace}

@@ -46,7 +46,7 @@ El problema reside en que, inicialmente, únicamente existe una \crate con todo:
 \code{runtime}, \code{plugin}s, y \code{common}. El primer paso debería ser el
 que muestra la Figura~\ref{fig:separation_temporary}: separar los plugins del
 mono-binario. La funcionalidad se encuentra en binarios diferentes, así que la
-runtime tendrá un tiempo de compilación considerablemente menor. Desarrollar un
+runtime tendrá un tiempo de compilación significativamente menor. Desarrollar un
 plugin también será menos costoso, ya que no hará falta compilar los demás.
 
 \begin{figure}
@@ -81,7 +81,7 @@ sistema de plugins basado en iteraciones (o pull requests):
 
 \begin{enumerate}
     \item \textbf{Definir una nueva interfaz y usarla internamente}: el sistema
-        de plugins debería ser todo lo mínimo posible. La interfaz principal
+        de plugins debería ser lo más minimalista posible. La interfaz principal
         puede convertirse de forma que soporte plugins, pero se debería mantener
         todo en un mismo binario por simplicidad. La parte de cargado de plugins
         se puede dejar como una prueba de concepto por el momento y se pueden
@@ -99,8 +99,8 @@ sistema de plugins basado en iteraciones (o pull requests):
 
     \item \textbf{Separar la runtime de la interfaz}: como se ha explicado, esta
         parte es menos importante pero puede implicar un gran número de cambios.
-        Por tanto, únicamente al final se separará la interfaz a una crate
-        \code{common} nueva, para una última mejora a los tiempos de
+        Por tanto, solamente al final se separará la interfaz a una crate
+        \code{common} nueva, para una última reducción de los tiempos de
         compilación.
 
     \item \textbf{Otras mejoras para el despliegue}: últimos cambios antes de
@@ -118,38 +118,39 @@ de escribir ninguna línea de código.
 
 \subsection{Lenguajes interpretados}
 
-Todo tipo de proyectos usan lenguajes interpretados para extender su
-funcionalidad a tiempo de ejecución, como Python, Ruby, Perl, Bash, o
-JavaScript. Particularmente, el editor de texto Vim creó su propio lenguaje para
-poderlo personalizar por completo, Vimscript~\cite{vimscript}. Ahora NeoVim, un
-fork más moderno, está esforzándose por tener Lua como lenguaje de primera clase
-para su configuración~\cite{nvimlua}. Incluso Tremor tiene su propio lenguaje
-para configurarlo, Troy.
+Gran cantidad de proyectos usan lenguajes interpretados para extender su
+funcionalidad a tiempo de ejecución, con Python, Ruby, Perl, Bash, o JavaScript,
+entre otros. Particularmente, el editor de texto Vim creó su propio lenguaje,
+Vimscript, para poderlo personalizar por completo~\cite{vimscript}. Ahora
+NeoVim, un fork más moderno, está esforzándose por tener Lua como lenguaje de
+primera clase para su configuración~\cite{nvimlua}. Incluso Tremor tiene su
+propio lenguaje para configurarlo, Troy.
 
-TODO: alguna traducción de 'embedding' decente?
+TODO: alguna traducción de 'embedding' decente que reemplace su ocurrencia en el
+siguiente párrafo?
 
 De todos los lenguajes disponibles, Lua sería una de las mejores opciones para
 este sistema de plugins en específico. Está hecho con \emph{embedding} en mente:
-es simple y únicamente alrededor de 220KB~\cite{ierusalimschy2006programming}.
-Algunas implementaciones del lenguaje, como LuaJIT, son extremadamente
-eficientes y pueden ser viables hasta en escenarios de rendimiento
-crítico~\cite{luajitperf}. Adicionalmente, las garantías de seguridad de Lua son
-más fuertes que otros lenguajes, dado que no requiere \unsafe y que incluye una
-\sandbox (aunque es ``delicado y difícil de configurar
-correctamente'')~\cite{luasandboxes}.
+es simple de usar y únicamente ocupa alrededor de
+220KB~\cite{ierusalimschy2006programming}. Algunas implementaciones del
+lenguaje, como LuaJIT, son extremadamente eficientes y pueden ser viables hasta
+en escenarios de rendimiento crítico~\cite{luajitperf}. Adicionalmente, las
+garantías de seguridad de Lua son más fuertes que otros lenguajes, dado que no
+requiere \unsafe y por incluir una \sandbox (aunque es ``delicado y difícil de
+configurar correctamente'')~\cite{luasandboxes}.
 
 Rust dispone de librerías como \cratelink{rlua}, con bindings para interoperar
 con Lua. \code{rlua} en particular parece enfocar su interfaz en ser idiomática
 y segura, que es un punto positivo para una librería fuertemente relacionada con
-C. Por desgracia, parece estar semi-abandonada y fue reemplazada por
+C. Desgraciadamente, parece estar semi-abandonada y fue reemplazada por
 \cratelink{mlua}. Por lo general, el ecosistema de Lua en Rust no parece lo
 suficientemente maduro para un proyecto como este; aún queda trabajo para
-mejorar la estabilidad.
+mejorar su estabilidad.
 
 También sería posible usar uno de los lenguajes interpretados creados
 específicamente para Rust: \textcite{cratesiogluon}, \textcite{cratesiorhai} o
 \textcite{cratesiorune}. Usarlos posiblemente resulte en código más limpio y
-simple. Sin embargo, su ecosistema todavía está en su infancia y ninguna de las
+simple. Sin embargo, el ecosistema todavía está en su infancia y ninguna de las
 opciones son tan estables o seguras como lenguajes de programación de propósito
 general. Rhai, el más usado, anunció su versión v1.0 en julio de 2021 y no
 sobrepasa las 200.000 descargas, mientras que Lua fue creado en 1993 y es uno de
@@ -174,15 +175,16 @@ rendimiento excesivo. Su diseño incluye una \sandbox para lidiar con programas
 no fiables, como es el caso en sistemas de plugins, y apenas no requiere usar
 \unsafe. Ya que puede ser compilado desde otros lenguajes como Rust o C, el
 código existente en Tremor podría ser reusado (lo cual era imposible con
-lenguajes de \scripting).
+lenguajes interpretados).
 
 Existen dos runtimes principales para Rust: \textcite{wasmer} y
-\textcite{wasmtime}. Ambas son implementaciones competitivas que se enfocan a
-unos u otros casos de uso. Por lo general, Wasmer es más adecuado para embebirlo
-en programas nativos, mientras que Wasmtime se centra en programas individuales
---- aunque los dos se pueden usar apara ambos casos~\cite{wasmwikiusage}.
+\textcite{wasmtime}. Ambas son implementaciones competitivas enfocadas a unos u
+otros casos de uso. Por lo general, Wasmer es más adecuado para embebirlo en
+programas nativos, mientras que Wasmtime se centra en programas individuales,
+aunque los dos se pueden usar apara ambos casos~\cite{wasmwikiusage}.
 
-TODO: quizá esta footnote es innecesaria? Podría llamarlo `intérprete` y ya.
+TODO: quizá esta footnote siguiente es innecesaria? Podría llamarlo `intérprete`
+y ya.
 
 WebAssembly todavía es una tecnología relativamente nueva, así que algunas
 partes siguen bajo desarrollo continuo y necesitan mejoras, como en rendimiento.
@@ -192,22 +194,21 @@ compilador\footnote{Nos referimos también a la runtime como un
 \emph{compilador}, dado que las implementaciones más eficientes y populares son
 intérpretes \emph{Just-In-Time} (JIT), que transforman partes del código fuente
 a código máquina.} y del entorno que se esté usando, variando desde mejoras en
-velocidad de 1.67x en Chrome, a 11.71x con Firefox. Cuando se compara contra
-código nativo, \textcite{libsodiumwasmperf} describe una varianza similar, donde
-Wasmer es 2.47x más lento y con Wasmtime es 3.28x. En resumen, mientras que
-WebAssembly es una solución más eficiente que algunos lenguajes de \scripting,
-sigue sin llegar al nivel de binarios nativos, y posiblemente no sea lo
-suficiente para este caso.
+velocidad de 1.67x en Chrome, a 11.71x con Firefox. Cuando se compara con código
+nativo, \textcite{libsodiumwasmperf} describe una varianza similar, donde Wasmer
+es 2.47x más lento y con Wasmtime es 3.28x. En resumen, aunque WebAssembly es
+una solución más eficiente que algunos lenguajes interpretados, sigue sin llegar
+al nivel de binarios nativos, y posiblemente no sea lo suficiente para este
+caso.
 
 Esta tecnología es de las más adecuadas encontradas por el momento; su único
 problema es el rendimiento. Tras implementar algún sistema de plugins en
-miniatura, su usabilidad era excelente. Si fuera posible transferir datos entre
-la runtime y el plugin sin tener que copiarlos, sería definitivamente la mejor
-alternativa.
-
-La especificación de WebAssembly define únicamente enteros y decimales como sus
-tipos disponibles~\cite{wasmertypes}. Existen algunas maneras de tratar tipos no
-triviales como estructuras o enumeraciones:
+miniatura, su usabilidad y seguridad era excelente. Si fuera posible transferir
+datos (tipos no triviales) entre la runtime y el plugin sin tener que copiarlos,
+sería definitivamente la mejor alternativa. La especificación de WebAssembly
+define únicamente enteros y decimales como sus tipos
+disponibles~\cite{wasmertypes}. Existen algunas maneras de tratar tipos
+compuestos, como estructuras o enumeraciones:
 
 \begin{itemize}
     \item A través de la \textcite{wasminterfacetypes}. Esta define un formato
@@ -229,25 +230,26 @@ triviales como estructuras o enumeraciones:
         aún~\cite{interfacetypeswasmtime}\cite{interfacetypeswasmer}. Tras
         fallar al intentar usarlo, esta opción fue descartada.
 
-    \item La forma actualmente funcional pero imperfecta, con punteros y memoria
-        compartida. El usuario debe construir y serializar el tipo complejo y
-        después guardarlo en la memoria reservada para Wasm, a la que la runtime
-        puede acceder directamente con punteros. Esto es lo que otros sistemas
-        de plugins como Feather o Veloren
+    \item El método más popular actualmente, que es funcional pero imperfecto,
+        con punteros y memoria compartida. El usuario debe construir y
+        serializar el tipo compuesto y después guardarlo en la memoria reservada
+        para Wasm, a la que la runtime puede acceder directamente con punteros.
+        Esto es lo que otros sistemas de plugins como Feather o Veloren
         hacen~\cite{featherpluginsystem}\cite{velorenpluginsystem}, así que es
         garantizado que funciona.
 
         No sólo requiere esto un paso de serialización y otro de deserialización
         y escribir y leer todos los datos de una memoria, sino que también es
-        una tarea ardua y complicado de hacer correctamente. A nivel de
-        rendimiento esto implicaría copiar los datos, así que no es algo que
+        una tarea ardua y complicada de hacer correctamente. A nivel de
+        rendimiento, esto implicaría copiar los datos, así que no es algo que
         Tremor se pueda permitir.
 
-    \item Otra opción que usan programas como Zellij~\cite{zellijpluginsystem},
-        que usa un ejecutable de Wasm en vez de usarlo como una librería. Para
-        cargarlo, lo ejecuta y usa \stdin y \stdout para los flujos de datos.
-        Por desgracia, esto también requiere copiar datos, y tiene que
-        descartarse.
+    \item Otra opción que emplean programas como
+        Zellij~\cite{zellijpluginsystem}, que usa un ejecutable de Wasm en vez
+        de usarlo como una librería importable. Para cargarlo, ejecuta el
+        binario independiente y usa \stdin y \stdout para los flujos de datos.
+        Desgraciadamente, esto también requiere serializar y copiar datos, y
+        tiene que descartarse.
 
 \end{itemize}
 
@@ -272,11 +274,11 @@ triviales como estructuras o enumeraciones:
 
 \subsection{eBPF}
 
-eBPF es ``a revolutionary technology with origins in the Linux kernel that can
-run sandboxed programs in an operating system kernel''~\cite{ebpf}. Sin embargo,
-de forma similar a WebAssembly, su uso se ha extendido a \emph{user-space}. eBPF
-define una lista de instrucciones que pueden ejecutarse por una máquina virtual,
-también como WebAssembly funciona.
+eBPF es ``una tecnología revolucionaria con orígenes en el kernel de Linux que
+puede ejecutar programas en \sandbox en el kernel de un sistema
+operativo''~\cite{ebpf}. Sin embargo, de forma similar a WebAssembly, su uso se
+ha extendido al espacio de usuario. eBPF define una lista de instrucciones que
+pueden ejecutarse por una máquina virtual, también como WebAssembly funciona.
 
 Esta tecnología es prometedora, ya que a diferencia de WebAssembly, no es
 necesario serializar o deserializar los datos o escribirlos a una memoria
@@ -295,103 +297,14 @@ instrucciones eBPF de forma oficial y la única runtime disponible es
 parece estar obsoleto. Además, supondría un esfuerzo mucho mayor que
 WebAssembly, ya que también requeriría implementar una \sandbox personalizada.
 
-\subsection{Comunicación Inter-Proceso}
-
-Otra opción popular para sistemas de plugins es la \emph{Comunicación
-Inter-Proceso}, que divide el programa en un cliente y un servidor en procesos
-distintos. El cliente actuaría como runtime y estaría conectado a múltiples
-servidores que proporcionan la funcionalidad. Se podría comparar con el
-\emph{Language Server
-Protocol}\footnote{\url{https://microsoft.github.io/language-server-protocol/}},
-basado en JSON-RPC y usado por la mayoría de editores de texto para tener
-soporte especializado para cualquier lenguaje de programación.
-
-Una ventaja común para todos los métodos de esta familia es que, de forma
-similar a WebAssembly, los plugins se podrán escribir en Rust, así que el código
-existente se podría reusar. Además, ya que el cliente y servidor se dividirían
-en múltiples procesos, serían más seguros por lo general; plugins defectuosos no
-afectarían a la runtime de Tremor.
-
-\subsubsection{Sockets}
-
-Son los que peor rendimiento tienen de acuerdo a la Figura
-\ref{fig:ipc_comparison1} y la Figura \ref{fig:ipc_comparison2}, pero también
-son los más famosos, y consecuentemente, los más fáciles de usar. Los \sockets
-son la misma tecnología usada en cualquier servidor para comunicarse con un
-cliente y viceversa, por lo que hay una cantidad enorme de implementaciones
-disponibles.
-
-\begin{figure}
-    \centering
-    \includegraphics[width=12cm]{./Imagenes/venkataraman2015evaluation1.png}
-    \caption{Latencia vs. Tamaño de Mensaje \cite{venkataraman2015evaluation}.}%
-    \label{fig:ipc_comparison1}
-\end{figure}
-
-\begin{figure}
-    \centering
-    \includegraphics[width=12cm]{./Imagenes/venkataraman2015evaluation2.png}
-    \caption{Rendimiento vs. Tamaño de Mensaje
-    \cite{venkataraman2015evaluation}.}%
-    \label{fig:ipc_comparison2}
-\end{figure}
-
-Usar \sockets también requiere un paso de deserialización, dado que los datos se
-envían en paquetes. Formatos como JSON son los más flexibles, pero otros como
-\textcite{protobuf} son ligeros y tienen mejor rendimiento.
-
-\subsubsection{Pipes}
-
-Para un sistema de plugins, las \pipes son muy similares a los \sockets, con la
-única diferencia siendo que las \pipes solo se pueden usar en una misma máquina.
-Con \sockets, técnicamente podrías usar TCP o UDP y tener la runtime y los
-plugins en ordenadores distintos. Esto no es algo necesario para el caso de
-Tremor, y ya que las \pipes ofrecen un mejor rendimiento, posiblemente sean una
-mejor opción por lo general.
-
-Por ejemplo, el gestor de archivos
-nnn\footnote{\url{https://github.com/jarun/nnn}} usa este método: los plugins
-pueden leer de una FIFO (una \pipe con nombre) para recibir las selecciones de
-archivos o directorios que realice el usuario e implementar su funcionalidad
-adicional.
-
-La única desventaja es que no parecen haber librerías populares para la
-funcionalidad genérica de \pipes (quizá \cratelink{interprocess} o
-\cratelink{ipipe}). Sin embargo, esto podría ser innecesario si se usaran las
-\pipes de \stdin, \stdout o \stderr implícitamente, ya que tienen soporte en la
-librería estándar al ejecutar comandos \emph{shell}~\cite{rustpipes}.
-
-\subsubsection{Memoria compartida}
-
-Como el nombre indica, la memoria compartida consiste en inicializar un buffer
-del que se puede leer y escribir desde dos o más procesos al mismo tiempo para
-comunicarse. El API de memoria compartida se implementa a nivel del kernel, por
-lo que depende mucho del sistema operativo y posiblemente no sea tan portable
-como otras soluciones.
-
-Tal y como indican las
-Figuras~\ref{fig:ipc_comparison1}~y~\ref{fig:ipc_comparison2}, es el método con
-mejor rendimiento, ya que no requiere copiar ni transformar datos entre
-procesos. El único coste adicional es la inicialización de las páginas
-compartidas en el sistema operativo, que se debe hacer únicamente al
-principio~\cite{sharedmemperf}.
-
-Desgraciadamente, el soporte para memoria compartida en Rust es casi
-inexistente. Las únicas \crates disponibles son \cratelink{shared_memory} y
-\cratelink{raw_sync}, que no superan las 150.000 descargas en total y usan gran
-cantidad de \unsafe. Esto probablemente tenga que ver con el hecho de que
-comparte los mismos problemas que cargado dinámico respecto a estabilidad de ABI
-(explicado en la sección~\ref{sec:dynload}). No parece ofrecer nada mejor que el
-cargado dinámico y por tanto se descarta como opción.
-
 \subsection{Cargado dinámico}\label{sec:dynload}
 
 Esta es la manera más popular para implementar un sistema de plugins, al menos
 fuera de Rust. Una \emph{Foreign Function Interface} (FFI) nos permite acceder
 directamente a recursos en objetos compilados separadamente, aun después de la
 fase de \emph{linking}, mediante el cargado dinámico. Es una de las opciones más
-eficientes porque no impone casi ningún coste adicinal tras el cargado de la
-librería dinámica.
+eficientes porque no impone casi ningún coste adicional tras el cargado de la
+librería dinámica, y no requiere crear procesos nuevos en el sistema operativo.
 
 La \crate principal para este método es \cratelink{libloading}, aunque también
 existen las menos conocidas \cratelink{dlopen} y \cratelink{sharedlib}, con
@@ -410,8 +323,8 @@ El problema principal con esta alternativa es que Rust carece de una
 entre dos módulos binarios, en nuestro caso entre un ejecutable (runtime) y una
 librería dinámica (plugin). Este se encarga de definir, entre otros, la
 estructura que siguen los tipos en memoria y la convención usada para llamar
-funciones. Sin un ABI definido (y por tanto, \emph{estable}), sería imposible
-saber cómo acceder a los recursos de otros binarios.
+funciones. Sin un ABI definido (y por tanto, sin \emph{estabilidad}), sería
+imposible saber cómo acceder a los recursos de otros binarios.
 
 En el comienzo este proyecto, gran cantidad de fuentes en la comunidad
 confundían cómo funciona este concepto en Rust, y lo explicaban de forma
@@ -419,21 +332,21 @@ incorrecta~\cite{wrongabi1}\cite{wrongabi2}\cite{wrongabi3}\cite{wrongabi4}.
 Este popular malentendido también se dio en la propuesta del PDK y no nos dimos
 cuenta del verdadero significado hasta haber invertido numerosas horas. El
 equipo de Tremor --- yo incluido --- creía que el ABI de Rust es estable,
-siempre que los dos binarios se compilen con la misma versión de compilador. Sin
-embargo, esto es incorrecto por varias razones y fuentes como la referencia
-oficial no entran en suficiente detalle~\cite[Application Binary Interface
-(ABI)]{rustref}. Debe recurrirse a otra sección que menciona brevemente lo
-siguiente:
+siempre que los dos binarios se compilen con exactamente la misma versión de
+compilador. Sin embargo, esto es incorrecto por varias razones y fuentes como la
+referencia oficial no entran en suficiente detalle~\cite[Application Binary
+Interface (ABI)]{rustref}. Debe recurrirse a otra sección, que menciona
+brevemente lo siguiente:
 
 ``La estructura de tipos en memoria puede cambiar con cada compilación. En vez
 de intentar documentar exactamente qué se hace, se documenta solo lo que se
 garantiza hoy''~\cite[Type Layout]{rustref}
 
 La asunción anterior incorrecta se basa en que, hasta el momento, Rust no ha
-implementado ninguna optimización que rompa el ABI entre ejecuciones de un mismo
-compilador. Pero no existe absolutamente ninguna garantía de que esto sea así, y
-es un detalle de implementación del compilador del que no debería confiarse. Es
-posible que este comportamiento sí que se rompa en el
+implementado ninguna optimización que rompa el ABI entre ejecuciones de un
+compilador en la misma versión. Pero no existe absolutamente ninguna garantía de
+que esto sea así, y es un detalle de implementación del compilador del que no
+debería confiarse. Es posible que este comportamiento sí que se rompa en el
 futuro~\cite{randomizelayout}, en cuyo caso el sistema de plugins tendría que
 reescribirse por completo.
 
@@ -502,21 +415,22 @@ Todo este proyecto va a ser posible gracias a una \crate de más alto nivel,
 \cratelink{abi_stable}. Esta usa \code{libloading} internamente y exporta una
 gran cantidad de macros y herramientas para facilitar el desarrollo. Incluye una
 copia de la librería estándar de Rust declarada con el ABI de C, con nombres
-generalmente precedidos por la letra \code{R}. Por tanto, en vez de
+generalmente precedidos por la letra \code{R}. Por tanto, en vez del vector
 \rust{Vec<T>}, podremos usar \rust{RVec<T>}; en caso contrario habría que
-recurrir a punteros \rust{*const T} o tendríamos que reescribir los tipos desde
-cero nosotros. También da soporte para librerías externas muy conocidas en la
-comunidad, como \cratelink{crossbeam} o \cratelink{serde_json}. La
+recurrir a punteros (\rust{*const T}) o tendríamos que reescribir los tipos
+desde cero nosotros. También da soporte para librerías externas muy conocidas en
+la comunidad, como \cratelink{crossbeam} o \cratelink{serde_json}. La
 Figura~\ref{fig:rustabi_stable} demuestra parte de la simplificación respecto al
 código en la Figura~\ref{fig:rustffi}.
 
-Existen algunas alternativas o extensiones para el cargado dinámico como
+Existen más alternativas o extensiones para el cargado dinámico que se tuvieron
+en cuenta, como
 \code{lccc}\footnote{\url{https://github.com/LightningCreations/lccc}},
-\cratelink{safer_ffi} o \cratelink{cglue} que se tuvieron en cuenta, pero no son
-soluciones tan completas ni maduras, por lo que no serán incluidas en este
-proyecto. \abistable se trata de una librería grande, con más de 50.000 líneas
-de código en Rust (como referencia, Tremor tiene unas 35.000 líneas), por lo que
-el aumento de complejidad deberá tenerse en cuenta en la decisión final.
+\cratelink{safer_ffi} o \cratelink{cglue}, pero no son soluciones tan completas
+ni maduras, por lo que no se usarán en este proyecto. \abistable se trata de una
+librería grande, con más de 50.000 líneas de código en Rust (como referencia,
+Tremor tiene unas 35.000 líneas), por lo que el aumento de complejidad deberá
+tenerse en cuenta en la decisión de la tecnología final a usar.
 
 \begin{figure}
     \centering
@@ -542,41 +456,130 @@ pub fn transform(x: Event) -> i32 {
     \label{fig:rustabi_stable}
 \end{figure}
 
+\subsection{Comunicación Inter-Proceso}
+
+Otra opción popular para sistemas de plugins es la \emph{Comunicación
+Inter-Proceso}, que divide el programa en procesos distintos de tipo cliente y
+servidor. El cliente actuaría como runtime y estaría conectado a múltiples
+servidores que proporcionan la funcionalidad. Se podría comparar con el
+\emph{Language Server
+Protocol}\footnote{\url{https://microsoft.github.io/language-server-protocol/}},
+basado en JSON-RPC y usado por la mayoría de editores de texto para tener
+soporte especializado para cualquier lenguaje de programación.
+
+Una ventaja común para todos los métodos de esta familia es que, de forma
+similar a WebAssembly, los plugins se podrán escribir en Rust, así que el código
+existente se podría reusar. Además, ya que el cliente y servidor se dividirían
+en múltiples procesos, serían más seguros por lo general; plugins defectuosos no
+afectarían a la runtime de Tremor.
+
+\subsubsection{Sockets}
+
+Son los que peor rendimiento tienen de acuerdo a la Figura
+\ref{fig:ipc_comparison1} y la Figura \ref{fig:ipc_comparison2}, pero también
+son los más famosos, y consecuentemente, los más fáciles de usar. Los \sockets
+son la misma tecnología usada en cualquier servidor para comunicarse con un
+cliente y viceversa, por lo que hay una cantidad enorme de implementaciones
+disponibles.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=12cm]{./Imagenes/venkataraman2015evaluation1.png}
+    \caption{Latencia vs. Tamaño de Mensaje \cite{venkataraman2015evaluation}.}%
+    \label{fig:ipc_comparison1}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=12cm]{./Imagenes/venkataraman2015evaluation2.png}
+    \caption{Rendimiento vs. Tamaño de Mensaje
+    \cite{venkataraman2015evaluation}.}%
+    \label{fig:ipc_comparison2}
+\end{figure}
+
+Usar \sockets también requiere un paso de serialización, dado que los datos se
+envían en paquetes. Formatos como JSON son los más flexibles, pero otros como
+\textcite{protobuf} son ligeros y tienen mejor rendimiento.
+
+\subsubsection{Pipes}
+
+Para un sistema de plugins, las \pipes son muy similares a los \sockets, con la
+única diferencia siendo que las \pipes solo se pueden usar en una misma máquina.
+Con \sockets, técnicamente podrías usar TCP o UDP y tener la runtime y los
+plugins en ordenadores distintos. Esto no es algo necesario para el caso de
+Tremor, y ya que las \pipes ofrecen un mejor rendimiento, posiblemente sean una
+mejor opción por lo general.
+
+Por ejemplo, el gestor de archivos
+nnn\footnote{\url{https://github.com/jarun/nnn}} usa este método: los plugins
+pueden leer de una FIFO (una \pipe con nombre) para recibir las selecciones de
+archivos o directorios que realice el usuario e implementar su funcionalidad
+adicional.
+
+La única desventaja es que no parecen haber librerías populares para la
+funcionalidad genérica de \pipes (quizá \cratelink{interprocess} o
+\cratelink{ipipe}). Sin embargo, esto podría ser innecesario si se usaran las
+\pipes de \stdin, \stdout o \stderr implícitamente, ya que tienen soporte en la
+librería estándar al ejecutar comandos \emph{shell}~\cite{rustpipes}.
+
+\subsubsection{Memoria compartida}
+
+Como el nombre indica, la memoria compartida consiste en inicializar un buffer
+del que se puede leer y escribir desde dos o más procesos al mismo tiempo para
+comunicarse. El API de memoria compartida se implementa a nivel del kernel, por
+lo que depende mucho del sistema operativo y quizá no sea tan portable como
+otras soluciones.
+
+Tal y como indican las
+Figuras~\ref{fig:ipc_comparison1}~y~\ref{fig:ipc_comparison2}, es el método con
+mejor rendimiento, ya que no requiere copiar ni transformar datos entre
+procesos. El único coste adicional es el tener múltiples procesos, y la
+inicialización de las páginas compartidas en el sistema operativo, que se debe
+hacer únicamente al principio~\cite{sharedmemperf}.
+
+Desgraciadamente, el soporte para memoria compartida en Rust es casi
+inexistente. Las únicas \crates disponibles son \cratelink{shared_memory} y
+\cratelink{raw_sync}, que no superan las 150.000 descargas en total y usan gran
+cantidad de \unsafe. Esto probablemente tenga que ver con el hecho de que
+comparte los mismos problemas que cargado dinámico respecto a estabilidad de ABI
+(explicado en la sección~\ref{sec:dynload}). No parece ofrecer nada mejor que el
+cargado dinámico y por tanto se descarta como opción.
+
 \section{Sistemas de plugins de referencia}
 
 Otro punto de estudio importante es qué plugins ya hay existentes en Rust y cómo
 se han realizado:
 
 \begin{itemize}
-    \item El mismo Cargo o
-        \code{mdbook}\footnote{\url{https://github.com/rust-lang/mdBook}}
-        implementan un sistema de extensiones a través de la línea de comandos.
-        Añadir un subcomando nuevo es tan sencillo como crear un binario con un
-        prefijo establecido (e.g., \code{cargo-expand}). Si está disponible en
-        la variable de entorno \code{PATH} al ejecutar \code{cargo}, se podrá
-        invocar al plugin con \code{cargo expand} también. Es una manera
-        especialmente simple y creativa de usar \pipes con IPC, dado que usa
-        \stdin y \stdout para comunicarse con la runtime.
+	\item El mismo Cargo\footnote{\url{https://github.com/rust-lang/cargo}} o
+		\code{mdbook}\footnote{\url{https://github.com/rust-lang/mdBook}}
+		implementan un sistema de extensiones a través de la línea de comandos.
+		Añadir un subcomando nuevo es tan sencillo como crear un binario con un
+		prefijo establecido (por ejemplo, \code{cargo-expand}). Si este binario
+		está disponible en la variable de entorno \code{PATH} al ejecutar
+		\code{cargo}, se podrá invocar al plugin con \code{cargo expand}
+		también. Es una implementación especialmente simple con \pipes e IPC,
+		dado que usa \stdin y \stdout para comunicarse con la runtime.
 
     \item \code{zellij}\footnote{\url{https://github.com/zellij-org/zellij}} es
         un entorno de trabajo en el terminal con ``un sistema de plugins que
         permite crear plugins en cualquier lenguaje que compile a WebAssembly''.
-        De forma similar al caso anterior, funciona un binario distinto para
-        cada plugin y el ejecutable principal ejecuta el código en WebAssembly,
-        comunicándose con \stdin y \stdout.
+		De forma similar al caso anterior, funciona un binario distinto para
+		cada plugin y la runtime ejecuta el código en WebAssembly, comunicándose
+		con \stdin y \stdout.
 
-    \item \code{xi}\footnote{\url{https://github.com/xi-editor/xi-editor}} es un
-        editor de texto moderno ahora abandonado. Usa RPC con mensajes JSON para
-        comunicarse con plugins en procesos distintos~\cite{xiplugin}, método
-        también usado en Visual Studio Code~\cite{vscodeplugin} o
-        Eclipse~\cite{eclipseplugin}.
+	\item \code{xi}\footnote{\url{https://github.com/xi-editor/xi-editor}} es un
+		editor de texto moderno ahora abandonado. Usaba RPC con mensajes JSON
+		para comunicarse con plugins en procesos distintos~\cite{xiplugin},
+		método también usado en Visual Studio Code~\cite{vscodeplugin} o
+		Eclipse~\cite{eclipseplugin}.
 
     \item \cratelink{bevy} es un motor de videojuegos prometedor cuyas
         prestaciones se implementan como plugins. En la mayoría de los casos, se
         cargan en tiempo de compilación, pero \rust{bevy::dynamic_plugin}
-        da la posibilidad de hacerlo dinámicamente. \code{bevy} se basa en la
-        falsa estabilidad del ABI explicado en la sección~\ref{sec:abi} y
-        únicamente usa tipos definidos en Rust.
+		da la posibilidad de hacerlo dinámicamente. \code{bevy} se basa en la
+		falsa estabilidad del ABI explicado en la Sección~\ref{sec:abi}, así que
+		podría romperse en un futuro.
 
         Otras fuentes como \textcite{dynloading1} o \textcite{dynloading2}
         también intentan usar cargado dinámico para funcionalidades similares.
@@ -595,10 +598,10 @@ flojos, como ilustra la Figura~\ref{fig:triangle}, pero pocas realmente
 cumplen los requisitos de rendimiento establecidos por el equipo de Tremor.
 
 Todas las tecnologías excepto cargado dinámico, eBPF o memoria compartida
-requieren la copia de los datos en algún momento, algo que Tremor no se puede
-permitir. De esas tres posibles soluciones, todas tienen que lidiar con
-problemas con el ABI. La que mejor soporte tiene es cargado dinámico, así que
-ese será el camino tomado.
+requieren la serialización y copia de los datos en algún momento, algo que
+Tremor no se puede permitir. De esas tres posibles soluciones, todas tienen que
+lidiar con problemas con el ABI. La que mejor soporte tiene es cargado dinámico,
+así que ese será el camino tomado.
 
 \begin{figure}
     \centering
