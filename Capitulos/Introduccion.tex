@@ -10,9 +10,9 @@ No se muy bien cuándo usar cual.
 
 Este proyecto ha sido organizado y financiado por \emph{Wayfair}, una empresa
 estadounidense de comercio digital de muebles y artículos del
-hogar\footnote{\url{https://www.wayfair.com/}}. Actualmente, ofrece 14 millones
-de ítems de más de 11.000 proveedores globales~\cite{wayfairItems} e ingresó
-13.700 millones de dólares en 2021~\cite{wayfairRevenue}.
+hogar\footnote{\url{https://www.wayfair.com/}}. Ingresó 13.700 millones de
+dólares en 2021~\cite{wayfairRevenue} y actualmente ofrece 14 millones de ítems
+de más de 11.000 proveedores globales~\cite{wayfairItems}.
 
 Se trata de una entidad de gran tamaño, lo que se refleja en su cantidad
 disponible de datos o \emph{logs} para describir el comportamiento de sus
@@ -107,9 +107,9 @@ las más importantes antes de implementarlo, pero el equipo de Tremor pensaba
 usar \emph{cargado dinámico} desde el principio. El concepto es simple: tanto la
 runtime como los plugins son binarios nativos (es decir, código máquina). Para
 inicializar un plugin, la runtime lo cargará en su propia memoria RAM reservada.
-Posteriormente, mediante una interfaz de acceso binario establecida, denominada
-\emph{Application Binary Interface~(ABI)}, es posible acceder a funciones y
-recursos en los plugins.
+Posteriormente, mediante una interfaz establecida, denominada \emph{Interfaz
+Binaria de Aplicación~(ABI)}, es posible acceder a funciones y recursos en los
+plugins.
 
 El \emph{cargado dinámico} es un método especialmente popular en el lenguaje de
 programación C, dado que su interfaz de comunicación es relativamente sencilla y

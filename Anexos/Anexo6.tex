@@ -1,162 +1,176 @@
-\chapter{Fases de desarrollo}\label{annex:hours}
+\chapter{Pruebas de rendimiento}\label{annex:benchmarks}
 
-Este anexo lista las fases en las que se llevó a cabo el proyecto y las horas
-invertidas en cada una de ellas. Se incluye el periodo en el que se realizaron,
-comenzando en abril de 2021 con la propuesta a Tremor. Una vez aceptado, el
-inicio oficial se dio en agosto. Adicionalmente, junto a sus descripciones se
-añaden uno o más enlaces relacionados con la tarea.
+TODO: listo las specs de las dos máquinas o no hace falta?
 
-\setlist{topsep=2pt,nosep}
+Para medir la degradación de rendimiento introducida por el sistema de plugins,
+fue necesario realizar varias pruebas. Para ello, se ejecutó Tremor en
+\code{passthrough}, que simplemente reenvía todos los eventos que recibe; no es
+necesario el envío de paquetes ni transformaciones más complejas. Aunque esto
+simplifica el proceso, una posible mejora sería probar con casos de uso más
+cercanos a lo real, involucrando el envío de paquetes TCP, por ejemplo. Sin
+embargo, esto no fue posible porque no se había implementado aún ningún plugin
+más avanzado cuando se realizaron las pruebas.
 
-\begin{longtable}[H]{| m{9.7cm} | P{1.3cm} | P{3.4cm} |}
-\caption{Fases de desarrollo del proyecto}\\
+Inicialmente, las pruebas se realizaban sobre el mismo portátil donde
+desarrollaba el proyecto. Sin embargo, el equipo de Tremor ofreció una máquina
+dedicada a \emph{benchmarking}, que permitía ejecutarlos más rápidamente y con
+mayor estabilidad. Se puede observar la diferencia entre las máquinas en la
+Figura~\ref{fig:histogram_variance}. También se incluye el script final usado
+para las pruebas, en la Figura~\ref{fig:script_bench_1} y la
+Figura~\ref{fig:script_bench_2}.
 
-\hline
-\textbf{Fase}
-    & \textbf{Horas}
-    & \textbf{Periodo} \\
-\hline
-\endhead
+Este anexo es autocontenido e incluye las pruebas más relevantes para la
+memoria, pero existen más detalles en el último artículo de \emph{NullDeref},
+todavía no publicado:
+\url{https://github.com/marioortizmanero/nullderef.com/tree/plugin-end}.
 
-Propuesta a Tremor: incluye una introducción sobre quién soy, qué proyecto
-quiero hacer y una breve planificación de la metodología a seguir.
+\begin{sidewaysfigure}
+    \centering
+    \includegraphics[width=\textwidth]{./Imagenes/histogram_pdk.png}
+    \caption{Histograma con dos diferentes versiones del sistema de plugins,
+    mejorando la latencia iterativamente. Concretamente, la mejora consiste en
+    usar un único \code{Value}, en lugar de la copia \code{PdkValue} (ver
+    Anexo~\ref{annex:abi}). La línea marcada como
+    \code{tremor-connectors-laptop} es la rama original de Tremor.}%
+    \label{fig:histogram_pdk}
+\end{sidewaysfigure}
 
-\vspace{4mm}
-\emph{\url{https://nullderef.com/blog/gsoc-proposal/}}
-    & 6
-    & Abr.~\textquotesingle21 \\
+\begin{sidewaysfigure}
+    \centering
+    \includegraphics[width=\textwidth]{./Imagenes/histogram_variance.png}
+    \caption{Las dos líneas inferiores son el mismo programa ejecutado en el
+    servidor dedicado para medir su varianza. Las siguientes dos sobre estas es
+    lo mismo con el portátil; la diferencia en varianza no es tan perceptible
+    como se esperaba. Una mejora importante en la fiabilidad se consiguió
+    realizando varias ejecuciones de calentamiento previas a las mediciones,
+    como se puede ver en la diferencia de la línea superior, el portátil sin
+    calentamiento, con las otras dos del portátil.}%
+    \label{fig:histogram_variance}
+\end{sidewaysfigure}
 
-\hline
-Investigación inicial de las tecnologías disponibles para el sistema de
-plugins y discusión con el equipo. Esto también formó parte de la propuesta,
-aunque de forma no oficial.
+\begin{sidewaysfigure}
+    \centering
+    \includegraphics[width=\textwidth]{./Imagenes/without_value_conv.png}
+    \caption{\emph{Flamegraph} con los porcentajes de ejecución de Tremor
+    original, resaltando en rosa las conversiones de tipos realizadas.}%
+    \label{fig:without_value_conv}
+\end{sidewaysfigure}
 
-\vspace{4mm}
-\emph{\url{https://nullderef.com/blog/plugin-tech/}}
-    & 36
-    & Abr.~\textquotesingle21 -- May.~\textquotesingle21 \\
+\begin{sidewaysfigure}
+    \centering
+    \includegraphics[width=\textwidth]{./Imagenes/with_value_conv.png}
+    \caption{\emph{Flamegraph} una vez implementado el sistema de plugins. Las
+    conversiones son más visibles ahora, puesto que es necesario para
+    comunicarse entre runtime y plugins. Esta gráfica visualiza la degradación
+    de rendimiento causada por conversiones de la librería estándar a \abistable
+    y viceversa.}%
+    \label{fig:with_value_conv}
+\end{sidewaysfigure}
 
-\hline
-Aceptación del proyecto. Introducción a Tremor y a su equipo.
+\begin{sidewaysfigure}
+    \centering
+    \includegraphics[width=\textwidth]{./Imagenes/perf_report.png}
+    \caption{También se utilizó la herramienta \code{perf} para visualizar las
+    secciones del programa más frecuentes en su ejecución. El comando completo
+    es \code{perf report --no-children -i FILE}. El stack de programación
+    asíncrona introduce gran cantidad de ruido, pero sigue pudiéndose distinguir
+    por ejemplo \code{SinkManager::run} (ver Anexo~\ref{annex:tremor}), o el uso
+    de \code{panic::catch_unwind} para pánicos seguros (ver
+    Sección~\ref{sec:panics}).}%
+    \label{fig:perf}
+\end{sidewaysfigure}
 
-\vspace{4mm}
-\emph{\url{https://nullderef.com/blog/plugin-start/}}
-    & 8
-    & Ago.~\textquotesingle21 \\
+\begin{figure}
+    \centering
+    \begin{minted}{bash}
+#!/usr/bin/env bash
 
-\hline
-Implementación de prototipos para el sistema de plugins, y medidas de
-rendimiento iniciales. También incluye otros experimentos menores para encontrar
-el mejor método para tener programación asíncrona o genéricos.
+set -e
 
-\vspace{4mm}
-\emph{\url{https://github.com/marioortizmanero/pdk-experiments}}
+# Both paths must be absolute, and not use `~` or similars. Otherwise
+# it won't work when ran as root.
+TREMOR_DIR=/<fill-yours>/tremor-runtime
+OUTPUT_DIR=/<fill-yours>/results
+WARMUP_ROUNDS=0
+BINARIES="tremor-connectors tremor-pdk"
+BENCHMARKS="passthrough"
 
-\vspace{4mm}
-\emph{\url{https://nullderef.com/blog/plugin-start/}}
+# Working with paths easily
+get_dir() {
+    dir="$TREMOR_DIR/tremor-cli/tests/bench/$1"
+}
+get_bin() {
+    bin="../../../../target/release/$1"
+}
 
-\vspace{4mm}
-\emph{\url{https://nullderef.com/blog/plugin-dynload/}}
-    & 51
-    & Ago.~\textquotesingle21 -- Feb.~\textquotesingle22 \\
+# Validation step to avoid waiting for the benchmarks only for one of
+# them to be incorrectly configured.
+for bin in flamegraph; do
+    if ! command -v "$bin" > /dev/null; then
+        echo "ERROR: Binary $bin not available"
+        exit 1
+    fi
+done
+for name in $VALUES; do
+    get_bin "$name"
 
-\hline
-Investigación del funcionamiento interno de Tremor. Diseño de diagramas de
-secuencia.
+    if ! [ -f "$bin" ] || ! [ -x "$bin" ]; then
+        echo "ERROR: Binary $bin doesn't exist"
+        exit 1
+    fi
+done
+for name in $BENCHMARKS; do
+    get_dir "$name"
 
-\vspace{4mm}
-\emph{\url{https://nullderef.com/blog/plugin-dynload/}}
-    & 13
-    & Sep.~\textquotesingle21 \\
+    if ! [ -d "$dir" ]; then
+        echo "ERROR: Benchmark $dir doesn't exist"
+        exit 1
+    fi
+done
+echo ">> Verification step passed"
 
-\hline
-Investigación en detalle de cargado dinámico en Rust.
+# Setup
+mkdir -p "$OUTPUT_DIR"
+export TREMOR_PATH=../../../../tremor-script/lib:../../lib/
+    \end{minted}
+    \caption{Script usado para realizar las pruebas de rendimiento (parte 1/1).}%
+    \label{fig:script_bench_1}
+\end{figure}
 
-\vspace{4mm}
-\emph{\url{https://nullderef.com/blog/plugin-dynload/}}
-    & 22
-    & Sep.\textquotesingle21 -- Oct.~\textquotesingle21 \\
+\begin{figure}
+    \centering
+    \begin{minted}{bash}
+# Finally running the benchmarks
+for bench in $BENCHMARKS; do
+    # Benchmarks only work if you're in the same directory, and then
+    # always use relative paths.
+    get_dir "$name"
+    cd "$dir"
 
-\hline
-Aprendizaje de la librería \abistable.
+    # Warmup round, ran alternately for accuracy
+    for i in $(seq $WARMUP_ROUNDS); do
+        for name in $BINARIES; do
+            get_bin "$name"
 
-\vspace{4mm}
-\emph{\url{https://nullderef.com/blog/plugin-abi-stable/}}
-    & 17
-    & Oct.~\textquotesingle21 -- Nov.~\textquotesingle21 \\
+            echo ">> Warming up with $name ($i/$WARMUP_ROUNDS)"
+            "$bin" test bench . > /dev/null
+        done
+    done
 
-\hline
-Soporte de \abistable para programación asíncrona con \code{async_ffi}.
+    for name in $BINARIES; do
+        get_bin "$name"
 
-\vspace{4mm}
-\emph{\url{https://github.com/oxalica/async-ffi/pull/10}}
-    & 15
-    & Nov.~\textquotesingle21 -- Ene.~\textquotesingle22 \\
+        echo ">> Benchmarking $name"
+        "$bin" test bench . > "$OUTPUT_DIR/${name}.hgrm"
 
-\hline
-Primer diseño e implementación del sistema de plugins.
-
-\vspace{4mm}
-\emph{\url{https://github.com/tremor-rs/tremor-runtime/pull/1434}}
-    & 64
-    & Oct.~\textquotesingle21 -- Abr.~\textquotesingle22 \\
-
-\hline
-Mediciones de rendimiento.
-
-\vspace{4mm}
-\emph{\url{https://github.com/marioortizmanero/nullderef.com/pull/54} (artículo
-aún no publicado)}
-    & 14
-    & Ene.~\textquotesingle22 -- Jun.~\textquotesingle22 \\
-
-\hline
-Resolución de los problemas de covarianza y subtipado.
-
-\vspace{4mm}
-\emph{\url{https://github.com/rodrimati1992/abi_stable_crates/issues/75}}
-    & 26
-    & Ene.~\textquotesingle22 -- Mar.~\textquotesingle22\\
-
-\hline
-Añadir soporte de la librería \code{halfbrown} para \abistable.
-
-\vspace{4mm}
-\emph{\url{https://github.com/rodrimati1992/abi_stable_crates/pull/83}}
-    & 19
-    & Mar.~\textquotesingle22 -- Jun.~\textquotesingle22 \\
-
-\hline
-Segunda versión del sistema de plugins con las dos mejoras anteriores de
-rendimiento.
-
-\vspace{4mm}
-\emph{\url{https://github.com/tremor-rs/tremor-runtime/pull/1597}}
-    & 26
-    & May.~\textquotesingle22 -- Jun.~\textquotesingle22 \\
-
-\hline
-Documentación final para que Tremor pueda continuar con el desarrollo del
-proyecto.
-
-\vspace{4mm}
-\emph{\url{https://github.com/tremor-rs/tremor-runtime/pull/1597}}
-
-\vspace{4mm}
-\emph{\url{https://github.com/marioortizmanero/tremor-runtime/projects/1}}
-    & 6
-    & Jun.~\textquotesingle22 \\
-
-\hline
-Memoria del Trabajo de Fin de Grado.
-    & 41
-    & May.~\textquotesingle22 -- Jun.~\textquotesingle22 \\
-
-\hline
-\textbf{Total}
-    & \textbf{364}
-    & \textbf{Abr.~\textquotesingle21 --
-Jun.~\textquotesingle22} \\
-
-\hline
-\end{longtable}
+        echo ">> Creating flamegraph for $name"
+        flamegraph "$bin" test bench . \
+            > "$OUTPUT_DIR/${name}-flamegraph.hgrm"
+        mv flamegraph.svg "$OUTPUT_DIR/$name-flamegraph.svg"
+        mv perf.data "$OUTPUT_DIR/$name-perf.data"
+    done
+done
+    \end{minted}
+    \caption{Script usado para realizar las pruebas de rendimiento (parte 2/2).}%
+    \label{fig:script_bench_2}
+\end{figure}

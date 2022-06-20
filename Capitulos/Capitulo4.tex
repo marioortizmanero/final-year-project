@@ -389,24 +389,25 @@ cargado dinámico y por tanto se descarta como opción.
 Esta es la manera más popular para implementar un sistema de plugins, al menos
 fuera de Rust. Una \emph{Foreign Function Interface} (FFI) nos permite acceder
 directamente a recursos en objetos compilados separadamente, aun después de la
-fase de \emph{linking}, gracias al cargado dinámico. Es una de las opciones más
-eficientes porque no implica casi ningún coste adicinal tras cargar la librería
-dinámica.
+fase de \emph{linking}, mediante el cargado dinámico. Es una de las opciones más
+eficientes porque no impone casi ningún coste adicinal tras el cargado de la
+librería dinámica.
 
 La \crate principal para este método es \cratelink{libloading}, aunque también
-existen las menos conocidas \cratelink{dlopen} y \crate{sharedlib}, con pequeñas
-diferencias~\cite{cratesdynloadcompare}. Todas ellas requieren de uso extensivo
-de \unsafe, son complicadas de usar
+existen las menos conocidas \cratelink{dlopen} y \cratelink{sharedlib}, con
+pequeñas diferencias~\cite{cratesdynloadcompare}. Todas ellas requieren de uso
+extensivo de \unsafe, son complicadas de usar
 correctamente~\cite{hardplugins1}\cite{hardplugins2}, incluyendo sutiles
-disparidades entre sistemas operativos~\cite{hardplugins3}, ni disponen de un
+disparidades entre sistemas operativos~\cite{hardplugins3}, y no disponen de un
 mecanismo similar a una \sandbox. La única manera de mejorar la usabilidad será
-a través de los macros y herramientas facilitados por algunas librerías.
+a través de los macros, herramientas y abstracciones facilitadas por ellas
+mismas y otras librerías.
 
 \subsubsection{Estabilidad del ABI}\label{sec:abi}
 
-El problema principal con esta alternativa es que Rust carece de un
-\emph{Application Binary Interface} (ABI) estable. El ABI es una interfaz entre
-dos módulos binarios, en nuestro caso entre un ejecutable (runtime) y una
+El problema principal con esta alternativa es que Rust carece de una
+\emph{Interfaz Binaria de Aplicación~(ABI)} estable. El ABI es una interfaz
+entre dos módulos binarios, en nuestro caso entre un ejecutable (runtime) y una
 librería dinámica (plugin). Este se encarga de definir, entre otros, la
 estructura que siguen los tipos en memoria y la convención usada para llamar
 funciones. Sin un ABI definido (y por tanto, \emph{estable}), sería imposible
@@ -428,7 +429,7 @@ siguiente:
 de intentar documentar exactamente qué se hace, se documenta solo lo que se
 garantiza hoy''~\cite[Type Layout]{rustref}
 
-La asumpción anterior incorrecta se basa en que, hasta el momento, Rust no ha
+La asunción anterior incorrecta se basa en que, hasta el momento, Rust no ha
 implementado ninguna optimización que rompa el ABI entre ejecuciones de un mismo
 compilador. Pero no existe absolutamente ninguna garantía de que esto sea así, y
 es un detalle de implementación del compilador del que no debería confiarse. Es
@@ -436,7 +437,8 @@ posible que este comportamiento sí que se rompa en el
 futuro~\cite{randomizelayout}, en cuyo caso el sistema de plugins tendría que
 reescribirse por completo.
 
-TODO: a lo mejor lo de órdenes de magnitud se podría cambiar por algo mejor?
+TODO: a lo mejor lo de órdenes de magnitud es demasiado? Pero quiero hacer
+énfasis en lo mucho que complica todo esto.
 
 Descubrir esto implicó un cambio de planes y un aumento en la complejidad del
 proyecto de órdenes de magnitud. Ahora tendría que recurrirse a una ABI que sí
@@ -499,22 +501,22 @@ pub static cached: Event = Event {
 Todo este proyecto va a ser posible gracias a una \crate de más alto nivel,
 \cratelink{abi_stable}. Esta usa \code{libloading} internamente y exporta una
 gran cantidad de macros y herramientas para facilitar el desarrollo. Incluye una
-copia de la librería estándar de Rust declarada con el ABI de C, generalmente
-precedidos por la letra \code{R}. Por tanto, en vez de \rust{Vec<T>}, podremos
-usar \rust{RVec<T>}; en caso contrario habría que recurrir a punteros
-\rust{*const T} o tendríamos que reescribir los tipos desde cero nosotros.
-También da soporte para librerías externas muy conocidas en la comunidad, como
-\cratelink{crossbeam} o \cratelink{serde_json}. La
-Figura~\ref{fig:rustabi_stable} demuestra parte de la simplificación del código
-en la Figura~\ref{fig:rustffi}.
+copia de la librería estándar de Rust declarada con el ABI de C, con nombres
+generalmente precedidos por la letra \code{R}. Por tanto, en vez de
+\rust{Vec<T>}, podremos usar \rust{RVec<T>}; en caso contrario habría que
+recurrir a punteros \rust{*const T} o tendríamos que reescribir los tipos desde
+cero nosotros. También da soporte para librerías externas muy conocidas en la
+comunidad, como \cratelink{crossbeam} o \cratelink{serde_json}. La
+Figura~\ref{fig:rustabi_stable} demuestra parte de la simplificación respecto al
+código en la Figura~\ref{fig:rustffi}.
 
-Existen algunas alternativas o extensiones de \abistable como
+Existen algunas alternativas o extensiones para el cargado dinámico como
 \code{lccc}\footnote{\url{https://github.com/LightningCreations/lccc}},
 \cratelink{safer_ffi} o \cratelink{cglue} que se tuvieron en cuenta, pero no son
 soluciones tan completas ni maduras, por lo que no serán incluidas en este
-proyecto. \abistable se trata de una librería compleja, con más de 50.000 líneas
-de código en Rust (como referencia, Tremor tiene unas 35.000 líneas), lo cual
-deberá tenerse en cuenta en la decisión final también.
+proyecto. \abistable se trata de una librería grande, con más de 50.000 líneas
+de código en Rust (como referencia, Tremor tiene unas 35.000 líneas), por lo que
+el aumento de complejidad deberá tenerse en cuenta en la decisión final.
 
 \begin{figure}
     \centering
@@ -587,11 +589,10 @@ se han realizado:
 \section{Elección Final}
 
 Tras implementar varios sistemas de plugins en miniatura con las tecnologías más
-prometedoras mencionadas en este capítulo, se tomó la decisión de usar cargado
+prometedoras mencionadas en esta sección, se tomó la decisión de usar cargado
 dinámico con \abistable. Cada alternativa tiene sus puntos fuertes y sus puntos
-flojos, como ilustra la Figura~\ref{fig:triangle}, pero ninguna de las demás
-terminaron de cumplir los requisitos de rendimiento establecidos por el equipo
-de Tremor.
+flojos, como ilustra la Figura~\ref{fig:triangle}, pero pocas realmente
+cumplen los requisitos de rendimiento establecidos por el equipo de Tremor.
 
 Todas las tecnologías excepto cargado dinámico, eBPF o memoria compartida
 requieren la copia de los datos en algún momento, algo que Tremor no se puede
