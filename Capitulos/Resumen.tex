@@ -6,8 +6,34 @@
 \vspace{2.5cm}
 \end{center}
 
-Desarrollar un sistema de plugins en Rust no es una tarea tan sencilla como en
-el caso de C o C++. Esto no se debe únicamente a los problemas con el ABI, sino
-también con la inmadurez del lenguaje de programación en comparación.
+La estrategia de muchas empresas modernas como Wayfair se basa en la recolección
+y análisis de datos de su sistema. Para llevarlo a cabo de forma eficiente en
+una escala masiva es necesario el uso de herramientas de alto rendimiento, como
+Tremor.
 
-TODO
+Tremor está escrito en Rust. A medida que evoluciona, sus tiempos de compilación
+crecen, y consecuentemente se deteriora la experiencia de desarrollo. Esto se
+puede aliviar implementando un sistema de plugins que divide su único binario en
+componentes más pequeños compilables independientemente.
+
+Existen múltiples posibles tecnologías para su desarrollo: lenguajes
+interpretados, WebAssembly, eBPF, comunicación inter-proceso, o cargado
+dinámico. Sin embargo, gran parte de ellas deben descartarse por no cumplir los
+requisitos de eficiencia de Tremor. Entre las alternativas restantes, se escoge
+cargado dinámico por ser la más usable y popular.
+
+El cargado dinámico es imposible con tipos y funciones declarados con Rust puro,
+ya que su Interfaz Binaria de Aplicación (ABI) no es estable. Será necesario
+traducir los tipos al ABI de C, que sí es estable, y viceversa. Para facilitar
+el proceso, se pueden aprovechar librerías existentes y herramientas del
+lenguaje como macros procedurales.
+
+Dado que el cargado dinámico en Rust es un ecosistema muy nuevo,, es necesario
+contribuir en código abierto a gran cantidad de sus dependencias para
+implementar las funcionalidades necesarias para un sistema de plugins.
+
+La complejidad del proyecto incrementó significativamente respecto al plan
+original, por lo que aunque funcional, no alcanza alguno de los objetivos
+iniciales, principalmente relacionados con el rendimiento. Sin embargo, sirve
+como una buena base para futuras versiones de Tremor que sí que lo incluyan,
+y continuará evolucionando con el programa.

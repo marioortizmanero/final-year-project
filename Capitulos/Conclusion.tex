@@ -4,47 +4,91 @@
 
 \section{Concusiones}
 
-La complejidad del proyecto resultó ser mucho mayor que lo esperado por
-problemas con el ABI. Por tanto, resultó imposible desarrollar en el tiempo
-disponible un sistema de plugins tan completo y eficiente como se especificaba
-inicialmente.
-
-La última versión del sistema de plugins es funcional y, mediante contribuciones
-de código abierto, ha hecho posible su futura inclusión en una versión de
-Tremor. Muchas de las librerías usadas no disponían de la funcionalidad
-necesaria para este proyecto, así como \code{async_ffi}, \code{abi_stable},
-\code{halfbrown} o \code{simd-json}.
+La complejidad del proyecto ha resultado ser mucho mayor de lo esperado,
+principalmente por el malentendido sobre la estabilidad del ABI de Rust. Por
+tanto, ha resultado imposible desarrollar en el tiempo disponible un sistema de
+plugins tan completo y eficiente como se especificaba inicialmente.
 
 El problema principal tiene que ver con el rendimiento. Dada la naturaleza de
 Tremor, es un requerimiento imprescindible para poderlo incluir en una futura
-versión. Tras unas mediciones iniciales, se calculó que su inclusión reducía el
-rendimiento del programa un 30\%, así que los siguientes pasos consistieron en
-reducir dicha cifra.
+versión. Tras las pruebas realizadas en el Anexo~\ref{annex:benchmarks}, se ha
+calculado que reduce el rendimiento del programa un 30\%.
 
-TODO: incluir todas las figuras de benchmarks con las explicaciones
+No obstante, la última versión del sistema de plugins es perfectamente funcional
+y, mediante su investigación, el diseño de su arquitectura y contribuciones de
+código abierto, se ha hecho posible su inclusión en una futura versión de
+Tremor.
+
+Parte de esta ralentización en el desarrollo se debe también a Rust. Al ser un
+lenguaje tan inmaduro es frecuente encontrar documentación pobre o librerías
+incompletas. Muchas de las \crates usadas no disponían inicialmente de la
+funcionalidad necesaria para un sistema de plugins, como \code{async_ffi},
+\code{abi_stable}, \code{halfbrown} o \code{simd-json}.
 
 \section{Futuro}
 
-\begin{itemize}
-    \item Optimización
+Se ha documentado tanto el proceso seguido como lo que queda pendiente, de forma
+que el equipo de Tremor pueda continuar trabajando en el sistema de plugins para
+su futuro lanzamiento. Sin embargo, aun después de esto el PDK nunca parará de
+evolucionar: su uso se extenderá en la base de código y se perfeccionarán otras
+características con el tiempo. Algunas ideas de mejoras son las siguientes:
 
-    \item Implementación para otros componentes de Tremor: códecs,
-        preprocesadores, postprocesadores, operadores, funciones, extractores,
+\begin{itemize}
+    \item \textbf{Mejoras de rendimiento}: el enfoque principal para el primer
+        lanzamiento del PDK. Esto incluye la realización de \emph{benchmarks}
+        más variados y realistas, y el soporte de \abistable en más librerías.
+
+    \item \textbf{Soporte de otros componentes de Tremor}: el PDK únicamente se
+        implementa para los conectores, pero también podría funcionar con
+        códecs, preprocesadores, postprocesadores, operadores, funciones,
+        extractores, etc.
+
+    \item \textbf{Mejora de la experiencia de usuario}: creación de proyectos
+        modelo como base para plugins nuevos, ejemplos de uso, macros,
+        documentación exhaustiva y de más alto nivel, frameworks de testing,
         etc.
 
-    \item Mejora de la experiencia de usuario: proyectos template, ejemplos,
-        documentación exhaustiva, frameworks de testing.
+    \item \textbf{Carga de plugins a petición del usuario}: además de poder
+        cargar los plugins al inicio del programa, sería especialmente útil
+        solicitar su carga durante la ejecución. Se podría elaborar un nuevo
+        método de configuración iterativo, en el que se cargan y configuran los
+        plugins uno a uno, y finalmente se exporta la composición final.
 
-    \item Carga de plugins a petición del usuario
+    \item \textbf{Paquetes de plugins}: en ciertos casos, sería más eficiente
+        exportar un plugin que implemente más de un componente. Por ejemplo,
+        podrían juntarse los conectores de TCP y UDP en único plugin, dado que
+        probablemente compartan partes de su código y dependencias.
 
-    \item Eliminación de plugins en tiempo de ejecución. Resiliencia a errores
+    \item \textbf{Gestión de versiones alternativas}: la implementación de
+        \abistable para comprobar las versiones es rudimentaria y poco
+        eficiente; se limita a comprobarlos todos recursivamente. Otra opción
+        más simple sería únicamente comprobar una única cadena con el versionado
+        global, por ejemplo.
 
-    \item Registro centralizado de plugins (similar a un repositorio maven)
+    \item \textbf{Registro centralizado de plugins}: en el futuro a largo plazo,
+        se podría desarrollar una funcionalidad similar a los repositorios de
+        Maven o Cargo. Allí se podrían guardar todos los plugins de la comunidad
+        para descargarlos automáticamente.
 
-    \item Paquetes de plugins
-
-    \item Gestión de versiones avanzada???
+    \item \textbf{Eliminación de plugins en tiempo de ejecución}: es
+        especialmente complejo de implementar, dado que \abistable
+        explícitamente no lo soporta. Sin embargo, esto mejoraría
+        considerablemente la resiliencia a errores, siendo posible reiniciar
+        plugins completamente.
 
 \end{itemize}
 
 \section{Valoración personal}
+
+Pese a las situaciones de frustración frente a todos los errores y bloqueos que
+he encontrado en el camino, ha sido una experiencia extraordinaria. Matthias
+bromeó una vez con que ``El infierno de debugging es importante para el
+desarrollo de personaje'', y creo que tiene toda la razón. Enfrentarme a errores
+que no sabía ni cómo abordar me ha enseñado mucho sobre Rust, y lo que es más
+importante, sobre desarrollo de software en general.
+
+Estoy muy satisfecho con haber conseguido lo que he conseguido, y aún más por
+haberlo poder hecho junto al increíble equipo que es el de Tremor. Trabajar con
+ellos me ha ayudado a descubrir qué quiero hacer tras la graduación, y con qué
+tipo de empresa y personas quiero trabajar. Me mantendré en contacto con ellos
+para ver cómo progresa el sistema de plugins.
