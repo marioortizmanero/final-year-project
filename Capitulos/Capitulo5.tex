@@ -267,6 +267,16 @@ al completo para más información.
 
 Una vez implementada la primera versión del sistema de plugins, se realizan
 optimizaciones iterativamente hasta alcanzar un rendimiento lo suficientemente
-bueno. Esto incluye una limpieza general del código, la restauración de
-optimizaciones que se eliminaron temporalmente (ver Anexo~\ref{annex:abi}) o la
-simplificación de la interfaz del PDK.
+bueno. Antes de aplicarlas, sin embargo, es importante realizar mediciones para
+asegurarse de que la mejora ofrecida es apreciable. Para ello, debe elaborarse
+un entorno de \emph{benchmarking} riguroso y pruebas que tengan en cuenta casos
+de uso variados y realistas. Los experimentos iniciales indican una degradación
+del 35\% del rendimiento, por lo que tendrán que realizarse mejoras hasta llegar
+al rango de 10-20\% propuesto por Tremor. Este paso se describe en detalle en el
+Anexo~\ref{annex:benchmarks}.
+
+Las primeras optimizaciones incluyen una limpieza general del código, la
+restauración de optimizaciones que se eliminaron temporalmente (mencionado en el
+Anexo~\ref{annex:abi}) o la simplificación de la interfaz del PDK. Sin embargo,
+no son suficiente para el objetivo marcado, únicamente alcanzándose un 30\% de
+degradación.

@@ -2,16 +2,17 @@
 
 TODO: listo las specs de las dos máquinas o no hace falta?
 
-Para medir la degradación de rendimiento introducida por el sistema de plugins,
-fue necesario realizar varias pruebas. Para ello, se ejecutó Tremor en
-\code{passthrough}, que simplemente reenvía todos los eventos que recibe; no es
-necesario el envío de paquetes ni transformaciones más complejas. Aunque esto
-simplifica el proceso, una posible mejora sería probar con casos de uso más
-cercanos a lo real, involucrando el envío de paquetes TCP, por ejemplo. Sin
-embargo, esto no fue posible porque no se había implementado aún ningún plugin
-más avanzado cuando se realizaron las pruebas.
+Para medir y analizar la degradación de rendimiento introducida por el sistema
+de plugins, fue necesario realizar diversas pruebas. Se ejecutó Tremor con la
+configuración \code{passthrough}, que simplemente reenvía todos los eventos que
+recibe; no es necesario el envío de paquetes ni transformaciones más complejas.
+Aunque esto simplifica el proceso considerablemente, una posible mejora sería
+probar con casos de uso más cercanos a lo real, involucrando el envío de
+paquetes TCP, y filtros y transformaciones de los eventos, por ejemplo. Sin
+embargo, esto no fue posible por no haberse implementado aún ningún conector más
+avanzado al realizarse las pruebas.
 
-Inicialmente, las pruebas se realizaban sobre el mismo portátil donde
+Inicialmente, los experimentos se ejecutaban sobre el mismo portátil donde
 desarrollaba el proyecto. Sin embargo, el equipo de Tremor ofreció una máquina
 dedicada a \emph{benchmarking}, que permitía ejecutarlos más rápidamente y con
 mayor estabilidad. Se puede observar la diferencia entre las máquinas en la
@@ -21,7 +22,7 @@ Figura~\ref{fig:script_bench_2}.
 
 Este anexo es autocontenido e incluye las pruebas más relevantes para la
 memoria, pero existen más detalles en el último artículo de \emph{NullDeref},
-todavía no publicado:
+todavía no publicado:\\
 \url{https://github.com/marioortizmanero/nullderef.com/tree/plugin-end}.
 
 \begin{sidewaysfigure}
@@ -31,7 +32,9 @@ todavía no publicado:
     mejorando la latencia iterativamente. Concretamente, la mejora consiste en
     usar un único \code{Value}, en lugar de la copia \code{PdkValue} (ver
     Anexo~\ref{annex:abi}). La línea marcada como
-    \code{tremor-connectors-laptop} es la rama original de Tremor.}%
+    \code{tremor-connectors-laptop} es la rama original de Tremor. Basándose en
+    el rendimiento puro (\emph{throughput}), la primera versión reduce el
+    rendimiento un 35\%, y la segunda un 30\%.}%
     \label{fig:histogram_pdk}
 \end{sidewaysfigure}
 
