@@ -9,10 +9,11 @@ principalmente por el malentendido sobre la estabilidad del ABI de Rust. Por
 tanto, ha resultado imposible desarrollar en el tiempo disponible un sistema de
 plugins tan completo y eficiente como se especificaba inicialmente.
 
-El problema principal tiene que ver con el rendimiento. Dada la naturaleza de
-Tremor, es un requerimiento imprescindible para poderlo incluir en producción.
-Tras las pruebas realizadas en el Anexo~\ref{annex:benchmarks}, se ha calculado
-que el sistema de plugins reduce el rendimiento un 30\%.
+Las partes incompletas están relacionadas mayoritariamente con el rendimiento.
+Dada la naturaleza de Tremor, es un requerimiento imprescindible para poderlo
+incluir en producción. Tras las pruebas realizadas en el
+Anexo~\ref{annex:benchmarks}, se ha calculado que el sistema de plugins reduce
+el rendimiento del programa un 30\%, en lugar de un 10 a 20\%.
 
 No obstante, la última versión del sistema de plugins es perfectamente funcional
 y, mediante su investigación, el diseño de su arquitectura y contribuciones de
@@ -21,43 +22,42 @@ Tremor.
 
 Parte de esta ralentización en el desarrollo se debe también a Rust. Al ser un
 lenguaje tan inmaduro es frecuente encontrar documentación pobre o librerías
-incompletas. Muchas de las librerías usadas no disponían inicialmente de la
-funcionalidad necesaria para un sistema de plugins, como \code{async_ffi},
-\code{abi_stable}, \code{halfbrown} o \code{simd-json}. Se han resuelto
-problemas importantes en el entorno, extendiendo el soporte para el ABI de C,
-resolviendo tipos con varianzas inflexibles y elaborando conversiones de tipos
-no triviales, todo ello manteniendo la máxima seguridad y eficiencia posible.
-Con esfuerzos como estos, el desarrollo de proyectos similares en el futuro
-resultará mucho más accesible.
+incompletas. Muchas dependencias no disponían inicialmente de la funcionalidad
+necesaria para un sistema de plugins, como \code{async_ffi}, \code{abi_stable},
+\code{halfbrown} o \code{simd-json}. Se han resuelto problemas importantes en el
+entorno extendiendo el soporte para el ABI de C, resolviendo tipos con varianzas
+inflexibles y elaborando conversiones de tipos no triviales, todo ello
+manteniendo la máxima seguridad y eficiencia posible. Con esfuerzos como estos,
+el desarrollo de proyectos similares en el futuro resultará mucho más accesible.
 
 \section{Futuro}
 
 Se ha documentado tanto el proceso seguido como lo que queda pendiente, de forma
 que el equipo de Tremor pueda continuar trabajando en el sistema de plugins para
-su futuro lanzamiento. Sin embargo, aun después de esto el PDK nunca parará de
-evolucionar: su uso se extenderá en la base de código y se perfeccionarán otras
-características con el tiempo. Algunas ideas son las siguientes:
+su futuro lanzamiento. Sin embargo, aun después de esto el PDK siempre seguirá
+evolucionando: su uso se extenderá en la base de código y se perfeccionarán
+otras características con el tiempo. Algunas ideas son las siguientes:
 
 \begin{itemize}
     \item \textbf{Mejoras de rendimiento}: el enfoque principal para el primer
         lanzamiento del PDK. Esto incluye la realización de \emph{benchmarks}
         más variados y realistas, y el soporte de \abistable en más librerías.
 
-    \item \textbf{Soporte de otros componentes de Tremor}: el PDK únicamente se
-        implementa para los conectores, pero también podría funcionar con
-        códecs, preprocesadores, postprocesadores, operadores, funciones,
-        extractores, etc.
+    \item \textbf{Soporte para otros componentes de Tremor}: el PDK únicamente
+        se implementa para los conectores, pero también podría funcionar con
+        códecs, preprocesadores, postprocesadores, operadores, funciones o
+        extractores.
 
-    \item \textbf{Refinamiento de la experiencia de usuario}: creación de
-        proyectos modelo como base para plugins nuevos, ejemplos de uso, macros,
-        documentación exhaustiva y de más alto nivel, frameworks de testing,
-        etc.
+    \item \textbf{Refinamiento de la experiencia de usuario}: puede incluir la
+        creación de proyectos modelo como base para plugins nuevos, ejemplos de
+        uso, documentación exhaustiva y de más alto nivel, macros o frameworks
+        de testing.
 
     \item \textbf{Carga de plugins a petición del usuario}: además de poder
         cargar los plugins al inicio del programa, sería especialmente útil
         solicitar su carga durante la ejecución. Se podría elaborar un nuevo
         método de configuración iterativo, en el que se cargan y configuran los
-        plugins uno a uno, y finalmente se exporta la composición final.
+        plugins uno a uno y finalmente se exporta la composición final.
 
     \item \textbf{Paquetes de plugins}: en ciertos casos, sería más conveniente
         exportar un plugin que implemente más de un componente. Por ejemplo,
@@ -66,19 +66,21 @@ características con el tiempo. Algunas ideas son las siguientes:
 
     \item \textbf{Gestión de versiones alternativas}: la implementación de
         \abistable para comprobar las versiones es rudimentaria y poco
-        eficiente; se limita a comprobarlos todos recursivamente. Otra opción
-        más simple sería únicamente comprobar una cadena con el versionado
-        global para la interfaz, por ejemplo.
+        eficiente; se limita a verificarlos todos recursivamente. Otra opción
+        más simple sería únicamente comprobar una cadena con la versión global
+        de la interfaz, por ejemplo.
 
     \item \textbf{Mayor seguridad}: el cargado dinámico no ofrece ningún tipo de
         aislamiento sobre los plugins y no es adecuado si estos no son de
         confianza. Si en una futura versión de WebAssembly su rendimiento
         mejorase considerablemente, se podría volver a considerar su uso.
+        Mientras tanto, se deberían implementar medidas para evitar
+        vulnerabilidades en lo posible.
 
     \item \textbf{Registro centralizado de plugins}: en el futuro a largo plazo,
-        se podría desarrollar una funcionalidad similar a los repositorios de
-        Maven o Cargo. Allí se podrían guardar todos los plugins de la comunidad
-        para gestionarlos automáticamente.
+        se podría desarrollar un sistema similar a los repositorios de Maven o
+        Cargo. Allí se podrían guardar todos los plugins de la comunidad para
+        importarlos fácilmente.
 
     \item \textbf{Eliminación de plugins en tiempo de ejecución}: es
         especialmente complejo de implementar, dado que \abistable
@@ -92,12 +94,12 @@ características con el tiempo. Algunas ideas son las siguientes:
 
 Pese a las situaciones de frustración frente a todos los errores y bloqueos que
 he encontrado en el camino, ha sido una experiencia extraordinaria. Matthias
-bromeó una vez con que ``El infierno de debugging es importante para el
-desarrollo de personaje'', y creo que tiene toda la razón. Enfrentarme a errores
-que no sabía ni cómo abordar me ha enseñado mucho sobre Rust, y lo que es más
-importante, sobre desarrollo de software en general.
+bromeó una vez con que ``el infierno de depuración es importante para el
+desarrollo de personaje'', y creo que tiene toda la razón. Enfrentarme a
+problemas que no sabía ni cómo abordar me ha enseñado mucho sobre Rust, y lo que
+es más importante, sobre desarrollo de software en general.
 
-Estoy muy satisfecho con haber conseguido lo que he conseguido, y aún más por
+Estoy muy satisfecho por haber conseguido lo que he conseguido, y aún más por
 haberlo poder hecho junto al increíble equipo que es el de Tremor. Trabajar con
 ellos me ha ayudado a descubrir qué quiero hacer tras la graduación, y con qué
 tipo de empresa y personas quiero trabajar. Me mantendré en contacto con ellos
