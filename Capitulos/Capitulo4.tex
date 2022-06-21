@@ -107,7 +107,7 @@ trabajo mucho más alta.
 
 Una vez esta interfaz de bajo nivel se defina, se puede crear un \emph{wrapper}
 de más alto nivel en la runtime que se encargue de la comunicación y de mejorar
-su usabilidad dentro de Tremor. Esto mismo lo hacen otras \crates como
+su usabilidad dentro de Tremor. Esto mismo lo hacen otras librerías como
 \namecite{rdkafka}, que implementa una capa de abstracción asíncrona sobre su
 interfaz de C en \namecite{rdkafka-sys}.
 
@@ -205,7 +205,7 @@ terminó siendo inevitable, dado que la asincronía es uno de los pilares de
 Tremor.
 
 Para poder usar programación asíncrona con el ABI de C se puede recurrir a la
-\crate \namecite{async_ffi}, cuyo único problema era no tener soporte para
+librería \namecite{async_ffi}, cuyo único problema era no tener soporte para
 \abistable en concreto. Al no implementar el \trait \rust{StableAbi}, no se
 podía usar en la interfaz del PDK, por lo que tuve que abrir un pull request
 para hacerlo yo mismo~\cite{asyncfficontrib}. El uso de esta librería resulta en
@@ -214,16 +214,16 @@ macros~\cite{asyncffimacro}.
 
 \section{Seguridad en hilos}
 
-\abistable utiliza la \crate \namecite{libloading} internamente, cuya gestión
+\abistable utiliza la librería \namecite{libloading} internamente, cuya gestión
 de errores no es segura en hilos en algunas plataformas, como \code{dlerror} en
-FreeBSD~\cite{thsafe_libloading}\cite{thsafe_openbsd}. Sí que lo es en
+FreeBSD~\cite{hardplugins3}\cite{thsafe_openbsd}. Sí que lo es en
 Linux~\cite{thsafe_linux}, macOS~\cite{thsafe_macos} y Windows~\cite{thsafe_ms},
 así que en el caso de Tremor no es un problema.
 
 Será importante tenerlo en cuenta en el futuro; al añadir soporte para un nuevo
 sistema operativo habrá que asegurarse de que su gestión de errores sea segura
 en hilos. En caso contrario, deberá actualizarse \code{libloading} para
-sincronizar el acceso con un mútex interno, como lo hace la \crate
+sincronizar el acceso con un mútex interno, como lo hace la librería
 \namecite{dlopen}~\cite{thsafe_dlopen}. Notar que \code{dlopen} es también
 mejorable, dado que usa el mútex \emph{siempre}, incluso en sistemas operativos
 donde la gestión de errores sí es segura en hilos~\cite{thsafe_dlopen_issue}.

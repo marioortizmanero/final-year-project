@@ -15,10 +15,9 @@ respectivamente.
 \section{Primeros pasos}
 
 Comenzando por el clásico ``Hola Mundo'', se incluyen algunos ejemplos de cómo
-es la sintaxis de Rust más básica. Los binarios o librerías en Rust reciben el
-nombre de \crate. Nuestra \crate se podría ejecutar fácilmente con \emph{Cargo},
-el administrador de dependencias oficial, específicamente con el comando
-\code{cargo run}.
+es la sintaxis de Rust más básica. Nuestro programa se podría ejecutar
+fácilmente con \emph{Cargo}, el administrador de dependencias oficial,
+específicamente con el comando \code{cargo run}.
 
 \begin{minted}{rust}
 fn main() {
@@ -242,8 +241,8 @@ y los tokens nuevos como salida. Son similares a los macros de C o C++, pero má
 potentes e higiénicos (en el sentido de que su expansión no captura
 identificadores accidentalmente).
 
-Los macros procedurales se describen como extensiones del lenguaje y en una
-\crate independiente. Esencialmente, ejecutan código en la compilación que
+Los macros procedurales se describen como extensiones del lenguaje y en un
+binario independiente. Esencialmente, ejecutan código en la compilación que
 consume y produce sintaxis de Rust; consisten en directamente transformar el
 Árbol de Sintaxis Abstracta (AST)~\cite[Procedural Macros]{rustref}.
 Consecuentemente, su complejidad es mucho mayor, pero expanden las posibilidades

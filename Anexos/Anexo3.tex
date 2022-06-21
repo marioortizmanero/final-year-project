@@ -40,7 +40,7 @@ pub enum Value {
 
 El primer problema surge en la variante \rust{Static}. Su tipo contenido
 internamente, \rust{StaticNode}, es externo y usa \rust{#[repr(Rust)]}. Se
-declara en el \crate \namecite{value_trait} así:
+declara en la librería \namecite{value_trait} así:
 
 \begin{minted}{rust}
 pub enum StaticNode {
@@ -147,7 +147,7 @@ Los problemas surgen cuando es necesario convertir \emph{tipos externos a
 realmente, Tremor usa la implementación de \namecite{halfbrown} de
 \rust{HashMap}. Esto se debe a que es más eficiente para su caso de uso, y que
 posee algunas funcionalidades adicionales necesarias. El mismo caso se da para
-el tipo \rust{Cow}, cuya alternativa en la \crate \namecite{beef} ocupa menos
+el tipo \rust{Cow}, cuya alternativa en la librería \namecite{beef} ocupa menos
 espacio en memoria y ofrece un mejor rendimiento en Tremor.
 
 Ninguna de estas dos librerías tienen soporte dentro de \abistable, y aunque
@@ -216,7 +216,7 @@ async fn user() {
 }
     \end{minted}
     \caption{Interfaz modificada para la programación asíncrona en el sistema de
-    plugins con la \crate \code{async_ffi}. Este caso sigue el método de
+    plugins con la librería \code{async_ffi}. Este caso sigue el método de
     encapsular \code{Future} con el tipo \code{FfiFuture}.}%
     \label{fig:async_ffi}
 \end{figure}
