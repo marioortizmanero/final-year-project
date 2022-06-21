@@ -5,7 +5,7 @@ explicaciones no sean completamente precisas por razones de simplicidad.
 \namecite{rustbook} es el libro oficial para aprender Rust por completo, pero es
 una lectura larga y posiblemente demasiado exhaustiva. Para mayor brevedad, se
 recomienda leer \namecite{rustprofessionals}, \namecite{rustgentleintro} o
-\namecite{rust30min}.
+\namecite{rust30min}. Partes de este capítulo se obtienen de estas fuentes.
 
 La comunidad dispone de otros libros que explican aspectos más avanzados del
 lenguaje en específico, como \unsafe o la programación asíncrona. En esos casos,
@@ -17,7 +17,7 @@ respectivamente.
 Comenzando por el clásico ``Hola Mundo'', se incluyen algunos ejemplos de cómo
 es la sintaxis de Rust más básica. Los binarios o librerías en Rust reciben el
 nombre de \crate. Nuestra \crate se podría ejecutar fácilmente con \emph{Cargo},
-el administrador de dependencias oficial, o específicamente con el comando
+el administrador de dependencias oficial, específicamente con el comando
 \code{cargo run}.
 
 \begin{minted}{rust}
@@ -28,13 +28,13 @@ fn main() {
 
 \code{main} es nuestra función principal, que invoca al macro \rust{println!}
 para escribir por pantalla. Notar que la invocación de macros, a diferencia de
-funciones, requiere un \rust{!} al final.
+funciones, requiere un una exclamación al final del identificador.
 
 \section{Conceptos principales}
 
 Los bloques básicos (\rust{if}, \rust{else}, \rust{while}, \rust{for}) son muy
-similares a en otros lenguajes. También existe \rust{match}, que permite extraer
-patrones de variables.
+similares a los de otros lenguajes. También existe \rust{match}, que permite
+extraer patrones de variables:
 
 \begin{minted}{rust}
 fn factorial(i: u64) -> u64 {
@@ -85,8 +85,8 @@ struct MessageA {
 \end{minted}
 
 \begin{minted}{rust}
-// Sin nombres de campos; se pueden acceder con `data.0`
-// y `data.1`, respectivamente.
+// Sin nombres de campos; se pueden acceder con `msg.0` y `msg.1`,
+// respectivamente.
 struct MessageB(pub String, i32);
 \end{minted}
 
@@ -110,25 +110,25 @@ trait Sender {
     // que es lo mismo que `this` en Java o C++. En este caso,
     // `&send` tomará una referencia al tipo que implemente
     // `Sender`. También podría ser una referencia mutable con
-    // `&mut self`, o el mismo tipo con `self`.
+    // `&mut self`, o el tipo en sí con `self`.
     fn send(&self, msg: String);
 
     // Implementación por defecto.
     fn send_twice(&self, msg: String) {
-        self.send(msg);
         self.send(msg.clone());
+        self.send(msg);
     }
 }
 \end{minted}
 
-        Y para implementar un trait para un tipo:
+Y para implementar un \trait para un tipo:
 
 \begin{minted}{rust}
 impl Sender for MessageC {
     fn send(&self, msg: String) {
         match self {
             Join => println!("Joined"),
-            Text(txt, id) => println!("{} sent: {}", id, txt),
+            Text(txt, id) => println!("{id} sent: {txt}"),
             // Las variables `_` son ignoradas
             Leave(_) => println!("Left"),
         }
@@ -138,9 +138,9 @@ impl Sender for MessageC {
 }
 \end{minted}
 
-    Notar que, sin embargo, Rust no es un lenguaje orientado a objetos. Un
-    \trait puede heredar de otro \trait, pero un \struct no puede heredar de
-    otro \struct.
+    Notar que, aunque Rust no sea un lenguaje orientado a objetos, un
+    \trait puede heredar de otro \trait. Al contrario, un \struct no puede
+    heredar de otro \struct.
 
 \end{itemize}
 
@@ -150,16 +150,15 @@ De forma similar a C++, Rust posee tipos genéricos. Esto permite la
 implementación de una librería estándar flexible, con varias estructuras de
 datos importantes a conocer:
 
-% NOTE: esto creo que lo puedo evitar si no incluyo cómo se usa async_ffi, que
-% me parece demasiado complejo para el documento.
-% \begin{minted}{rust}
-% // Función genérica, donde `ToString` es un trait
-% fn print<T: ToString>(t: T) {}
+\begin{minted}{rust}
+// Función genérica, donde `ToString` es un trait. El tipo del
+// parámetro `T` tendrá que implementar `ToString`.
+fn print<T: ToString>(t: T) {}
 
-% // Otra manera de especificar genéricos con diferencias
-% // menores que no se explicarán en esta introducción.
-% fn print(t: impl ToString) {}
-% \end{minted}
+// Otra manera de especificar genéricos con diferencias menores
+// que no se explicarán en esta introducción.
+fn print(t: impl ToString) {}
+\end{minted}
 
 \begin{itemize}
     \item Tipos primitivos:
@@ -196,8 +195,8 @@ use std::collections::HashMap;
 \end{minted}
 
     \item \rust{Box<T>}, usado para localizar un tipo \rust{T} no nulo en
-        memoria. Además de un \rust{*const T}, incluye el tamaño que ocupa
-        \rust{T} y tiene una interfaz limitada para que su uso sea siempre
+        memoria. Además de un puntero \rust{*const T}, incluye el tamaño que
+        ocupa \rust{T} y tiene una interfaz limitada para que su uso sea siempre
         seguro.
 
     \item \rust{str} es una cadena UTF-8 de solo lectura, típicamente usada con
@@ -224,7 +223,7 @@ match load_file(input) {
 }
 \end{minted}
 
-En caso de que se produjera un error del que el programa no se puediera
+En caso de que se produjera un error del que el programa no se pudiera
 recuperar, como quedarse sin memoria o un fallo inesperado en la implementación,
 se usa la funcionalidad de \emph{pánicos}. Un pánico se propaga de forma similar
 a una excepción de C++ o Java, y terminará la ejecución por completo. Se puede
@@ -240,14 +239,15 @@ menor o mayor, respectivamente.
 Los macros declarativos se crean con una sintaxis especializada, similar a un
 \rust{match} con patrones de tokens (identificadores, tipos, etc) como entrada,
 y los tokens nuevos como salida. Son similares a los macros de C o C++, pero más
-potentes e higiénicos (i.e., su expansión no captura identificadores
-accidentalmente).
+potentes e higiénicos (en el sentido de que su expansión no captura
+identificadores accidentalmente).
 
-Los macros procedurales se describen como extensiones del lenguaje.
-Esencialmente, ejecutan código en la compilación que consume y produce sintaxis
-de Rust; consisten en directamente transformar el Árbol de Sintaxis Abstracta
-(AST)~\cite[Procedural Macros]{rustref}. Consecuentemente, su complejidad es
-mucho mayor, pero expanden las posibilidades de los macros enormemente.
+Los macros procedurales se describen como extensiones del lenguaje y en una
+\crate independiente. Esencialmente, ejecutan código en la compilación que
+consume y produce sintaxis de Rust; consisten en directamente transformar el
+Árbol de Sintaxis Abstracta (AST)~\cite[Procedural Macros]{rustref}.
+Consecuentemente, su complejidad es mucho mayor, pero expanden las posibilidades
+de los macros enormemente.
 
 \begin{minted}{rust}
 some_macro!(1, 2, 3); // Puede ser tanto declarativo como procedural
@@ -286,23 +286,72 @@ impl fmt::Debug for X {
 \section{Lifetimes}
 
 La seguridad que provee Rust en memoria se basa en un modelo a tiempo de
-compilación con \lifetimes. Una \lifetime es 
+compilación, que usa \lifetimes. Una \lifetime inicia cuando se crea una
+referencia, y termina cuando se destruye, por lo que indica la longitud de su
+vida~\cite[Lifetimes]{rustexample}.
 
-TODO: esto depende de cómo se acaba incluyendo la sección de ``problemas con
-varianza y subtipado''.
+\begin{minted}{rust}
+// Se anotan las lifetimes a continuación con líneas marcando la
+// creación y destrucción de cada variable.
+// `i` tiene la lifetime más larga porque su ámbito (scope)
+// encierra completamente a tanto `ref1` como `ref2`. La duración
+// de `ref1` comparada con `ref2` es irrelevante, puesto que son
+// disjuntas.
+fn main() {
+    let i = 3; // La lifetime de `i` comienza ──────────┐
+    //                                                  │
+    { //                                                │
+        let ref1 = &i; // La lifetime `ref1` comienza ─┐│
+        //                                             ││
+        println!("ref1: {ref1}");   //                 ││
+    } // `ref1 termina ────────────────────────────────┘│
+    //                                                  │
+    //                                                  │
+    { //                                                │
+        let ref2 = &i; // La lifetime `ref2` comienza ─┐│
+        //                                             ││
+        println!("ref2: {ref2}");   //                 ││
+    } // `ref2` termina ───────────────────────────────┘│
+    //                                                  │
+}   // Lifetime termina─────────────────────────────────┘
+\end{minted}
+
+Las \lifetimes se anotan de forma similar a los tipos genéricos, pero en
+minúsculas y precedidos por un apóstrofo: \rust{Foo<'a>} tiene una \lifetime
+\rust{'a} como parámetro. La \lifetime \rust{'static} se reserva para aquellas
+referencias estáticas, es decir, que existen durante toda la ejecución del
+programa. Las \lifetimes en referencias se indican con \rust{&'a T}. Por
+ejemplo, las siguientes funciones expanden las \lifetimes manualmente, que no es
+necesario en casos sencillos porque lo puede inferir el compilador:
+
+\begin{minted}{rust}
+// Una referencia de entrada con lifetime `'a`, que debe vivir al
+// menos lo mismo que la función.
+fn print_one<'a>(x: &'a i32) {
+    println!("`print_one`: x es {x}");
+}
+
+// Múltiples elementos con lifetimes diferentes. En este caso, ambas
+// podrían tener también la lifetime `'a`, pero en casos más
+// complejos es posible que se necesiten lifetimes distintas.
+fn print_multi<'a, 'b>(x: &'a i32, y: &'b i32) {
+    println!("`print_multi`: x es {x}, y es {y}");
+}
+\end{minted}
 
 \section{Unsafe}
 
 Para poder mantener control completo a bajo nivel, es posible ignorar sus
 garantías de seguridad con el sub-lenguaje llamado \emph{unsafe Rust}. El
-análisis estático de Rust es conservativo; en algunas ocasiones es posible que
-rechace algunos programas correctos. El desarrollador puede indicar que es
-consciente de la situación y puede apagar este análisis para corregirlo por sí
+análisis estático de Rust es conservativo; en ocasiones es posible que rechace
+algunos programas correctos. El desarrollador puede indicar que es consciente de
+la situación y puede apagar este análisis en el bloque para corregirlo por sí
 mismo, arriesgándose a cometer un error en su código.
 
 Se puede acceder a \emph{unsafe Rust} conteniendo el código dentro de un bloque
-\rust{unsafe { /* ... */ }} o una función \rust{unsafe fn name() { /* ... */ }}.
-Funciona igual que rust, pero incluye varias nuevas habilidades, entre otras:
+\rust{unsafe { /* ... */ }} o mediante una función \rust{unsafe fn name() { /*
+... */ }}. El código dentro de bloques \rust{unsafe} funciona igual que fuera de
+ellos, pero incluye varias nuevas habilidades, entre otras:
 
 \begin{itemize}
     \item Leer un puntero bruto en memoria
@@ -316,11 +365,11 @@ Funciona igual que rust, pero incluye varias nuevas habilidades, entre otras:
 \section{Programación asíncrona}
 
 Como muchos lenguajes modernos, Rust da soporte a la programación asíncrona, un
-modelo de programación concurrente. Sin entrar en excesivo detalle, esta permite
-tener una gran cantidad de \emph{tareas} concurrentes ejecutándose sobre unos
-pocos hilos del Sistema Operativo. Su caso de uso principal es programas cuyo
-rendimiento está limitado por operaciones de entrada y salida, como servidores o
-bases de datos~\cite{rustasyncbook}.
+modelo de programación concurrente. Esta permite tener una gran cantidad de
+\emph{tareas} concurrentes ejecutándose sobre unos pocos hilos del Sistema
+Operativo. Su caso de uso principal es programas cuyo rendimiento está limitado
+por operaciones de entrada y salida, como servidores o bases de
+datos~\cite{rustasyncbook}.
 
 \begin{minted}{rust}
 // Con `async` se indica que la función es asíncrona.
@@ -333,10 +382,10 @@ async fn get_two_sites_async() {
 
     // Ejecutar las dos tareas. Similar a esperar la terminación de
     // los hilos.
-    join!(future_one, future_two);
+    let (website_one, website_two) = join!(future_one, future_two);
 
     // Con `.await` se puede esperar a la terminación de un futuro
     // individual.
-    let future_three = download_async("https://www.bar.com").await;
+    let website_three = download_async("https://www.bar.com").await;
 }
 \end{minted}
