@@ -346,13 +346,13 @@ pub struct Event {
 }
 
 pub fn transform(x: Event) -> i32 {
-    println!("Received an event with count {}", x.count);
+    println!("Se ha recibido el evento {}", x.count);
     x.count
 }
 
 pub static cached: Event = Event {
     count: 0,
-    name: "my data"
+    name: "mis datos"
 };
     \end{minted}
 
@@ -370,14 +370,14 @@ pub struct Event {
 }
 
 pub extern "C" fn transform(x: Event) -> i32 {
-    println!("Received an event with count {}", x.count);
+    println!("Se ha recibido el evento {}", x.count);
     x.count
 }
 
 #[no_mangle]
 pub static cached: Event = Event {
     count: 0,
-    name: "my data".as_ptr() as _
+    name: "mis datos".as_ptr() as _
 };
     \end{minted}
 
@@ -444,13 +444,12 @@ tecnología final a usar.
 #[derive(StableAbi)]
 pub struct Event {
     pub count: i32,
-    // We can use abi_stable's types!
     pub name: RStr<'static>,
 }
 
 #[sabi_extern_fn]
 pub fn transform(x: Event) -> i32 {
-    println!("Received an event with count {}", x.count);
+    println!("Se ha recibido el evento {}", x.count);
     x.count
 }
     \end{minted}

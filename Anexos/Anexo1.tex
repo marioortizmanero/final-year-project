@@ -15,9 +15,8 @@ respectivamente.
 \section{Primeros pasos}
 
 Comenzando por el clásico ``Hola Mundo'', se incluyen algunos ejemplos de cómo
-es la sintaxis de Rust más básica. Nuestro programa se podría ejecutar
-fácilmente con \emph{Cargo}, el administrador de dependencias oficial,
-específicamente con el comando \code{cargo run}.
+es la sintaxis de Rust más básica. El siguiente programa se podría ejecutar
+fácilmente con \emph{Cargo}, el administrador de dependencias oficial:
 
 \begin{minted}{rust}
 fn main() {
@@ -31,7 +30,7 @@ funciones, requiere un una exclamación al final del identificador.
 
 \section{Conceptos principales}
 
-Los bloques básicos (\rust{if}, \rust{else}, \rust{while}, \rust{for}) son muy
+Los bloques básicos \rust{if}, \rust{else}, \rust{while} y \rust{for} son muy
 similares a los de otros lenguajes. También existe \rust{match}, que permite
 extraer patrones de variables:
 
@@ -46,7 +45,7 @@ fn factorial(i: u64) -> u64 {
 }
 \end{minted}
 
-Uso de variables y métodos:
+Algunos ejemplos de uso de variables y métodos:
 
 \begin{minted}{rust}
 fn main() {
@@ -57,13 +56,13 @@ fn main() {
     // manualmente. Notar que se puede usar el mismo nombre, y la
     // variable anterior será destruida.
     let my_number: i32 = 4321;
-    // Invocación de la función estática (constructor) `new` dentro
-    // del tipo `String`. El uso de `mut` indica que la instancia del
-    // tipo se puede modificar. Funciona de forma inversa a C++, que
-    // por defecto es mutable y `const` indica que *no* se puede
-    // modificar.
+    // Invocación de la función estática `new` dentro del tipo
+    // `String` para construirlo. El uso de `mut` indica que la
+    // instancia del tipo se puede modificar. Funciona de forma
+    // inversa a C++, que por defecto es mutable y `const` indica
+    // que *no* se puede modificar.
     let mut my_str = String::new();
-    // Invocación del método `push` de `my_str`, que añade un
+    // Invocación del método `push` de `String`, que añade un
     // carácter al final de la cadena.
     my_str.push('a');
 }
@@ -84,12 +83,12 @@ struct MessageA {
 \end{minted}
 
 \begin{minted}{rust}
-// Sin nombres de campos; se pueden acceder con `msg.0` y `msg.1`,
-// respectivamente.
+// Estructura sin nombres de campos; se pueden acceder con
+// `msg.0` y `msg.1`.
 struct MessageB(pub String, i32);
 \end{minted}
 
-    \item Enumeraciones, que también permiten contener datos:
+    \item Enumeraciones, que también permiten contener datos en cada variante:
 
 \begin{minted}{rust}
 enum MessageC {
@@ -101,7 +100,7 @@ enum MessageC {
 
     \item \emph{Traits}, similares a las interfaces de Java en el sentido de que
         son una serie de requerimientos y que un tipo puede implementar
-        múltiples \traits, pero también permiten implementaciones por defecto:
+        múltiples \traits. También permiten implementaciones por defecto:
 
 \begin{minted}{rust}
 trait Sender {
@@ -120,7 +119,7 @@ trait Sender {
 }
 \end{minted}
 
-Y para implementar un \trait para un tipo:
+Y para implementar el \trait para un tipo:
 
 \begin{minted}{rust}
 impl Sender for MessageC {
@@ -147,7 +146,7 @@ impl Sender for MessageC {
 
 De forma similar a C++, Rust posee tipos genéricos. Esto permite la
 implementación de una librería estándar flexible, con varias estructuras de
-datos importantes a conocer:
+datos importantes a conocer.
 
 \begin{minted}{rust}
 // Función genérica, donde `ToString` es un trait. El tipo del
@@ -162,11 +161,12 @@ fn print(t: impl ToString) {}
 \begin{itemize}
     \item Tipos primitivos:
         \begin{itemize}
-            \item Carácteres con \rust{char}.
+            \item Carácteres: \rust{char}.
 
-            \item Punto flotante con \rust{f32} y \rust{f64}.
+            \item Booleanos: \rust{bool}.
 
-            \item Booleanos con \rust{bool}.
+            \item Punto flotante: \rust{f32} y \rust{f64}. El número indica el
+                número de bits del tipo.
 
             \item Enteros: \rust{u8}, \rust{i8}, \rust{u16}, \rust{i16},
                 \rust{u32}, \rust{i32}, \rust{u64}, \rust{i64}, e incluso
@@ -179,7 +179,14 @@ fn print(t: impl ToString) {}
             \item El tipo ``unidad'', \rust{()}, equivalente a \code{void} en C
                 o C++.
 
+            \item Referencias con \rust{&T} o \rust{&mut T}.
+
             \item Punteros básicos con \rust{*const T} o \rust{*mut T}.
+
+            \item \rust{str} es una cadena UTF-8 de solo lectura, típicamente
+                usada con una referencia \rust{&str}. Va acompañada por su
+                longitud, por lo que no hace falta terminarla con \code{\0}, a
+                diferencia de C.
 
         \end{itemize}
 
@@ -195,13 +202,10 @@ use std::collections::HashMap;
 
     \item \rust{Box<T>}, usado para localizar un tipo \rust{T} no nulo en
         memoria. Además de un puntero \rust{*const T}, incluye el tamaño que
-        ocupa \rust{T} y tiene una interfaz limitada para que su uso sea siempre
-        seguro.
+        ocupa \rust{T} y tiene una interfaz limitada para que su uso sea seguro.
 
-    \item \rust{str} es una cadena UTF-8 de solo lectura, típicamente usada con
-        una referencia \rust{&str}. Va acompañada por su longitud, por lo que no
-        hace falta terminarla con \code{\0}, a diferencia de C. \rust{String} es
-        su versión modificable asignada en memoria.
+    \item \rust{String} es la versión modificable de \rust{str}, asignada en
+        memoria.
 
 \end{itemize}
 
@@ -210,10 +214,10 @@ use std::collections::HashMap;
 En Rust, los errores se indican con el tipo \rust{Result<T, E>}. Este se trata
 de una enumeración cuyo valor puede ser \rust{Ok(T)}, con el resultado obtenido
 satisfactoriamente, o \rust{Err(E)}, con el tipo de error que ha sucedido. Dado
-que el resultado está contenido dentro suyo, es imposible olvidar comprobar si
-se ha producido algún error. Se puede usar \rust{match} para comprobar el
-resultado, o una serie de funciones disponibles para hacer el proceso más
-ergonómico:
+que el resultado está contenido \emph{dentro} suyo, es imposible olvidar
+comprobar si se ha producido algún error. Se puede usar \rust{match} para
+obtener el resultado, o una serie de funciones disponibles para hacer el proceso
+más ergonómico:
 
 \begin{minted}{rust}
 match load_file(input) {
@@ -245,8 +249,8 @@ Los macros procedurales se describen como extensiones del lenguaje y en un
 binario independiente. Esencialmente, ejecutan código en la compilación que
 consume y produce sintaxis de Rust; consisten en directamente transformar el
 Árbol de Sintaxis Abstracta (AST)~\cite[Procedural Macros]{rustref}.
-Consecuentemente, su complejidad es mucho mayor, pero expanden las posibilidades
-de los macros enormemente.
+Consecuentemente, su complejidad es mucho mayor, pero expanden los límites de
+los macros enormemente.
 
 \begin{minted}{rust}
 some_macro!(1, 2, 3); // Puede ser tanto declarativo como procedural
@@ -285,9 +289,9 @@ impl fmt::Debug for X {
 \section{Lifetimes}
 
 La seguridad que provee Rust en memoria se basa en un modelo a tiempo de
-compilación, que usa \lifetimes. Una \lifetime inicia cuando se crea una
-referencia, y termina cuando se destruye, por lo que indica la longitud de su
-vida~\cite[Lifetimes]{rustexample}.
+compilación, que usa \lifetimes. Una \lifetime comienza al crearse una variable,
+y termina al destruirse, indicando la ``longitud de su
+vida''~\cite[Lifetimes]{rustexample}.
 
 \begin{minted}{rust}
 // Se anotan las lifetimes a continuación con líneas marcando la
@@ -340,17 +344,17 @@ fn print_multi<'a, 'b>(x: &'a i32, y: &'b i32) {
 
 \section{Unsafe}
 
-Para poder mantener control completo a bajo nivel, es posible ignorar sus
-garantías de seguridad con el sub-lenguaje llamado \emph{unsafe Rust}. El
-análisis estático de Rust es conservativo; en ocasiones es posible que rechace
-algunos programas correctos. El desarrollador puede indicar que es consciente de
-la situación y puede apagar este análisis en el bloque para corregirlo por sí
-mismo, arriesgándose a cometer un error en su código.
+Para poder tener control completo a bajo nivel, es posible ignorar las garantías
+de seguridad con el sub-lenguaje llamado \emph{unsafe Rust}. El análisis
+estático de Rust es conservativo y en ocasiones es posible que rechace algunos
+programas correctos. El desarrollador puede indicar que es consciente de la
+situación, apagando este análisis en el bloque para corregirlo por sí mismo,
+pero también arriesgándose a cometer un error en su código.
 
-Se puede acceder a \emph{unsafe Rust} conteniendo el código dentro de un bloque
+Se puede acceder a \emph{unsafe Rust} escribiendo el código dentro de un bloque
 \rust{unsafe { /* ... */ }} o mediante una función \rust{unsafe fn name() { /*
 ... */ }}. El código dentro de bloques \rust{unsafe} funciona igual que fuera de
-ellos, pero incluye varias nuevas habilidades, entre otras:
+ellos, pero se ganan nuevas ``super-habilidades'', como:
 
 \begin{itemize}
     \item Leer un puntero bruto en memoria
@@ -375,16 +379,17 @@ datos~\cite{rustasyncbook}.
 async fn get_two_sites_async() {
     // Creación de dos "futuros" que, al completarse, descargarán
     // asíncronamente las páginas web. Similar a la creación de
-    // un nuevo hilo.
+    // un nuevo hilo. `download_async` también estará declarado
+    // con la palabra clave `async`.
     let future_one = download_async("https://www.foo.com");
     let future_two = download_async("https://www.bar.com");
 
-    // Ejecutar las dos tareas. Similar a esperar la terminación de
-    // los hilos.
+    // Ejecución las dos tareas. Similar a esperar la terminación
+    // de dos hilos.
     let (website_one, website_two) = join!(future_one, future_two);
 
     // Con `.await` se puede esperar a la terminación de un futuro
-    // individual.
+    // individual directamente.
     let website_three = download_async("https://www.bar.com").await;
 }
 \end{minted}
