@@ -11,7 +11,8 @@ alguno con la misma eficiencia pero menos vulnerabilidades.
 
 \section{Requisitos}
 
-Los requerimientos principales para el proyecto son los siguientes:
+La tecnología final escogida y el diseño del sistema de plugins tendrán que
+cumplir una serie de requerimientos impuestos por el equipo de Tremor:
 
 \begin{itemize}
     \item Debe ser posible añadir y quitar plugins tanto en el inicio del
@@ -20,9 +21,9 @@ Los requerimientos principales para el proyecto son los siguientes:
     \item Disponibilidad y madurez de la tecnología en el ecosistema de Rust.
         Debería ser viable en el largo plazo y no quedar obsoleto.
 
-    \item Soporte multi-plataforma. Tremor actualmente da soporte a Windows,
+    \item Soporte multi-plataforma. Tremor actualmente da funciona en Windows,
         MacOS y Linux, así que debería estar disponible para al menos todas
-        ellas.
+        ellos.
 
     \item No debe tener un impacto excesivo en el rendimiento. El equipo de
         Tremor está dispuesto a sufrir una degradación de rendimiento siempre y
@@ -33,8 +34,7 @@ Los requerimientos principales para el proyecto son los siguientes:
 
 \end{itemize}
 
-También existe una lista de tareas opcionales que se pueden tener en cuenta al
-finalizar el proyecto:
+También existe una lista de tareas opcionales que se pueden tener en cuenta:
 
 \begin{itemize}
     \item Maximizar la seguridad en lo posible, como se especifica en la Sección
@@ -49,12 +49,11 @@ finalizar el proyecto:
 
     \item Gestionar correctamente plugins con identificadores conflictivos.
 
-    \item Desarrollar un sistema de tests que compruebe las invariantes de los
-        plugins y proporcione mecanismos de testing para desarrolladores de
-        plugins.
+    \item Desarrollar un sistema que compruebe las invariantes de los plugins y
+        proporcione mecanismos de testing para desarrolladores de plugins.
 
-    \item Considerar la generación de documentación para plugins y herramientas
-        para mejorar la experiencia de desarrollo.
+    \item Considerar la generación de documentación para plugins y desarrollar
+        herramientas para mejorar la experiencia de uso.
 
 \end{itemize}
 
@@ -69,9 +68,9 @@ nulos o referencias colgantes. Se suele usar para maximizar el control y
 rendimiento del programa.
 
 \begin{minted}{rust}
-let p = std::ptr::null::<i32>();
+let p = std::ptr::null::<i32>(); // Puntero nulo a un entero
 unsafe {
-    // Imposible sin un bloque `unsafe`:
+    // La lectura de `p` es imposible sin un bloque `unsafe`
     println!("Mi número: {}", *p); // Segmentation fault!
 }
 \end{minted}
@@ -79,12 +78,12 @@ unsafe {
 Técnicamente, esto no es necesariamente un problema si la implementación está
 autocontenida y su corrección es auditada exhaustivamente. Pero al perderse
 garantías importantes proporcionadas por Rust, incrementa el coste de
-mantenimiento de la librería.
+mantenimiento de la librería y existen riesgos de vulnerabilidades.
 
 Asegurarse de que la implementación es segura implica una cantidad
-considerablemente mayor de trabajo, aun cuando existen herramientas como
-\namecite{miri} --- que sería integrado en Tremor en caso de tenerse que
-recurrir a \unsafe.
+considerablemente mayor de trabajo, aun cuando existen herramientas de
+verificación en tiempo de ejecución como \namecite{miri}. Este sería integrado
+en Tremor en caso de tenerse que recurrir a \unsafe.
 
 \subsection{Resiliencia a errores}
 
@@ -92,13 +91,13 @@ Rust no protege a sus usuarios de \leaks de memoria. De hecho, es tan sencillo
 como llamar a la función \rust{mem::forget}. Si un plugin tuviera un \leak, el
 proceso entero también se vería afectado; el rendimiento de Tremor se degradaría
 con plugins no desarrollados incorrectamente. Algo similar podría suceder en
-caso de que un plugin abortase o sufriese de un pánico, lo que terminaría la
-ejecución del programa por completo.
+caso de que un plugin abortase, lo que terminaría la ejecución del programa por
+completo.
 
 Idealmente, Tremor debería poder detectar plugins que no rinden óptimamente y
 pararlos antes de que sea demasiado tarde. La runtime debería poder continuar
-corriendo aun cuando falle un plugin, posiblemente avisando al usuario o
-reiniciándolo para seguir funcionando.
+corriendo aun cuando falle un plugin, posiblemente reiniciándolo y avisando al
+usuario.
 
 \subsection{Ejecución de código remota a través de plugins}
 
@@ -113,7 +112,7 @@ instalan extensiones de confianza con firmas digitales, pero sigue siendo un
 vector de ataque importante.
 
 Se podría aplicar lo mismo a Tremor. El usuario del producto --- aquellos que
-añadan plugins a su configuración ---, es un desarrollador, que debería ser más
+añadan plugins a su configuración --- es un desarrollador, que debería ser más
 consciente sobre lo que incluye en sus proyectos. Sin embargo, en la práctica
 esto no es cierto.
 
@@ -124,26 +123,26 @@ código remoto o robar credenciales~\cite{npm1}\cite{npm2}. Los plugins son como
 dependencias en este caso; tienen acceso completo a la máquina donde se
 ejecutan, y por tanto no deberían ser de confianza por defecto.
 
-Una mejora respecto a Node y npm sería algo como \namecite{deno}, una runtime
-segura por defecto. Esto es posible gracias a \sandboxing, y requiere que el
+Una mejora respecto a Node.js y npm sería algo como \namecite{deno}, una runtime
+segura por defecto. Esto es posible gracias a \sandboxing y requiere que el
 desarrollador configure manualmente, por ejemplo, el acceso al sistema de
 ficheros o a la red. No es una solución infalible porque puede que los
 desarrolladores acaben activando los permisos que necesitan sin pensarlo, pero
 es un mecanismo similar a \unsafe: al menos te hace consciente de que estás en
 terreno pantanoso y facilita la búsqueda de vulnerabilidades.
 
-Se podría discutir que, realísticamente, el programa va a ejecutarse la mayoría
-de los casos en una máquina virtual o un contenedor, donde este problema no es
-tan peligroso. Pero, ¿debería la seguridad del usuario recaer en el hecho de que
-el kernel está isolado? Por no mencionar que un contenedor afecta mucho más al
-rendimiento que algunos métodos de \sandboxing. Aunque el sistema por completo
-estuviera isolado, seguiría habiendo una posibilidad de \leaks internos: el
-plugin de Postgres tiene acceso a todo lo que esté usando el plugin de Apache
-Kafka, que posiblemente tenga \emph{logs} sensitivos.
+Se podría discutir que, realistamente, el programa va a ejecutarse casi siempre
+en una máquina virtual o un contenedor, donde este problema no es tan peligroso.
+Pero, ¿debería la seguridad del usuario recaer en el hecho de que el kernel está
+aislado? Por no mencionar que un contenedor afecta mucho más al rendimiento que
+algunos métodos de \sandboxing. Aunque la máquina por completo estuviera
+aislada, seguiría habiendo una posibilidad de \leaks internos: el plugin de
+Postgres tiene acceso a todo lo que esté usando el plugin de Apache Kafka, que
+posiblemente tenga \emph{logs} sensitivos.
 
 \section{Retro-compatibilidad}\label{sec:compat}
 
-Será necesario incluir algún tipo de gestión de versiones en el proyecto. Es
+Deberá incluirse algún tipo de gestión de versiones del sistema de plugins. Es
 probable que la interfaz de Tremor cambie con frecuencia, lo que romperá plugins
 basados en versiones previas. Si un plugin recibe una estructura de la runtime,
 pero esta estructura perdiese uno de sus campos en una nueva versión, se estará
@@ -155,10 +154,12 @@ inexistente.
 La idea más sencilla para arreglar problemas con retrocompatibilidad es
 serializar y deserializar los datos con un protocolo flexible, en vez de usando
 su representación binaria directamente. Si se usara un protocolo como JSON para
-comunicarse entre la runtime y los plugins, añadir un campo no rompería nada, y
+comunicarse entre la runtime y los plugins, añadir un campo no rompería nada y
 eliminar uno puede ocurrir mediante un proceso de deprecación. Por desgracia,
 esto implicaría una degradación en el rendimiento que posiblemente no interese
-en la aplicación. Otros arreglos más elaborados para representaciones binarias
+en la aplicación.
+
+Otras medidas preventivas más elaboradas para representaciones binarias
 incluyen~\cite{swiftabi}:
 
 \begin{itemize}
@@ -179,7 +180,7 @@ Hay casos donde un error inevitable. Es posible que Tremor quiera reescribir
 parte de su interfaz o finalmente eliminar una funcionalidad deprecada sin tener
 que preocuparse por romper todos los plugins desarrollados previamente.
 
-Para ello, los plugins deben incluir metadatos sobre las diferentes versiones de
-rustc o de la interfaz para la que fue desarrollado. Después, cuando sean
-cargados por Tremor, se podrá comprobar su compatibilidad, en vez de romperse de
-formas misteriosas.
+Para ello, los plugins deben incluir metadatos sobre las diferentes versiones
+del compilador de Rust o de la interfaz para la que fue desarrollado. Antes de
+que la runtime los cargue, se podrá comprobar su compatibilidad, en vez de
+romperse de formas misteriosas.

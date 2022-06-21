@@ -70,6 +70,11 @@ características con el tiempo. Algunas ideas son las siguientes:
         más simple sería únicamente comprobar una cadena con el versionado
         global para la interfaz, por ejemplo.
 
+    \item \textbf{Mayor seguridad}: el cargado dinámico no ofrece ningún tipo de
+        aislamiento sobre los plugins y no es adecuado si estos no son de
+        confianza. Si en una futura versión de WebAssembly su rendimiento
+        mejorase considerablemente, se podría volver a considerar su uso.
+
     \item \textbf{Registro centralizado de plugins}: en el futuro a largo plazo,
         se podría desarrollar una funcionalidad similar a los repositorios de
         Maven o Cargo. Allí se podrían guardar todos los plugins de la comunidad
