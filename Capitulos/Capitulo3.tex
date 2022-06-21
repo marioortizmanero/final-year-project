@@ -542,18 +542,18 @@ se han realizado:
         especialmente simple con \pipes e IPC, dado que usa \stdin y \stdout
         para comunicarse con la runtime.
 
-    \item \citetitle{zellij} es un entorno de trabajo en el terminal con ``un
+    \item \namecite{zellij} es un entorno de trabajo en el terminal con ``un
         sistema de plugins que permite crear plugins en cualquier lenguaje que
         compile a WebAssembly''. De forma similar al caso anterior, funciona un
         binario distinto para cada plugin y la runtime ejecuta el código en
         WebAssembly, comunicándose con \stdin y \stdout.
 
-    \item \citetitle{xi} es un editor de texto moderno ahora abandonado. Usaba
+    \item \namecite{xi} es un editor de texto moderno ahora abandonado. Usaba
         RPC con mensajes JSON para comunicarse con plugins en procesos
         distintos~\cite{xiplugin}, método también usado en Visual Studio
         Code~\cite{vscodeplugin} o Eclipse~\cite{eclipseplugin}.
 
-    \item \citetitle{bevy} es un motor de videojuegos prometedor cuyas
+    \item \namecite{bevy} es un motor de videojuegos prometedor cuyas
         prestaciones se implementan como plugins. En la mayoría de los casos, se
         cargan en tiempo de compilación, pero \rust{bevy::dynamic_plugin} da la
         posibilidad de hacerlo dinámicamente. \code{bevy} se basa en la falsa

@@ -34,11 +34,11 @@ procesados y su coste sin comprometer la privacidad de Wayfair.}.
 
 El problema principal residía en Logstash, escrito en Java y con un propósito de
 uso general en vez de especializado en rendimiento y escalabilidad. La solución
-de Wayfair fue crear la alternativa \emph{Tremor}. Esta nueva herramienta está
-escrita con el lenguaje de programación Rust, que ofrece un rendimiento similar
-a C o C++ con una mayor seguridad. Adicionalmente, implementa técnicas para
-maximizar la eficiencia, como SIMD, programación asíncrona con hilos o, en un
-futuro cercano, \emph{clustering}. Una vez la primera versión de Tremor fue
+de Wayfair fue crear la alternativa \namecite{tremor}. Esta nueva herramienta
+está escrita con el lenguaje de programación Rust, que ofrece un rendimiento
+similar a C o C++ con una mayor seguridad. Adicionalmente, implementa técnicas
+para maximizar la eficiencia, como SIMD, programación asíncrona con hilos o, en
+un futuro cercano, \emph{clustering}. Una vez la primera versión de Tremor fue
 publicada, el coste de la infraestructura se redujo a 780 dólares mensuales, 50
 veces menos que el valor original~\cite{tremorcon_lll}.
 
