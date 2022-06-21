@@ -8,8 +8,8 @@
 
 La toma de decisiones de muchas empresas modernas como Wayfair se basa en la
 recolección y análisis de datos de sus sistemas. Para llevarlo a cabo de forma
-eficiente en una escala masiva, es necesario el uso de herramientas de alto
-rendimiento como Tremor, escrito con Rust, programación asíncrona y SIMD.
+eficiente en una escala masiva, deben usarse herramientas de alto rendimiento
+como Tremor, escrito con Rust, programación asíncrona con hilos y SIMD.
 
 A medida que Tremor evoluciona, sus tiempos de compilación crecen y,
 consecuentemente, se deteriora la experiencia de desarrollo. Esto se puede
@@ -18,22 +18,22 @@ componentes más pequeños compilables independientemente.
 
 Existen múltiples tecnologías disponibles para su desarrollo: lenguajes
 interpretados, WebAssembly, eBPF, comunicación inter-proceso o cargado dinámico.
-Sin embargo, gran parte de ellas deben descartarse por no cumplir los estándares
-de eficiencia de Tremor. Entre las alternativas restantes, se escoge cargado
+Sin embargo, muchas de ellas deben descartarse por no cumplir los estándares de
+eficiencia de Tremor. Entre las alternativas restantes, se escoge cargado
 dinámico por ser la más usable y popular.
 
 El cargado dinámico es imposible con tipos y funciones declarados con Rust puro,
-ya que su Interfaz Binaria de Aplicación (ABI) no es estable. Será necesario
+ya que su Interfaz Binaria de Aplicación (ABI) no es estable. Es necesario
 convertir los tipos al ABI de C, que sí es estable, y viceversa. Para facilitar
 el proceso, se pueden aprovechar librerías existentes y herramientas del
 lenguaje como macros procedurales.
 
-Dado que el cargado dinámico en Rust es un ecosistema muy nuevo, es necesario
-contribuir en código abierto a gran cantidad de sus dependencias para
+Dado que el cargado dinámico en Rust es un ecosistema muy nuevo, se debe
+contribuir en código abierto a gran cantidad de dependencias de Tremor para
 implementar la funcionalidad necesaria para un sistema de plugins.
 
-La complejidad del proyecto incrementó significativamente respecto al plan
-original, por lo que aunque funcional, no alcanza alguno de los objetivos
-iniciales, principalmente relacionados con el rendimiento. Sin embargo, sirve
-como una buena base para futuras versiones de Tremor que sí que lo incluyan en
-producción, y continuará evolucionando con el programa.
+La complejidad del proyecto incrementa significativamente respecto al plan
+original, por lo que, aunque funcional, la implementación no alcanza alguno de
+los objetivos iniciales, principalmente relacionados con el rendimiento. Sin
+embargo, sirve como una buena base para futuras versiones de Tremor que sí que
+lo incluyan en producción y continuará evolucionando con el programa.

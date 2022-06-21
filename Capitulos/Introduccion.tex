@@ -19,8 +19,9 @@ en sus sistemas y ayudan a medir el rendimiento del negocio.
 Los logs no suelen seguir un formato único ni necesariamente estructurado (es
 decir, texto plano en vez de JSON o XML). Por tanto, para poderlos usar es
 necesario algún tipo de procesado, que también puede incluir ignorar información
-redundante o transformar ciertos valores. Este paso se llevaba a cabo con el
-sistema de procesado de datos \namecite{logstash}, entre otros.
+redundante o transformar ciertos valores. Esto se llevaba a cabo con la
+arquitectura ELK, que incluye el sistema de procesado de datos
+\namecite{logstash}, entre otros.
 
 A medida que crecía la empresa, estas herramientas de observabilidad dejaban de
 ser apropiadas. Cada día, Wayfair procesaba 100 \emph{terabytes} de logs. Para
@@ -28,7 +29,7 @@ visualizar mejor esta cantidad, si se escribieran en papel, la pila resultante
 sería de unos 5.400 kilómetros, o en otras palabras, 5 idas y vueltas a la
 Estación Espacial Internacional. El coste mensual de esta infraestructura
 alcanzaba unos 40,000 dólares\footnote{Las cantidades mencionadas en esta
-sección son aproximadas, para dar una representación del tamaño de datos
+sección son aproximadas para dar una representación del tamaño de datos
 procesados y su coste sin comprometer la privacidad de Wayfair.}.
 
 El problema principal residía en Logstash, escrito en Java y con un propósito de
@@ -36,12 +37,12 @@ uso general en vez de especializado en rendimiento y escalabilidad. La solución
 de Wayfair fue crear la alternativa \emph{Tremor}. Esta nueva herramienta está
 escrita con el lenguaje de programación Rust, que ofrece un rendimiento similar
 a C o C++ con una mayor seguridad. Adicionalmente, implementa técnicas para
-maximizar la eficiencia, como SIMD, asincronía con hilos o, en un futuro
-cercano, \emph{clustering}. Una vez la primera versión de Tremor fue publicada,
-el coste de la infraestructura se redujo a 780 dólares mensuales, 50 veces menos
-que el valor original~\cite{tremorcon_lll}.
+maximizar la eficiencia, como SIMD, programación asíncrona con hilos o, en un
+futuro cercano, \emph{clustering}. Una vez la primera versión de Tremor fue
+publicada, el coste de la infraestructura se redujo a 780 dólares mensuales, 50
+veces menos que el valor original~\cite{tremorcon_lll}.
 
-Tremor ha evolucionado desde entonces, y expandiendo sus posibilidades más allá
+Tremor ha evolucionado desde entonces y ha expandido sus posibilidades más allá
 de logs a algo más abstracto, los \emph{eventos}. Ahora soporta una mayor
 cantidad de protocolos, formatos y software de donde recibir y enviar eventos, e
 incluso implementa su propio lenguaje de configuración y procesado. El proyecto
@@ -86,7 +87,7 @@ En el caso de Tremor, un plugin podría dar soporte para recibir eventos de
 Apache Kafka o para enviarlos a Postgres, por ejemplo. La runtime debería ser
 capaz de cargar y usar esa funcionalidad mientras se está ejecutando el
 programa, en vez de a tiempo de compilación. Dividir el binario de Tremor en
-varios componentes más pequeños compilables independientemente implican una
+varios componentes más pequeños compilables independientemente implica una
 reducción en los tiempos de compilación de cada uno de ellos, que era el
 objetivo principal del proyecto.
 
@@ -103,14 +104,14 @@ plugins.
 El \emph{cargado dinámico} es un método especialmente popular en el lenguaje de
 programación C, dado que su interfaz de comunicación es relativamente sencilla y
 está muy bien definida en su estándar. Asimismo, se trata de una solución
-especialmente eficiente, dado que la comunicación es binaria y directa. Las
+especialmente eficiente, ya que la comunicación es binaria y directa. Las
 características de Tremor implican que el método a usar debería tener un alto
 rendimiento, así que el cargado dinámico es una de las mejores opciones
 disponibles.
 
-Sin embargo, lenguajes modernos como C++ o Rust no especifican estrictamente un
-ABI, dado que implementan características más complejas como excepciones o tipos
-genéricos. En el caso concreto de Rust, si se compila la runtime y los plugins
+Sin embargo, lenguajes modernos como C++ o Rust implementan características más
+complejas como excepciones o tipos genéricos y por tanto no especifican
+estrictamente un ABI. En el caso de Rust, si se compila la runtime y los plugins
 separadamente, no existe ninguna garantía de que la representación binaria de
 los datos o de que la convención de llamada a funciones --- entre otros --- sea
 la misma.
@@ -125,13 +126,13 @@ específica.
 El problema principal con Tremor es que, al estar escrito puramente con Rust,
 todas sus funciones y tipos internos también se declaran con este lenguaje. Este
 proyecto tendrá que desarrollar un método para transformar tipos complejos de
-Rust a C y viceversa para poder interactuar con plugins.
+Rust a C y viceversa para poder interactuar con los plugins.
 
 \section{Motivación}
 
 \subsection{Tiempos de compilación}
 
-Uno de los problemas más importantes en Tremor es su tiempo de compilación. En
+Un problema de creciente importancia en Tremor es su tiempo de compilación. En
 mi portátil Dell Vostro 5481 con un Intel i5-8265U, 16GB de RAM a 2667 MHz, un
 SSD de 256GB y Arch Linux con el kernel 5.18 de 64 bits, compilar el binario
 \code{tremor} desde cero requiere más de 7 minutos en modo \emph{debug}, y sobre
@@ -142,8 +143,8 @@ hay que esperar unos 10 segundos.
 Puede que estas cifras no sean tan preocupantes en comparación con software de
 un tamaño mucho mayor. Pero debido a la naturaleza del programa, el problema
 solo empeorará con el tiempo. Tremor debe tener soporte para un gran número de
-protocolos (e.g., TCP o UDP), software (e.g., PostgreSQL o ElasticSearch) y
-códecs (e.g., JSON o YAML). El número de dependencias continuará incrementando
+protocolos (como TCP o WebSockets), software (como PostgreSQL o ElasticSearch) y
+códecs (como JSON o YAML). El número de dependencias continuará incrementando
 hasta resultar en una pésima experiencia de desarrollo e imposibilitar la
 creación de nuevas prestaciones.
 
@@ -154,13 +155,13 @@ situación~\cite{rustsurvey}.
 
 \subsection{Modularidad y flexibilidad}
 
-Otra ventaja que provee un sistema de plugins es modularidad; ser capaz de
+Otra ventaja que provee un sistema de plugins es modularidad. Ser capaz de
 tratar la runtime y los plugins de forma separada suele resultar en una
 arquitectura más limpia~\cite{baldwin2000design}. Hace posible el
-desacoplamiento del ejecutable y sus componentes; algunas dependencias tienen un
-ciclo de versionado más rápido que otras. Generalmente, es más conveniente
-desarrollar, realizar tests o actualizar únicamente un plugin, en lugar del
-programa por completo.
+desacoplamiento completo del ejecutable y sus componentes. Algunas dependencias
+tienen un ciclo de versionado más rápido que otras y, generalmente, es más
+conveniente desarrollar, realizar tests o actualizar únicamente un plugin, en
+lugar del programa por completo.
 
 \subsection{Aprender de otros}
 
@@ -180,11 +181,12 @@ Tremor.
 
 El proyecto ha tenido una duración de unos once meses. La propuesta a Tremor se
 realizó de abril a mayo de 2021, pero no se comenzó el desarrollo hasta
-aceptarse en agosto del mismo año, y se terminó en junio de 2022. Su realización
-ha sido completamente remota y con horarios muy flexibles. Se usó el servidor de
-Discord de Tremor~\cite{tremor_discord} como plataforma principal de
-comunicación, tanto por texto como por videollamada. Se programó una llamada por
-semana, en la que explicaba mi progreso y recibía ayuda en caso de que me
+aceptarse en agosto del mismo año, y se terminó en junio de 2022.
+
+Su realización ha sido completamente remota y con horarios muy flexibles. Se usó
+el servidor de Discord de Tremor~\cite{tremor_discord} como plataforma principal
+de comunicación, tanto por texto como por videollamada. Se programó una llamada
+por semana, en la que explicaba mi progreso y recibía ayuda en caso de que me
 hubiera quedado atascado o necesitara alguna opinión adicional.
 
 Disponía de tres mentores, que me guiaban en el proceso de desarrollo: Darach
@@ -195,64 +197,63 @@ empleados por Wayfair. En el plano académico, Francisco Javier Fabra Caro
 director del proyecto.
 
 La organización de forma más estructurada para las tareas que tenía pendientes,
-en las que estaba trabajando en ese momento, y las que ya había realizado, se
-basó principalmente en un Kanban en
-GitHub.
+aquellas en las que estaba trabajando en ese momento, y las que ya había
+realizado, se basó principalmente en un Kanban en GitHub.
 
 \subsection{Desarrollo}
 
 Para reducir el coste de desarrollo y asegurarse de que el proceso sea
-completamente seguro (en memoria y concurrencia), el sistema de plugins
-aprovecha librerías existentes en Rust y herramientas como \emph{macros
+completamente seguro tanto en memoria como en concurrencia, el sistema de
+plugins aprovecha librerías existentes en Rust y herramientas como \emph{macros
 procedurales}. Los macros procedurales son mucho más potentes que los
 convencionales (\emph{declarativos}), puesto que directamente consumen y generan
 sintaxis de Rust a tiempo de compilación para implementar cualquier tipo de
 código trivial o repetitivo.
 
 El sistema de compilación usado es la solución oficial de Rust, Cargo, que
-también incluye un \emph{formatter}, \emph{linter}, y extensiones instalables
+también incluye un \emph{formatter}, un \emph{linter} y extensiones instalables
 creadas por la comunidad. Adicionalmente, existe una gran cantidad de tests y
-\emph{benchmarks} que se han de tener en cuenta para mantener el \emph{Code
-Coverage} (la cantidad de código cubierta por los tests) y el rendimiento.
+\emph{benchmarks} que se han de tener en cuenta para mantener el \emph{code
+coverage} (la cantidad de código cubierta por los tests) y el rendimiento.
 
 \subsection{Recursos públicos}
 
 Este trabajo está disponible públicamente al completo. Además, a medida que he
-investigado e implementado el sistema de plugins, he ido escribiendo todo en mi
+investigado y desarrollado el sistema de plugins, he ido escribiendo todo en mi
 blog personal, \namecite{nullderef}. Dispone de una serie con un total de
 seis\footnote{El último artículo será publicado poco después de la entrega de
 esta memoria.} artículos, con más detalles sobre la implementación final. La
-organización también difiere considerablemente, puesto que los artículos se
-escribieron a medida que se realizaba el proyecto, resultando en una estructura
-menos rigurosa. Esto toma un formato de tesis, mientras que el blog cuenta la
-historia cronológicamente y sirve mejor como un tutorial para alguien que quiera
+organización difiere considerablemente, puesto que los artículos se escribieron
+a medida que se realizaba el proyecto, resultando en una estructura menos
+rigurosa. Esto toma un formato de tesis, mientras que el blog cuenta la historia
+cronológicamente y sirve mejor como un tutorial para alguien que quiera
 implementar su propio sistema de plugins.
 
 \begin{itemize}
-    \item El repositorio de GitHub para el binario de Tremor:\\
+    \item La serie de artículos en mi blog personal:\\
+        \url{https://nullderef.com/series/rust-plugins/}.
+
+    \item El repositorio para el binario de Tremor:\\
         \url{https://github.com/tremor-rs/tremor-runtime}
 
     \item Mi \emph{fork}, con ramas adicionales usadas durante el desarrollo:\\
         \url{https://github.com/marioortizmanero/tremor-runtime}
 
-    \item Mi repositorio con experimentos antes de implementar la versión
-        definitiva:\\
+    \item Mi repositorio con experimentos iniciales:\\
         \url{https://github.com/marioortizmanero/pdk-experiments}
 
-    \item La serie de artículos en mi blog personal:\\
-        \url{https://nullderef.com/series/rust-plugins/}.
+    \item Kanban para organizar las ideas y tareas:\\
+        \url{https://github.com/marioortizmanero/tremor-runtime/projects/1}
 
-    \item Página oficial de la iniciativa:\\
+    \item Página del proyecto en la iniciativa LFX Mentorship:\\
         \url{https://mentorship.lfx.linuxfoundation.org/project/b90f7174-fc53-40bc-b9e2-9905f88c38ff}
 
-    \item \emph{Tracking issue} en GitHub:\\
+    \item \emph{Tracking issue} del proyecto en GitHub:\\
         \url{https://github.com/tremor-rs/tremor-runtime/issues/791}
 
-    \item RFC en la documentación de Tremor:\\
+    \item \emph{Request For Comments} (RFC) del proyecto:\\
         \url{https://www.tremor.rs/rfc/accepted/plugin-development-kit/}
 
-    \item Kanban con las tareas para el sistema de plugins:\\
-        \url{https://github.com/marioortizmanero/tremor-runtime/projects/1}
 \end{itemize}
 
 Se recomienda también consultar el Anexo~\ref{annex:contributions}, que lista

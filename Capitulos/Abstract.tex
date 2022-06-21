@@ -7,9 +7,9 @@
 \end{center}
 
 Decision-making in many modern companies like Wayfair is based on the collection
-and analysis of data within their systems. To do this efficiently on a massive
-scale, it is essential to use high-performance tools such as Tremor, written
-with Rust, asynchronous programming, and SIMD.
+and analysis of data from their systems. To carry this out efficiently on a
+massive scale, it is essential to use high-performance tools such as Tremor,
+written with Rust, multi-threaded asynchronous programming, and SIMD.
 
 As Tremor evolves, its compilation times grow and, consequently, its development
 experience deteriorates. This can be alleviated by implementing a plugin system
@@ -23,17 +23,17 @@ standards. Among the remaining alternatives, dynamic loading is chosen for being
 the most usable and popular one.
 
 Dynamic loading is impossible with types and functions declared with pure Rust,
-because its Application Binary Interface (ABI) is not stable. It will be
-necessary to convert its types to C's ABI, which is stable, and vice-versa. To
-facilitate the process, existing libraries and language tools such as procedural
-macros can be used.
+because its Application Binary Interface (ABI) is not stable. It is necessary to
+convert its types to C's ABI, which is stable, and vice-versa. To facilitate the
+process, existing libraries and language tools such as procedural macros can be
+used.
 
-Since dynamic loading is a very new ecosystem in Rust, it is necessary to
-contribute in open source to a great amount of dependencies in order to
-implement the functionality necessary for a plugin system.
+Since dynamic loading is a very new ecosystem in Rust, a great amount of
+Tremor's dependencies need to be contributed to in open source in order to
+implement the functionality needed for a plugin system.
 
-The complexity of the project increased significantly compared to the original
-plan, so even if functional, it does not attain some of the initial objectives,
-mainly related to performance. However, it serves as a great base for future
-versions of tremor that do include it in production, and it will continue to
-evolve with the program.
+The complexity of the project increases significantly compared to the original
+plan, so even if functional, the implementation does not attain some of the
+initial objectives, mainly related to performance. However, it serves as a great
+base for future versions of tremor that do include it in production, and it will
+continue to evolve with the program.
