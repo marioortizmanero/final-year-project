@@ -1,9 +1,8 @@
 \chapter{Conversión del ABI de Rust al ABI de C}\label{annex:abi}
 
-Para ilustrar mejor el problema de conversión de ABIs, se introduce la
-estructura más complicada al respecto, \rust{Value}. Esta estructura sirve para
-representar datos pseudo-JSON y es definido a continuación de forma
-simplificada:
+Para ilustrar mejor la conversión de ABIs, se introduce la estructura más
+problemática al respecto, \rust{Value}. Esta enumeración sirve para representar
+datos pseudo-JSON y es definido a continuación de forma simplificada:
 
 \begin{minted}{rust}
 pub enum Value {
@@ -20,8 +19,8 @@ pub enum Value {
 }
 \end{minted}
 
-Para poder usar \rust{Value} en la interfaz del sistema de plugins, se puede
-convertir a:
+Para poder usar \rust{Value} en la interfaz del sistema de plugins, se pueden
+modificar sus tipos internos tal que:
 
 \begin{minted}{rust}
 #[repr(C)] // La representación en memoria de Value seguirá el ABI de C
@@ -41,7 +40,7 @@ pub enum Value {
 
 El primer problema surge en la variante \rust{Static}. Su tipo contenido
 internamente, \rust{StaticNode}, es externo y usa \rust{#[repr(Rust)]}. Se
-declara en el \crate \namecite{value_trait}, que lo declara tal que:
+declara en el \crate \namecite{value_trait} así:
 
 \begin{minted}{rust}
 pub enum StaticNode {
@@ -57,38 +56,37 @@ Esto se podría arreglar siguiendo el mismo procedimiento recursivamente, hasta
 que todo sea \rust{#[repr(C)]}. Pero como se trata de una librería externa,
 tendrá que abrirse un nuevo pull request y esperar que al autor le parezcan bien
 los cambios~\cite{openstaticnode}. Será importante también que la estructura use
-\rust{#[repr(C)]} únicamente cuando opcionalmente se configure a tiempo de
-compilación como necesario. De esta forma, el resto de usuarios podrán seguir
-aprovechándose de las ventajas de rendimiento que ofrece \rust{#[repr(Rust)]}.
+\rust{#[repr(C)]} únicamente cuando se configure explícitamente a tiempo de
+compilación. De esta forma, el resto de usuarios podrán seguir aprovechándose de
+las ventajas de rendimiento que ofrece \rust{#[repr(Rust)]}.
 
 \section{Consecuencias del sistema de plugins}
 
-Por desgracia, este cambio no termina ahí; cambiar las variantes de \rust{Value}
-implica que el código que lo usaba se romperá de numerosas formas:
+Desgraciadamente, el procedimiento no termina ahí; cambiar las variantes de
+\rust{Value} implica que el código que lo usaba se romperá de numerosas formas:
 
 \begin{minted}{rust}
 // No funcionará porque Value::Array contiene un RVec ahora
 let value = Value::Array(Vec::new());
 \end{minted}
 
-Este caso es el más sencillo: simplemente hace falta cambiar \rust{Vec} por
-\rust{RVec}. La intención de los tipos de \abistable es que sean un reemplazo
-directo de los de la librería estándar, i.e., su interfaz será la misma:
+Este caso es el más sencillo: simplemente hace falta cambiar \rust{Vec}, de la
+librería estándar, por \rust{RVec}, de \abistable. La intención de los tipos de
+\abistable es que sean un reemplazo directo de los de la librería estándar, es
+decir, su uso será exactamente el mismo:
 
 \begin{minted}{rust}
 let value = Value::Array(RVec::new());
 \end{minted}
 
-TODO: 'return' es devolver o retornar?
-
-Es un poco más complicado cuando los tipos anteriores se exponían en métodos,
+Es un poco más complicado cuando los tipos anteriores se exponen en métodos,
 porque requiere tomar una decisión entre expandir el límite de FFI del
 \emph{funcionamiento interno} de \rust{Value} a los \emph{usuarios} de
 \rust{Value}. Por ejemplo, la variante \rust{Value::Object} contiene un
 \rust{RHashMap} ahora, pero el método \rust{Value::as_object} solía devolver una
 referencia a \rust{HashMap}. Se producirá un error nuevo ahí y tendrá que
-tomarse la decisión de devolver \rust{RHashMap} o añadir una conversión interna
-a \rust{HashMap}:
+tomarse una decisión entre devolver \rust{RHashMap} o añadir una conversión
+interna a \rust{HashMap}:
 
 \begin{minted}{rust}
 impl Value {
@@ -124,8 +122,9 @@ impl Value {
     \item Si se realiza una conversión interna a \rust{HashMap} en
         \rust{as_object}, evitaremos todos esos errores, con un pequeño coste de
         rendimiento. Es la opción más fácil, pero si \rust{Value::as_object} se
-        usara frecuentemente, e.g., en el bucle principal, sí que podría causar
+        usara frecuentemente, como en el bucle principal, sí que podría causar
         una degradación considerable.
+
 \end{itemize}
 
 Como indica la sección~\ref{abiperf}, las conversiones entre la librería
@@ -138,22 +137,23 @@ rendimiento en un caso en concreto, se puede reconsiderar.
 
 En algunos casos, los tipos de \abistable no habían sido actualizados para
 incluir métodos nuevos de la librería estándar, por lo que era necesario un pull
-request para añadirlo\footnote{El anexo \ref{annex:contributions} lista todas
-las contribuciones de código abierto realizadas para este proyecto}. Pero por lo
-general, convertir los tipos \emph{de la librería a estándar a \abistable} es
+request para añadirlo\footnote{El Anexo~\ref{annex:contributions} lista todas
+las contribuciones de código abierto realizadas para este proyecto.}. Pero por
+lo general, convertir los tipos \emph{de la librería a estándar a \abistable} es
 una tarea trivial, simplemente un tanto tedioso.
 
 Los problemas surgen cuando es necesario convertir \emph{tipos externos a
 \abistable}. La declaración anterior de \rust{Value} era una simplificación;
 realmente, Tremor usa la implementación de \namecite{halfbrown} de
-\rust{HashMap<K, V>}. Esto se debe a que es más eficiente para su caso de uso, y
-que posee algunas funcionalidades adicionales necesarias. El mismo caso se da
-para otro tipo \rust{Cow}, cuya alternativa en la \crate \namecite{beef} ocupa
-menos espacio en memoria y ofrece un mejor rendimiento en Tremor.
+\rust{HashMap}. Esto se debe a que es más eficiente para su caso de uso, y que
+posee algunas funcionalidades adicionales necesarias. El mismo caso se da para
+el tipo \rust{Cow}, cuya alternativa en la \crate \namecite{beef} ocupa menos
+espacio en memoria y ofrece un mejor rendimiento en Tremor.
 
-Ninguno de estos dos tipos tienen soporte dentro de \abistable, y aunque estos
-tipos estén basados en otros de la librería estándar, la conversión no es
-directa. Se pueden tomar cuatro posibles alternativas:
+Ninguna de estas dos librerías tienen soporte dentro de \abistable, y aunque
+sus tipos estén basados en otros de la librería estándar, la conversión no es
+directa porque su implementación es distinta. Se pueden tomar cuatro posibles
+alternativas:
 
 \subsection{Evitar el tipo externo}
 
@@ -182,7 +182,7 @@ Otra opción es crear un \emph{wrapper} para \code{halfbrown}, de la misma forma
 que lo hace ya \abistable con otras librerías más conocidas. Este
 encapsulamiento hace posible su uso desde el ABI de C de forma segura. Sin
 embargo, estos ejemplos ya existentes son complejos~\cite{complexwrapper} y
-difíciles de mantener, ya que tendrán que actualizarme con cada nueva versión de
+difíciles de mantener, ya que tendrán que actualizarse con cada nueva versión de
 \code{halfbrown}.
 
 \begin{figure}
@@ -216,17 +216,18 @@ async fn user() {
 }
     \end{minted}
     \caption{Interfaz modificada para la programación asíncrona en el sistema de
-    plugins con la \crate \code{async_ffi}.}%
+    plugins con la \crate \code{async_ffi}. Este caso sigue el método de
+    encapsular \code{Future} con el tipo \code{FfiFuture}.}%
     \label{fig:async_ffi}
 \end{figure}
 
 \subsection{Reimplementar el tipo con el ABI de C desde cero}
 
-Similar a la solución anterior, pero con incluso más costoso, dado que también
-requeriría reimplementar la funcionalidad. Puede parecer indeseable, pero es la
-mejor forma de asegurar un rendimiento máximo. Los tipos externos mencionados
-son parte de optimizaciones; encapsularlos podría tener un impacto en su
-rendimiento y hacerlos inútiles.
+Similar a la solución anterior, pero incluso más costoso, dado que también
+requeriría reimplementar la funcionalidad desde cero. Puede parecer indeseable,
+pero es la mejor forma de asegurar un rendimiento máximo. Los tipos externos
+mencionados son parte de optimizaciones; encapsularlos podría tener un impacto
+en su rendimiento y hacerlos inútiles.
 
 Si esta parte del proyecto es lo suficientemente importante y existen los
 recursos, debería considerarse. De hecho, el mismo tipo \rust{Value} en Tremor
@@ -236,8 +237,8 @@ carecía de la suficiente flexibilidad y el equipo implementó uno personalizado
 \subsection{Simplificar el tipo para la interfaz}
 
 Esta última opción resultó ser la más sencilla de implementar: crear una copia
-de \rust{Value} cuyo único uso es para comunicarse entre runtime y plugins,
-ilustrado en la Figura~\ref{fig:simplify}.
+de \rust{Value} cuyo único uso es comunicarse entre runtime y plugins, ilustrado
+en la Figura~\ref{fig:simplify}.
 
 \begin{figure}
     \centering
@@ -246,24 +247,10 @@ ilustrado en la Figura~\ref{fig:simplify}.
     \label{fig:simplify}
 \end{figure}
 
-Ya que es un tipo nuevo, no se romperá nada del código ya existente, y
-únicamente hará falta cambiarlo donde se use la interfaz. Su implementación es
-sencilla (notar el cambio de nombre a \rust{PdkValue}):
-
-\begin{minted}{rust}
-pub enum PdkValue {
-    /// Valores estáticos (enteros, booleanos, etc)
-    Static(StaticNode),
-    /// Tipo para cadenas de caracteres
-    String(String),
-    /// Tipo para listas
-    Array(Vec<Value>),
-    /// Tipo para objetos (mapas clave-valor)
-    Object(Box<HashMap<String, PdkValue>>),
-    /// Tipo para datos binarios
-    Bytes(Vec<u8>),
-}
-\end{minted}
+Ya que es un tipo nuevo, no se romperá nada del código existente, y únicamente
+hará falta cambiarlo donde se use la interfaz. Su implementación es exactamente
+igual que el \rust{Value} modificado anteriormente, pero bajo el nuevo nombre
+\rust{PdkValue}.
 
 No es necesario escribir métodos adicionales para el nuevo \rust{PdkValue}, solo
 sus conversiones desde y hasta el tipo original, \rust{Value}. Esto sería
@@ -292,17 +279,20 @@ fn runtime_wrapper(value: Value) {
 \end{minted}
 
 Es la alternativa más sencilla, pero implica un coste de rendimiento; dos
-conversiones implican iterar los datos dos veces. Tras mediciones posteriores,
-se verificó que convertir los datos era un 5-10\% de la ejecución del programa.
-Es menos de lo esperado, pero sigue sin ser suficiente para Tremor.
+conversiones implican iterar los datos dos veces. Las mediciones de rendimiento
+del Anexo~\ref{annex:benchmarks} indicaron posteriormente que convertir los
+datos era un 5-10\% de la ejecución del programa.
 
 También tiene un coste de usabilidad; en comparación con tener un único
-\rust{Value}, es necesario convertir los tipos y posiblemente crear encapsularlo
-con una función de más alto nivel (\rust{runtime_wrapper}). Es una tarea
+\rust{Value}, es necesario convertir los tipos y posiblemente encapsularlo con
+una función de más alto nivel (\rust{runtime_wrapper}). Es una tarea
 relativamente trivial, por lo que se podría automatizar con macros procedurales
 en Rust, pero esto debería dejarse para el final del proyecto.
 
-En conclusión, esta alternativa es la más fácil de implementar en el corto plazo
-y por tanto la que mejor sigue \work. Se puede visualizar la diferencia de
-rendimiento entre usar \rust{PdkValue} y reimplementar el tipo con C ``desde
-cero'' --- hecho para la segunda versión --- en el Anexo~\ref{annex:benchmarks}.
+\section{Progreso}
+
+Esta última alternativa es la más fácil de implementar para la primera
+versión~\cite{pdk_v1} y por tanto la que mejor sigue la metodología de \work. La
+segunda versión~\cite{pdk_v2} añadió una versión encapsulada de \code{halbrown}
+en \abistable para mejorar el rendimiento, y en el futuro se podría dar soporte
+también a \code{beef}.
