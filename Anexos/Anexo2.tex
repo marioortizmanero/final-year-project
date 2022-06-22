@@ -1,3 +1,5 @@
+% vim: spelllang=es
+
 \chapter{Funcionamiento interno de Tremor}\label{annex:tremor}
 
 \section{Arquitectura}
@@ -226,12 +228,12 @@ este último también puede responder a mensajes usando la misma conexión. Esto
 (\rust{Fail} para un evento específico, \rust{CircuitBreaker} para dejar de
 recibir datos por completo).
 
-Los códecs y preprocesadores se involucran aquí tanto para los \sources como
-para los \sinks. En la parte de \source, los datos son transformados a través de
-una serie de preprocesadores y posteriormente se aplica un códec. Para los
-\sinks, se sigue el proceso inverso: los datos se codifican primero a bytes con
-el códec y posteriormente una serie de postprocesadores se aplican sobre los
-datos binarios.
+Los códecs y preprocesadores se involucran aquí para tanto los \sources como los
+\sinks. En la parte de \source, los datos son transformados a través de una
+serie de preprocesadores y posteriormente se aplica un códec. Para los \sinks,
+se sigue el proceso inverso: los datos se codifican primero a bytes con el códec
+y posteriormente una serie de postprocesadores se aplican sobre los datos
+binarios.
 
 \subsection{Notas adicionales}
 

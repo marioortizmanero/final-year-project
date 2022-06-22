@@ -1,3 +1,5 @@
+% vim: spelllang=es
+
 \chapter{Conversión del ABI de Rust al ABI de C}\label{annex:abi}
 
 Para ilustrar mejor la conversión de ABIs, se introduce la estructura más
@@ -6,7 +8,7 @@ datos pseudo-JSON y es definido a continuación de forma simplificada:
 
 \begin{minted}{rust}
 pub enum Value {
-    /// Valores estáticos (enteros, booleanos, etc)
+    /// Valores estáticos (enteros, booleanos, etc.)
     Static(StaticNode),
     /// Tipo para cadenas de caracteres
     String(String),

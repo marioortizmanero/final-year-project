@@ -12,11 +12,11 @@ puedan facilitar el desarrollo, o de forma más general, con la estrategia de
 trabajo a seguir. En esta sección se cubrirá lo último, dado que es menos un
 detalle de implementación.
 
-La metodología fue insipirada por mis mentores, que lo denominaron el ``Just
-make it work'' o \work. Se basa en que, inicialmente, con lo que más problemas
-tenía era el perderme en los detalles. Pero ciertamente, primero de todo lo
-importante es que ``funcione''. Siempre y cuando el sistema de plugins se pueda
-compilar y ejecutar, lo siguiente es aceptable:
+La metodología fue inspirada por mis mentores, que lo denominaron el ``Just make
+it work'' o \work. Se basa en que, inicialmente, con lo que más problemas tenía
+era el perderme en los detalles. Pero ciertamente, primero de todo lo importante
+es que ``funcione''. Siempre y cuando el sistema de plugins se pueda compilar y
+ejecutar, lo siguiente es aceptable:
 
 \begin{itemize}
     \item Código ``feo'' (no idiomático, repetitivo o desordenado).
@@ -103,7 +103,7 @@ Es importante mantener la interfaz de plugins lo más simple posible. Los
 detalles de comunicación deberían dejarse a la runtime, de forma que los plugins
 se limiten a exportar una lista de funciones síncronas. De esta forma, se podrá
 evitar en lo posible pasar tipos complejos (programación asíncrona, canales de
-comunicación, etc) entre la runtime y los plugins, que implicaría una carga de
+comunicación, etc.) entre la runtime y los plugins, que implicaría una carga de
 trabajo mayor.
 
 Una vez esta interfaz básica se defina, se puede crear un \emph{wrapper} de más
