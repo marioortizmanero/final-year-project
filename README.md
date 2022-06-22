@@ -1,5 +1,9 @@
 # Dynamic loading of plugins in Rust in the absence of a stable Application Binary Interface
 
+* **Author**: Mario Ortiz Manero
+* **Mentors**: Matthias Wahl, Heinz N. Gies, and Darach Ennis
+* **Academic director**: Francisco Javier Fabra Caro
+
 This repository holds all the sources related to my Final Year Project in
 University of Zaragoza. Abstract:
 
@@ -39,3 +43,6 @@ The full document can be accessed
 Note that it's in Spanish, but if more information was needed, most of the
 contents are available in my personal website, with a somewhat different format:
 https://nullderef.com/series/rust-plugins/.
+
+This project was done in collaboration with [Tremor](https://www.tremor.rs/),
+and funded by [Wayfair](https://www.wayfair.com/).
