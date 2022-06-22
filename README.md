@@ -41,8 +41,9 @@ University of Zaragoza. Abstract:
 The full document can be accessed
 [here](https://github.com/marioortizmanero/final-year-project/blob/master/main.pdf).
 Note that it's in Spanish, but if more information was needed, most of the
-contents are available in my personal website, with a somewhat different format:
+contents are available on my personal website, with a somewhat different format:
 https://nullderef.com/series/rust-plugins/.
 
 This project was done in collaboration with [Tremor](https://www.tremor.rs/),
-and funded by [Wayfair](https://www.wayfair.com/).
+and funded by [Wayfair](https://www.wayfair.com/) through an [LFX
+Mentorship](https://mentorship.lfx.linuxfoundation.org/project/b90f7174-fc53-40bc-b9e2-9905f88c38ff).
