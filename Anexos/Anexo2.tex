@@ -1,0 +1,263 @@
+\chapter{Funcionamiento interno de Tremor}\label{annex:tremor}
+
+\section{Arquitectura}
+
+Antes de comenzar a modificar el código existente en Tremor, era importante
+conocer cómo funciona para evitar perder el tiempo. Tremor se basa en el modelo
+actor. Citando Wikipedia:
+
+% ORIGINAL:
+% ``[The actor model treats the] actor as the universal primitive of concurrent
+% computation. In response to a message it receives, an actor can: make local
+% decisions, create more actors, send more messages, and determine how to
+% respond to the next message received. Actors may modify their own private
+% state, but can only affect each other indirectly through messaging (removing
+% the need for lock-based synchronization).''
+
+``[El modelo actor trata al] actor como el componente universal de computación
+concurrente. En respuesta a un mensaje que recibe, un actor puede: tomar
+decisiones locales, crear más actores, enviar más mensajes y determinar cómo
+responder al siguiente mensaje recibido. Los actores pueden modificar su propio
+estado privado, pero solo pueden afectarse entre sí indirectamente a través de
+mensajería (eliminando la necesidad de sincronización con
+\emph{locks}).''~\cite{wikiactor}
+
+No usa un lenguaje (como \namecite{erlang}) o framework (como
+\namecite{bastion}, quizá en el futuro) que siga estrictamente este modelo, pero
+re-implementa los mismos patrones de forma manual. Tremor se basa en
+\emph{programación asíncrona}, es decir, que en vez de hilos trabaja con
+\emph{tareas}, un concepto de nivel más alto y especializado para operaciones de
+entrada/salida. De la documentación de \namecite{async_std}, la runtime
+asíncrona que usa Tremor:
+
+% ORIGINAL:
+% ``An executing asynchronous Rust program consists of a collection of native OS
+% threads, on top of which multiple stackless coroutines are multiplexed. We
+% refer to these as “tasks”. Tasks can be named, and provide some built-in
+% support for synchronization.''
+
+``La ejecución de un programa asíncrono en Rust consiste en una recopilación de
+hilos nativos del Sistema Operativo, sobre los cuales múltiples corutinas no
+apilables (\emph{stackless}) son multiplexadas. Nos referimos a ellas como
+``tareas''. Las tareas pueden tener nombre e incluir soporte para
+sincronización.''~\cite{asyncstd_task}
+
+Podría resumirse su arquitectura con la frase: ``Tremor se basa en actores
+corriendo en tareas diferentes, que se comunican asíncronamente con canales''.
+
+\section{Detalles de implementación}
+
+A nivel de implementación, los conectores se definen con el \trait
+\rust{Connector}, incluido en la figura \ref{fig:tremor_connector_trait}.
+Esencialmente, los plugins de tipo conector exportarán públicamente esta
+interfaz en su binario y la runtime deberá ser capaz de cargarlo dinámicamente.
+Inicialmente, todos los conectores disponibles se listaban y cargaban de forma
+estática al inicio del programa.
+
+El actor principal se llama \rust{World}. Contiene el estado del programa, como
+los artefactos disponibles (\emph{repositorios}) y los que se están ejecutando
+(\emph{registros}) y se usa para inicializar y controlar el programa.
+
+Los \emph{managers} o \emph{gestores} son simplemente actores en el sistema que
+envuelven una funcionalidad. Ayudan a desacoplar la comunicación de los detalles
+de implementación. De esta forma, se puede eliminar código repetitivo en la
+inicialización, como la creación de canales de comunicación o el lanzamiento del
+componente en una tarea nueva. Generalmente, hay un gestor por cada tipo de
+artefacto para facilitar su creación y también uno por cada instancia que se
+esté ejecutando para controlar su comunicación.
+
+Notar que la inicialización de los conectores ocurre en dos pasos. Primero se
+\emph{registran}, es decir, se indica su disponibilidad para cargarlo
+añadiéndolo al repositorio. Posteriormente, no se comenzará a ejecutar hasta
+conectarse con otro artefacto con \rust{launch_binding}, lo cual lo movería del
+repositorio al registro, junto al resto de artefactos ejecutándose.
+
+\begin{figure}[h]
+    \centering
+    \begin{minted}{rust}
+pub trait Connector {
+    /// Crea la parte "source" del conector, si es aplicable.
+    async fn create_source(
+        &mut self,
+        _source_context: SourceContext,
+        _builder: source::SourceManagerBuilder,
+    ) -> Result<Option<source::SourceAddr>> {
+        Ok(None)
+    }
+
+    /// Crea la parte "sink" del conector, si es aplicable.
+    async fn create_sink(
+        &mut self,
+        _sink_context: SinkContext,
+        _builder: sink::SinkManagerBuilder,
+    ) -> Result<Option<sink::SinkAddr>> {
+        Ok(None)
+    }
+
+    /// Intenta conectarse con el mundo exterior. Por ejemplo, inicia la
+    /// conexión con una base de datos.
+    async fn connect(
+        &mut self,
+        _c: &ConnectorContext,
+        _attempt: &Attempt
+    ) -> Result<bool> {
+        Ok(true)
+    }
+
+    /// Llamado una vez cuando el conector inicia.
+    async fn on_start(&mut self, _c: &ConnectorContext) -> Result<()> {
+        Ok(())
+    }
+    /// Llamado cuando el conector pausa.
+    async fn on_pause(&mut self, _c: &ConnectorContext) -> Result<()> {
+        Ok(())
+    }
+    /// Llamado cuando el conector continúa.
+    async fn on_resume(&mut self, _c: &ConnectorContext) -> Result<()> {
+        Ok(())
+    }
+    /// Llamado ante un evento de "drain", que se asegura de que no
+    /// lleguen más eventos a este conector.
+    async fn on_drain(&mut self, _c: &ConnectorContext) -> Result<()> {
+        Ok(())
+    }
+    /// Llamado cuando el conector termina.
+    async fn on_stop(&mut self, _c: &ConnectorContext) -> Result<()> {
+        Ok(())
+    }
+}
+    \end{minted}
+    \caption{Simplificación del \trait \rust{Connector}}%
+    \label{fig:tremor_connector_trait}
+\end{figure}
+
+\subsection{Registro}
+
+La Figura~\ref{fig:tremor_registering} detalla todos los pasos seguidos en el
+código. Primero se inicializan los gestores y a continuación se registran los
+artefactos. Esta parte se realizaba de forma estática con
+\rust{register_builtin_types}, pero después de implementar el PDK, debería
+ocurrir dinámicamente. Tremor buscaría automáticamente plugins en sus
+directorios configurados e intentaría registrar todos los que encuentre. En una
+futura versión, el usuario podría solicitar manualmente el cargado de un plugin
+nuevo mientras se está ejecutando Tremor.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{./Imagenes/registering.pdf}
+    \caption{Registro de un conector en el programa}%
+    \label{fig:tremor_registering}
+\end{figure}
+
+\subsection{Inicialización}
+
+Ya que es un proceso en múltiples pasos (en la implementación es más complicado
+que registro y creación), la primera parte provee las herramientas para
+inicializar el conector (un \builder). Cuando el conector necesite comenzar a
+ejecutarse porque se haya añadido a una \pipeline, el \builder ayuda a construir
+y configurarlo de forma genérica. Finalmente, se añade a una tarea asíncrona
+nueva para que se pueda comunicar con otras partes de Tremor. El gestor
+\rust{connectors::Manager} contiene todos los conectores ejecutándose en Tremor,
+como se muestra en la Figura~\ref{fig:tremor_initializing}.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{./Imagenes/initializing.pdf}
+    \caption{Inicialización de un conector en el programa}%
+    \label{fig:tremor_initializing}
+\end{figure}
+
+La Figura~\ref{fig:tremor_pipeline} muestra un ejemplo de una \pipeline,
+definida con Troy, su propio lenguaje inspirado en SQL.
+
+\begin{figure}
+    \centering
+    \begin{minted}[escapeinside=||]{mysql}
+|\textcolor{blue}{define pipeline}| main
+# El puerto `exit` no existe por defecto, así que tenemos que
+# sobreescribir la selección de puertos incorporada.
+into |out, exit|
+|\textcolor{blue}{pipeline}|
+  # Uso del módulo `std::string`.
+  use std::|string|;
+  use lib::scripts;
+
+  # Creación de nuestro script.
+  create |\textcolor{blue}{script}| punctuate from scripts::punctuate;
+
+  # Filtrado de cualquier evento que sea un `"exit"` y enviarlo al
+  # puerto de salida.
+  select {"graceful": false} from |in| where event == "exit" into |exit|;
+
+  # Conexión de nuestro texto convertido a mayúsculas al script.
+  select |string|::capitalize(event) from |in| where event != "exit"
+    into punctuate;
+  # Conexión de nuestro script a la salida.
+  select event from punctuate into |out|;
+end;
+    \end{minted}
+    \caption{Ejemplo de una \pipeline definida para Tremor.}%
+    \label{fig:tremor_pipeline}
+\end{figure}
+
+\subsection{Configuración}
+
+Una vez haya un conector corriendo, la Figura~\ref{fig:tremor_setting_up}
+visualiza cómo se divide en una parte \sink y otra \source. Estas son
+opcionales, pero no exclusivas; se puede tener una de las dos o ambas. De forma
+similar, un \builder se usa para inicializar las partes y a continuación lanza
+una nueva tarea asíncrona para ellos.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{./Imagenes/setting-up.pdf}
+    \caption{Configuración de un conector en el programa}%
+    \label{fig:tremor_setting_up}
+\end{figure}
+
+También se crea un gestor por cada instancia de \sink o \source, que se
+encargará de la comunicación con otros actores. De esta forma, sus interfaces
+pueden mantenerse lo más simples posibles. Esos gestores recibirán peticiones de
+conexión de la \pipeline y posteriormente leerán o enviarán eventos en ella.
+
+La diferencia principal entre \sources y \sinks a nivel de implementación es que
+este último también puede responder a mensajes usando la misma conexión. Esto es
+útil para notificar que el paquete ha llegado (\rust{Ack}) o que algo ha fallado
+(\rust{Fail} para un evento específico, \rust{CircuitBreaker} para dejar de
+recibir datos por completo).
+
+Los códecs y preprocesadores se involucran aquí tanto para los \sources como
+para los \sinks. En la parte de \source, los datos son transformados a través de
+una serie de preprocesadores y posteriormente se aplica un códec. Para los
+\sinks, se sigue el proceso inverso: los datos se codifican primero a bytes con
+el códec y posteriormente una serie de postprocesadores se aplican sobre los
+datos binarios.
+
+\subsection{Notas adicionales}
+
+Algunos conectores se basan en \emph{flujos}. Son equivalentes a los flujos de
+TCP, que agrupan paquetes para evitar entremezclarlos. Su inicio y fin es
+marcado mediante mensajes asíncronos. Algunos preprocesadores puedan querer
+guardar datos internos, así que el gestor se guarda el estado del flujo en un
+campo llamado \rust{states}. Si un conector no necesita flujos, como
+\rust{metronome} (que únicamente envía eventos periódicamente), puede
+especificar su identificador de flujo como \rust{DEFAULT_STREAM_ID} siempre.
+
+Tras terminar la interfaz de los conectores para el sistema de plugins, las
+primeras implementaciones a desarrollar deberían ser:
+
+\begin{itemize}
+    \item \emph{Blackhole}, usado para analizar el rendimiento. Realiza
+        mediciones de tiempos de final a final para cada evento pasando por la
+        \pipeline, y al final guarda un histograma HDR (\emph{High Dynamic
+        Range}).
+
+    \item \emph{Blaster}, usado para repetir una serie de eventos de un archivo,
+        que es especialmente útil para pruebas de rendimiento.
+
+\end{itemize}
+
+Ambos son relativamente simples y serán de gran ayuda para entender la
+inevitable degradación de eficiencia causada por el sistema de plugins. De todos
+modos, el equipo de Tremor insistía que lo más importante primero es que
+funcione, y después me podría preocupar sobre eficiencia.

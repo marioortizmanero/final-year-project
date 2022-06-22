@@ -17,17 +17,11 @@
 % * Buscar typos (grep):
 %   - Comas antes de conjunciones (y, e, o, u)
 %   - 'Artifacto'
-%
-% * Debería tener palabras anglosajonas con `\emph` siempre?
-%
-% * No sé cómo traducir onramp, offramp, sink y source de forma precisa.
-%
-% * Debería traducir runtime por ejecutor?
-%
-% * Debería incluir las figuras siempre en su sitio, donde las pone LaTeX por
-% defecto, o al final de la sección?
-%
-% * "Figura" va en mayúsculas?
+%   - Eliminar e.g. y i.e.
+%   - Eliminar misusos de `así como`
+%   - Revisar referencias no usadas
+%   - Check that no reference links are dead
+%   - Check if there is a short url alternative
 
 \documentclass[a4paper,12pt,twoside,hidelinks,openright]{book}
 
@@ -37,6 +31,7 @@
 
 \usepackage[usenames, dvipsnames]{color}
 \usepackage{graphicx}
+\usepackage{rotating}
 \usepackage{multirow}
 \usepackage{graphics}
 \usepackage{appendix}
@@ -54,6 +49,13 @@
 \usepackage{adjustbox}
 \usepackage{hyperref}
 
+% Better table formatting
+\usepackage{longtable} % Multi-page tables
+\renewcommand*{\arraystretch}{1.5}
+\usepackage{array} % Better alignment
+\newcolumntype{P}[1]{>{\centering\arraybackslash}p{#1}}
+\newcolumntype{M}[1]{>{\arraybackslash}m{#1}}
+
 % Bibtex for the bibliography
 \usepackage[
     backend=bibtex,
@@ -62,6 +64,7 @@
     sorting=none % Sort by appearance in the document
 ]{biblatex}
 \bibliography{Bibliografia_TFG}
+\renewcommand\namelabeldelim{\addnbspace} % https://tex.stackexchange.com/a/74932
 
 % Easier to read font
 \usepackage{fourier} % For math
@@ -71,12 +74,15 @@
 
 % Less margin between lists, otherwise after overriding \parskip and etc it's
 % too much.
-% TODO: decidir si hacer párrafos estilo TeX o convencionales.
 \usepackage{enumitem}
 \setlist{topsep=0pt}
 
-% Code syntax highlighting
-\usepackage{minted}
+% Code syntax highlighting. The cache is hardcoded with an absolute path for the
+% Tectonic engine until this is fixed:
+% https://github.com/tectonic-typesetting/tectonic/issues/835
+\usepackage[
+    cachedir=/home/mario/Downloads/minted/
+]{minted}
 \usepackage{xcolor}
 \usemintedstyle{friendly}
 \definecolor{bg}{HTML}{f8f8f8}
@@ -97,6 +103,29 @@
 \def\dontdofcolorbox{\renewcommand\fcolorbox[4][]{##4}}
 \makeatother
 
+% Cite the name instead of the author when referencing it
+%
+% https://tex.stackexchange.com/a/459977
+\makeatletter
+\newbibmacro*{namecite}{%
+  \printfield[citetitle]{labeltitle}%
+  \setunit*{\addnbspace}%
+  \printtext{\bibopenbracket}\global\booltrue{cbx:parens}%
+  \usebibmacro{cite}%
+  \setunit{%
+    \ifbool{cbx:parens}
+      {\bibclosebracket\global\boolfalse{cbx:parens}}
+      {}%
+    \multicitedelim}}
+
+\DeclareCiteCommand{\namecite}
+  {\usebibmacro{prenote}}
+  {\usebibmacro{citeindex}%
+   \usebibmacro{namecite}}
+  {}
+  {\usebibmacro{textcite:postnote}}
+\makeatother
+
 % Command for inline code
 \newmintinline[code]{text}{fontsize=\normalsize}
 \newmintinline[rust]{rust}{fontsize=\normalsize}
@@ -108,18 +137,14 @@
 }
 % Shortcuts
 \newcommand{\cpp}{C\texttt{++}}
-\newcommand{\cratelink}[1] {%
-    \code{#1}\footnote{\url{https://crates.io/crates/#1}}\xspace%
-}
+\newcommand{\work}{``Primero haz que funcione''\xspace}
+\newcommand{\unsafe}{\rust{unsafe}\xspace}
+\newcommand{\abistable}{\code{abi_stable}\xspace}
 % Gracias unizar por no evolucionar y solo permitir memorias en castellano...
-\newcommand{\unsafe}{\code{unsafe}\xspace}
-\newcommand{\crate}{\emph{crate}\xspace}
-\newcommand{\crates}{\emph{crates}\xspace}
 \newcommand{\onramp}{\emph{onramp}\xspace}
 \newcommand{\onramps}{\emph{onramps}\xspace}
 \newcommand{\offramp}{\emph{offramp}\xspace}
 \newcommand{\offramps}{\emph{offramps}\xspace}
-% TODO: sink/source sí que se podrían traducir por salida/entrada
 \newcommand{\sink}{\emph{sink}\xspace}
 \newcommand{\sinks}{\emph{sinks}\xspace}
 \newcommand{\source}{\emph{source}\xspace}
@@ -137,7 +162,6 @@
 \newcommand{\structs}{\emph{structs}\xspace}
 \newcommand{\leak}{\emph{leak}\xspace}
 \newcommand{\leaks}{\emph{leaks}\xspace}
-\newcommand{\scripting}{\emph{scripting}\xspace}
 \newcommand{\sandbox}{\emph{sandbox}\xspace}
 \newcommand{\sandboxing}{\emph{sandboxing}\xspace}
 \newcommand{\socket}{\emph{socket}\xspace}
@@ -145,9 +169,7 @@
 \newcommand{\stdin}{\emph{stdin}\xspace}
 \newcommand{\stdout}{\emph{stdout}\xspace}
 \newcommand{\stderr}{\emph{stderr}\xspace}
-\newcommand{\abistable}{\code{abi_stable}\xspace}
 \newcommand{\csharp}{C\#\xspace}
-% TODO: lo podría traducir a 'tuberías' pero suena terrible
 \newcommand{\pipe}{\emph{pipe}\xspace}
 \newcommand{\pipes}{\emph{pipes}\xspace}
 
@@ -191,6 +213,14 @@
 
 \vspace*{18.7mm}
 
+\fontsize{22pt}{22pt}\selectfont
+\begin{center}
+\textsc{Cargado dinámico de plugins en Rust\\
+en ausencia de estabilidad en la\\
+Interfaz Binaria de Aplicación}
+\end{center}
+
+\vspace*{0.75cm} 
 
 \fontsize{22pt}{22pt}\selectfont
 \begin{center}
@@ -199,7 +229,7 @@ in the absence of a stable \\
 Application Binary Interface}
 \end{center}
 
-\vspace*{1cm} 
+\vspace*{2cm} 
 \baselineskip 36pt
 \begin{center}
 
@@ -209,20 +239,19 @@ Application Binary Interface}
 \fontsize{18pt}{18pt}\selectfont
 \center{\textsc{Mario Ortiz Manero}}
 
-\vspace*{0.5cm}
 \baselineskip 36pt
 
 \fontsize{14pt}{14pt}\selectfont
 \center{\rm  Director:}
 \vspace*{0mm}
 \fontsize{15pt}{15pt}\selectfont
-\center{\textsc{Javier Fabra Caro}}
+\center{\textsc{Francisco Javier Fabra Caro}}
 
 \end{center}
 
 \setcounter{footnote}{1}
 
-\vspace*{35mm}
+\vspace*{2cm}
 \fontsize{14pt}{14pt}\selectfont
 \begin{center}
 Grado en Ingeniería Informática\\ \medskip
@@ -278,6 +307,14 @@ Junio 2022\\
 \renewcommand{\contentsname}{Índice}
 \tableofcontents
 
+\newpage
+\renewcommand\listfigurename{Lista de Figuras}
+\listoffigures
+
+% \newpage
+% \renewcommand\listtablename{Lista de Tablas}
+% \listoftables
+
 % Capitulos
 
 % Vuelta a configurar los párrafos para que no afecte al índice
@@ -297,15 +334,6 @@ Junio 2022\\
 \printbibliography%
 \nocite{*} % Include all the entries in the bibliography, even if not mentioned
 
-\newpage
-\renewcommand\listfigurename{Lista de Figuras}
-\listoffigures
-
-% TODO: quitar si no he acabado usando ninguna
-\newpage
-\renewcommand\listtablename{Lista de Tablas}
-\listoftables
-
 % ANEXOS
 
 % Vuelta a configurar los párrafos para que no afecte al índice
@@ -318,6 +346,11 @@ Junio 2022\\
 \addappheadtotoc%
 \appendixpage%
 \input{Anexos/Anexo1.tex}
-
+\input{Anexos/Anexo2.tex}
+\input{Anexos/Anexo3.tex}
+\input{Anexos/Anexo4.tex}
+\input{Anexos/Anexo5.tex}
+\input{Anexos/Anexo6.tex}
+\input{Anexos/Anexo7.tex}
 
 \end{document}
