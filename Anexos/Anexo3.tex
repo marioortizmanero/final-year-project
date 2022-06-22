@@ -80,13 +80,12 @@ let value = Value::Array(RVec::new());
 \end{minted}
 
 Es un poco más complicado cuando los tipos anteriores se exponen en métodos,
-porque requiere tomar una decisión entre expandir el límite de FFI del
-\emph{funcionamiento interno} de \rust{Value} a los \emph{usuarios} de
-\rust{Value}. Por ejemplo, la variante \rust{Value::Object} contiene un
-\rust{RHashMap} ahora, pero el método \rust{Value::as_object} solía devolver una
-referencia a \rust{HashMap}. Se producirá un error nuevo ahí y tendrá que
-tomarse una decisión entre devolver \rust{RHashMap} o añadir una conversión
-interna a \rust{HashMap}:
+porque requiere tomar una decisión de expandir \emph{funcionamiento interno} de
+\rust{Value} a los \emph{usuarios} de \rust{Value}. Por ejemplo, la variante
+\rust{Value::Object} contiene un \rust{RHashMap} ahora, pero el método
+\rust{Value::as_object} solía devolver una referencia a \rust{HashMap}. Se
+producirá un error nuevo ahí y tendrá que tomarse una decisión entre devolver
+\rust{RHashMap} o añadir una conversión interna a \rust{HashMap}:
 
 \begin{minted}{rust}
 impl Value {
@@ -129,9 +128,9 @@ impl Value {
 
 Como indica la sección~\ref{abiperf}, las conversiones entre la librería
 estándar y \abistable son $O(1)$. Esto es dónde la metodología \work es
-relevante: simplemente dejaremos el límite del FFI en su mínimo y añadiremos
-conversiones cuanto antes sea posible. Al terminar, si se detectan problemas de
-rendimiento en un caso en concreto, se puede reconsiderar.
+relevante: simplemente dejaremos el límite del sistema de plugins en su mínimo y
+añadiremos conversiones cuanto antes sea posible. Al terminar, si se detectan
+problemas de rendimiento en un caso en concreto, se puede reconsiderar.
 
 \section{Problemas con tipos externos}\label{sec:abi_ext}
 
@@ -199,10 +198,10 @@ fn example() -> impl Future<Output = String> {
     }
 }
 
-// No pueden haber genéricos en FFI, por lo que ahora `Future`
-// es un tipo concreto `FfiFuture` en vez de un trait. La
-// conversión de `Future` a `FfiFuture` se puede realizar con
-// `into_ffi`.
+// No pueden haber genéricos en la interfaz, por lo que ahora
+// `Future` es un tipo concreto `FfiFuture` en vez de un
+// trait. La conversión de `Future` a `FfiFuture` se puede
+// realizar con `into_ffi`.
 fn example() -> FfiFuture<String> {
     async move {
         read_file().await
@@ -250,11 +249,11 @@ en la Figura~\ref{fig:simplify}.
 Ya que es un tipo nuevo, no se romperá nada del código existente, y únicamente
 hará falta cambiarlo donde se use la interfaz. Su implementación es exactamente
 igual que el \rust{Value} modificado anteriormente, pero bajo el nuevo nombre
-\rust{PdkValue}.
+\rust{PdkValue} y como una copia, en lugar de reemplazarlo.
 
 No es necesario escribir métodos adicionales para el nuevo \rust{PdkValue}, solo
 sus conversiones desde y hasta el tipo original, \rust{Value}. Esto sería
-equivalente a, en vez de pasar un \rust{Vec<T>} al PDK, reemplzarlo con un
+equivalente a, en vez de pasar un \rust{Vec<T>} al PDK, cambiarlo por un
 \rust{*const u8} para los datos y un \rust{u32} para la longitud. Simplemente
 consiste en simplificar los tipos en la interfaz, y convertirlos de vuelta para
 usar la funcionalidad completa.
@@ -279,12 +278,12 @@ fn runtime_wrapper(value: Value) {
 \end{minted}
 
 Es la alternativa más sencilla, pero implica un coste de rendimiento; dos
-conversiones implican iterar los datos dos veces. Las mediciones de rendimiento
-del Anexo~\ref{annex:benchmarks} indicaron posteriormente que convertir los
-datos era un 5-10\% de la ejecución del programa.
+conversiones implican iterar los datos dos veces. Las mediciones del
+Anexo~\ref{annex:benchmarks} indicaron posteriormente que convertir los datos
+era un 5-10\% de la ejecución del programa.
 
 También tiene un coste de usabilidad; en comparación con tener un único
-\rust{Value}, es necesario convertir los tipos y posiblemente encapsularlo con
+\rust{Value}, es necesario convertir los tipos y posiblemente encapsularlos con
 una función de más alto nivel (\rust{runtime_wrapper}). Es una tarea
 relativamente trivial, por lo que se podría automatizar con macros procedurales
 en Rust, pero esto debería dejarse para el final del proyecto.
@@ -292,7 +291,7 @@ en Rust, pero esto debería dejarse para el final del proyecto.
 \section{Progreso}
 
 Esta última alternativa es la más fácil de implementar para la primera
-versión~\cite{pdk_v1} y por tanto la que mejor sigue la metodología de \work. La
-segunda versión~\cite{pdk_v2} añadió una versión encapsulada de \code{halbrown}
-en \abistable para mejorar el rendimiento, y en el futuro se podría dar soporte
-también a \code{beef}.
+versión~\cite{pdk_v1} y por tanto es la que mejor sigue la metodología de \work.
+La segunda versión~\cite{pdk_v2} añadió una versión encapsulada de
+\code{halbrown} en \abistable para mejorar el rendimiento, y en el futuro se
+podría dar soporte también a \code{beef}.

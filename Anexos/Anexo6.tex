@@ -6,7 +6,7 @@ configuración \code{passthrough}, que simplemente reenvía todos los eventos qu
 recibe; no es necesario el envío de paquetes ni transformaciones más complejas.
 Aunque esto simplifica el proceso considerablemente, una posible mejora sería
 probar con casos de uso más cercanos a lo real, involucrando el envío de
-paquetes TCP, y filtros y transformaciones de los eventos, por ejemplo. Sin
+paquetes TCP y filtros y transformaciones de los eventos, por ejemplo. Sin
 embargo, esto no fue posible por no haberse implementado aún ningún conector más
 avanzado al realizarse las pruebas.
 
@@ -43,12 +43,12 @@ todavía no publicado:\\
     \centering
     \includegraphics[width=\textwidth]{./Imagenes/histogram_variance.png}
     \caption{Las dos líneas inferiores son el mismo programa ejecutado en el
-    servidor dedicado para medir su varianza. Las siguientes dos sobre estas es
+    servidor dedicado, para medir su varianza. Las siguientes dos sobre estas es
     lo mismo con el portátil; la diferencia en varianza no es tan perceptible
     como se esperaba. Una mejora importante en la fiabilidad se consiguió
     realizando varias ejecuciones de calentamiento previas a las mediciones,
     como se puede ver en la diferencia de la línea superior, el portátil sin
-    calentamiento, con las otras dos del portátil.}%
+    calentamiento, encima de las otras dos del portátil.}%
     \label{fig:histogram_variance}
 \end{sidewaysfigure}
 

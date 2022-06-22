@@ -16,7 +16,7 @@ recomendable consultar el artículo \namecite{lcnr_covandcontra} o a
 \textcite{video_covandcontra} para un formato en vídeo.
 
 Este anexo deriva de los problemas encontrados con el tipo \rust{Value} del
-Anexo~\ref{annex:abi}.Al cambiar los tipos de la librería estándar a los de
+Anexo~\ref{annex:abi}. Al cambiar los tipos de la librería estándar a los de
 \abistable, se producían errores de \lifetimes inexplicables (ver
 Figura~\ref{fig:errors}). Estuve bloqueado con dicho problema durante mucho
 tiempo, así que tras comentárselo a mis mentores, Heinz me ayudó a reproducir el
@@ -111,7 +111,7 @@ más~\cite{fail_covariance}.
 Sin embargo, tras cambiar \rust{left == right} por \rust{left.cmp(right)} en la
 reproducción inicial, se repetía el mismo problema. Incluso con aparentemente la
 misma implementación de \rust{Ord} (el \trait con el método \rust{cmp}). Parecía
-que, al haber arreglado \rust{PartialEq} el problema había pasado a estar en
+que, al haber arreglado \rust{PartialEq}, el problema había pasado a estar en
 \rust{Ord}, pero esta vez no había manera de ``arreglarlo'' porque ambas
 implementaciones eran iguales.
 
@@ -189,9 +189,9 @@ genérico respecto a la \lifetime \rust{'a}, lo cual no es el caso de
 Al implementar \rust{Ord}, se tenía que indicar que \rust{T: ToOwned} en
 \rust{Cow} o \rust{T: BorrowOwned<'a>} en \rust{RCow}. El problema era que al
 relacionar la \lifetime \rust{'a} de esta forma, estaba rompiendo una regla que
-hacía a \rust{RCow} invariante en \rust{'a}, en vez de covariante. Tenemos que
-\rust{Cow<'a, T>} es covariante en tanto \rust{T} como \rust{'a}, pero nuestro
-\rust{RCow<'a, T>} es covariante en \rust{T} e invariante en \rust{'a}.
+hacía a \rust{RCow} invariante en \rust{'a}. Tenemos que \rust{Cow<'a, T>} es
+covariante en tanto \rust{T} como \rust{'a}, pero nuestro \rust{RCow<'a, T>} es
+covariante en \rust{T} e invariante en \rust{'a}.
 
 Adicionalmente, esta regla de covarianza específica tampoco está documentada
 apropiadamente en Rust. Las guías únicamente explican el sistema de herencia de
