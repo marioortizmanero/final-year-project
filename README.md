@@ -36,7 +36,6 @@ University of Zaragoza. Abstract:
 
 The full document can be accessed
 [here](https://github.com/marioortizmanero/final-year-project/blob/master/main.pdf).
-
-NOTE: The document is in Spanish, but if more information was needed, most of
-the contents are available in my personal website, with a somewhat different
-format: https://nullderef.com/series/rust-plugins/.
+Note that it's in Spanish, but if more information was needed, most of the
+contents are available in my personal website, with a somewhat different format:
+https://nullderef.com/series/rust-plugins/.
