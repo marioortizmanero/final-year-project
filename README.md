@@ -34,6 +34,9 @@ University of Zaragoza. Abstract:
 > great base for future versions of Tremor that do include it in production, and
 > it will continue to evolve with the program.
 
+The full document can be accessed
+[here](https://github.com/marioortizmanero/final-year-project/blob/master/main.pdf).
+
 NOTE: The document is in Spanish, but if more information was needed, most of
 the contents are available in my personal website, with a somewhat different
 format: https://nullderef.com/series/rust-plugins/.
