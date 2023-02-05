@@ -1,0 +1,214 @@
+% vim: spelllang=es
+
+% Página:
+% https://osluz.unizar.es/
+%
+% Bases:
+% https://osluz.unizar.es/sites/default/files/BasesConcursoTFG1ed.pdf
+
+\documentclass[a4paper,12pt,twoside,hidelinks,openright]{article}
+
+% \usepackage[T1]{fontenc}
+\usepackage[spanish]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{hyperref}
+\usepackage{enumitem}% http://ctan.org/pkg/enumitem
+
+% Easier to read font
+\usepackage{fourier} % For math
+\usepackage{fontspec}
+\setmainfont{Heuristica} % For the text
+\setmonofont{Liberation Mono} % For the code
+
+% Less margin between lists, otherwise after overriding \parskip and etc it's
+% too much.
+
+%	CONFIGURACIÓN DE PÁGINA
+
+\setlength{\paperwidth}{21cm}          % Ancho de página
+\setlength{\paperheight}{29,7cm}       % Alto de página
+\setlength{\textwidth}{15.5cm}         % Ancho de zona con texto
+\setlength{\textheight}{24.6cm}        % Ancho de zona con texto
+\setlength{\topmargin}{-1.0cm}         % Margen superior
+                                      
+\setlength{\oddsidemargin}{0.46cm}     % Margen izquierdo 
+\setlength{\evensidemargin}{0.46cm}    
+
+% Less margin between lists, otherwise after overriding \parskip and etc it's
+% too much.
+\usepackage{enumitem}
+\setlist{topsep=0pt}
+
+\begin{document}
+
+% PORTADA
+\newpage
+
+\title{I Concurso ``Trabajos Fin de Grado Relacionados con Tecnología Libre'' (TFGTL 2023)}
+\date{}
+
+\pagenumbering{Roman}
+
+% Párrafos de forma más convencional, me parece más fácil leerlo así.
+\begingroup
+\setlength{\parskip}{\baselineskip}%
+\setlength{\parindent}{0pt}%
+
+\maketitle
+
+\textbf{Autor}:\\
+Mario Ortiz Manero
+
+\textbf{Mentores}:\\
+Matthias Wahl, Heinz N. Gies y Darach Ennis
+
+\textbf{Director académico}:\\
+Francisco Javier Fabra Caro
+
+\textbf{Titulación y universidad}:\\
+Grado en Ingeniería Informática de la Universidad de Zaragoza
+
+\textbf{Título del trabajo fin de grado}:\\
+Cargado dinámico de plugins en Rust en ausencia de estabilidad en la Interfaz Binaria de Aplicación
+
+\textbf{Palabras clave}:\\
+Rust, C, Tremor, Wayfair, Procesado de Eventos, Cargado Dinámico, Alto
+Rendimiento, WebAssembly, eBPF, Lenguajes Interpretados, IPC
+
+\textbf{Lugar y fecha de defensa}:\\
+Edificio Ada Byron, EINA, C. María de Luna, 1, 50018 Zaragoza, España\\
+12 de julio de 2022\\
+Prueba adjuntada con el archivo
+\texttt{convocatoria\_defensa\_tfg\_07\_07\_2022.pdf}.
+
+\textbf{Nota del trabajo}:\\
+9.0/10
+
+\textbf{Difusión de los resultados y número de descargas, si corresponde}:\\
+\setlength{\parskip}{0cm}%
+\begin{itemize}[noitemsep, topsep=0pt]
+    \item Visitas a los artículos escritos durante el proyecto
+        (\url{https://nullderef.com/series/rust-plugins}) a 4 de febrero de
+        2023:\\
+        % 7948 + 6674 + 5664 + 4494 + 3331 + 1812 + 124
+        30.047
+
+    \item Contribuciones (\emph{pull requests} e \emph{issues}) realizadas para
+        repositorios externos a Tremor:\\
+        33
+
+    \item Contribuciones realizadas para repositorios dentro de la organización
+        de Tremor:\\
+        13
+
+    \item Presentación durante el proyecto, a 19 de enero de 2022, sobre el
+        progreso hasta ese punto. Parte del evento ``LFX Mentorship
+        Showcase'':\\
+        \url{https://youtu.be/htLCyqY0kt0?t=3166}
+
+    \item Presentación \emph{a posteriori}, a 18 de octubre de 2022, sobre la
+        realización del proyecto respecto a la usabilidad del lenguaje de
+        programación Rust. Parte del evento ``TremorCon 2022'':\\
+        \url{https://nullderef.com/blog/tremorcon22/}
+
+\end{itemize}
+\setlength{\parskip}{\baselineskip}%
+
+\textbf{Enlace al TFG}:\\
+\setlength{\parskip}{0cm}%
+\begin{itemize}[noitemsep, topsep=0pt]
+
+    \item \emph{Con código fuente}:\\
+        \url{https://github.com/marioortizmanero/final-year-project}
+
+    \item \emph{Fuente oficial}:\\
+        \url{https://deposita.unizar.es/record/68677}
+
+\end{itemize}
+\setlength{\parskip}{\baselineskip}%
+
+\textbf{Resumen}:\\ La toma de decisiones de muchas empresas modernas se basa en
+la recolección y análisis de datos de sus sistemas. En el caso de
+\emph{Wayfair}, debía llevarse a cabo de forma eficiente en una escala masiva,
+por lo que creó en 2018 su propia herramienta de procesado de eventos,
+\emph{Tremor}. Esta mantuvo una perspectiva de alto rendimiento desde el inicio,
+siendo escrita con el lenguaje de programación compilado Rust, concurrencia
+asíncrona con hilos y SIMD.
+
+Posteriormente, a través de la licencia \emph{Apache License 2.0}, Tremor se
+lanzó en código libre y pasó a formar parte de la \emph{Cloud Native Computing
+Foundation} (CNCF), organización fundada y gestionada por \emph{The Linux
+Foundation} (LFX). Entre los múltiples beneficios que aportó esto, también le
+abrió las puertas a participar en iniciativas como \emph{LFX Mentorship},
+gracias a la cual se llevó a cabo este proyecto. En la plataforma de la
+iniciativa se especifican tareas concretas que cualquier desarrollador puede
+realizar, proporcionando a cambio un mentor que le guíe durante el proceso y una
+ayuda monetaria.
+
+La tarea escogida consistía en desarrollar un ``sistema de plugins'' para
+Tremor. A medida que el programa evoluciona, sus tiempos de compilación crecen
+y, consecuentemente, se deteriora la experiencia de desarrollo. Esto se puede
+aliviar extrayendo la funcionalidad de su único binario a componentes más
+pequeños que se puedan compilar independientemente (plugins).
+Concretamente, se debía modificar Tremor de forma que el programa principal
+fuese capaz de cargar los plugins como librerías dinámicas durante su ejecución
+y de que, después, se pudieran comunicar entre sí. Dado que son binarios
+completamente distintos, cambiar el código de un plugin no requiere recompilar
+el de los demás, reduciendo así los tiempos de compilación drásticamente.
+
+Existen gran cantidad de tecnologías disponibles para su desarrollo: lenguajes
+interpretados, WebAssembly, eBPF, comunicación inter-proceso o cargado dinámico.
+Sin embargo, muchas de ellas deben descartarse por no cumplir los estándares de
+eficiencia de Tremor. Entre las alternativas restantes, se escoge cargado
+dinámico por ser la más usable y popular.
+
+El cargado dinámico es imposible con tipos y funciones declarados con Rust puro,
+ya que la Interfaz Binaria de Aplicación (ABI) del lenguaje no es ``estable''.
+Para agilizar su evolución en esta temprana etapa, prefiere no definir un
+protocolo a través del cual diferentes binarios se puedan comunicar entre sí de
+forma directa y determinista. Será necesario convertir los tipos al ABI de C ---
+que sí se especifica rigurosamente en su estándar --- y viceversa.
+
+Desafortunadamente, en el ámbito público y libre de los sistemas de plugins en
+Rust, las guías y artículos de la comunidad, librerías existentes y herramientas
+eran escasas o estaban desactualizadas. Gran parte del trabajo consiste en
+intentar mejorar esta situación de diversas formas.
+
+En primer lugar, se han realizado más de treinta contribuciones a diez
+diferentes dependencias de Tremor. Mayoritariamente se tratan de \emph{pull
+requests}, donde se intentaba dar soporte a su uso en un sistema de plugins o
+mejorar su documentación. También se crearon varios \emph{issues} proponiendo
+nuevas características que se podrían incluir en las librerías y debatiendo con
+sus autores.
+
+En segundo lugar, puesto que Tremor también es completamente libre, las más de
+diez contribuciones realizadas están disponibles en sus repositorios. El diseño
+se llevó a cabo dentro de su servidor de Discord público, tanto en formato
+escrito como en videollamada.
+
+En tercer lugar, se participó en eventos como \emph{LFX Mentorship Showcase},
+donde algunos participantes de la iniciativa presentaban su experiencia hasta el
+momento para futuros interesados. Incluso fue posible la asistencia presencial a
+la conferencia KubeCon 2022 en Valencia como colaborador del proyecto, pudiendo
+atender a charlas de organizaciones y empresas en el círculo de Tremor y conocer
+a sus miembros.
+
+Finalmente, durante la realización del proyecto, se han escrito seis artículos
+con abundantes recursos (\url{https://nullderef.com/series/rust-plugins/}),
+entrando en profundo detalle sobre el diseño del sistema, la investigación
+realizada y las decisiones tomadas. Su publicación e interacción con la
+comunidad ha resultado en un total de treinta mil visitas hasta el momento.
+
+A lo largo de los catorce meses transcurridos hasta la defensa, se colaboró muy
+cercanamente con el equipo principal de Tremor, contratado por Wayfair. Su ayuda
+fue esencial para comprender el funcionamiento interno del programa y para dar
+consejo cuando fuera necesario. La inestabilidad del ABI y falta de recursos
+para Rust causaron un aumento significativo de complejidad respecto al plan
+original. Por tanto, aunque funcional, la implementación no alcanza alguno de
+los objetivos iniciales, principalmente relacionados con el rendimiento. Sin
+embargo, sirve como una base sólida para futuras versiones de Tremor que sí que
+lo incluyan en producción, continuando así la evolución del trabajo.
+
+\endgroup
+
+\end{document}
