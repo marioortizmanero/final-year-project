@@ -1,0 +1,170 @@
+% vim: spelllang=es
+
+% Página:
+% https://osluz.unizar.es/
+%
+% Bases:
+% https://osluz.unizar.es/sites/default/files/BasesConcursoTFG1ed.pdf
+
+\documentclass[a4paper,12pt,twoside,hidelinks,openright]{article}
+
+% \usepackage[T1]{fontenc}
+\usepackage[spanish]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{hyperref}
+\usepackage{enumitem}% http://ctan.org/pkg/enumitem
+
+% Easier to read font
+\usepackage{fourier} % For math
+\usepackage{fontspec}
+\setmainfont{Heuristica} % For the text
+\setmonofont{Liberation Mono} % For the code
+
+% Less margin between lists, otherwise after overriding \parskip and etc it's
+% too much.
+
+%	CONFIGURACIÓN DE PÁGINA
+
+\setlength{\paperwidth}{21cm}          % Ancho de página
+\setlength{\paperheight}{29,7cm}       % Alto de página
+\setlength{\textwidth}{15.5cm}         % Ancho de zona con texto
+\setlength{\textheight}{24.6cm}        % Ancho de zona con texto
+\setlength{\topmargin}{-1.0cm}         % Margen superior
+                                      
+\setlength{\oddsidemargin}{0.46cm}     % Margen izquierdo 
+\setlength{\evensidemargin}{0.46cm}    
+
+% Less margin between lists, otherwise after overriding \parskip and etc it's
+% too much.
+\usepackage{enumitem}
+\setlist{topsep=0pt}
+
+\begin{document}
+
+% PORTADA
+\newpage
+
+\title{Documentación adicional para\\I Concurso ``Trabajos Fin de Grado
+Relacionados con Tecnología Libre''\\(TFGTL 2023)}
+\date{}
+
+\pagenumbering{Roman}
+
+% Párrafos de forma más convencional, me parece más fácil leerlo así.
+\begingroup
+\setlength{\parskip}{\baselineskip}%
+\setlength{\parindent}{0pt}%
+
+\maketitle
+
+\textbf{Acceso libre a todo el código con indicación de repositorio libre, si lo
+hay}:\\
+La implementación de Tremor y de todas sus herramientas acompañantes se
+encuentra en la siguiente organización de GitHub:\\
+\url{https://github.com/tremor-rs}.\\ Todos sus repositorios usan la licencia
+libre \emph{Apache License 2.0}.\\
+La implementación del sistema de plugins como tal se puede encontrar aquí:\\
+\url{https://github.com/tremor-rs/tremor-runtime/pull/1597}\\
+y una segunda versión en\\
+\url{https://github.com/marioortizmanero/tremor-runtime/pull/15}.
+
+También está disponible el código fuente de la memoria y algunos archivos
+adicionales en \url{https://github.com/marioortizmanero/final-year-project}.
+
+Notar que una parte muy importante a tener en cuenta del trabajo realizado
+consiste en diversas contribuciones a otros proyectos usados por Tremor. Existe
+una lista detallada con enlaces en el anexo quinto de la memoria,
+``Contribuciones de código abierto'', o en
+\url{https://nullderef.com/blog/plugin-end/#os}. Para otros tipos de
+contribuciones, como artículos o charlas, se puede consultar la última sección
+de este documento.
+
+\textbf{Generalidad de la propuesta, que el software realizado pueda ser
+utilizado por un grupo amplio de usuarios}:\\
+Tremor, y por tanto, el proyecto que he llevado a cabo, puede ser usado por
+cualquier empresa que procese eventos internos o externos. La empresa más grande
+que lo utiliza actualmente se trata de Wayfair. En el último año, esta ha
+colaborado con más de 11.000 proveedores globales para ofrecer 14 millones de
+ítems, alcanzando un procesado diario medio de unos 100TB de datos.  Además, el
+número de usuarios provenientes de organizaciones más pequeñas sigue creciendo,
+incluyendo empresas como RedPanda o TDEngine, entre otras:
+
+\begin{itemize}
+    \item \url{https://www.tremor.rs/blog/2021/11/01/wayfair-case-studies}
+    \item \url{https://www.tremor.rs/blog/2022/06/15/tdengine-colaboration}
+    \item \url{https://www.tremor.rs/blog/2021/12/13/redpanda}
+\end{itemize}
+
+Tremor también dispone de una activa comunidad en Discord con casi 200 usuarios
+y contribuidores:
+
+\begin{itemize}
+    \item \url{https://discord.com/invite/Wjqu5H9rhQ}
+\end{itemize}
+
+\textbf{Quiénes son los potenciales usuarios}:\\
+La característica implementada es parte del núcleo del programa, es decir que
+será utilizado por cualquier usuario o desarrollador de Tremor.
+
+Por un lado, los contribuidores se beneficiarán por medio de una reducción muy
+considerable en los tiempos de compilación, facilitando así el proceso de
+desarrollo. Además, esto implica una completa modularización y limpieza del
+código.
+
+Por otro lado, el sistema de plugins proporcionará a los usuarios una mayor
+flexibilidad, permitiéndoles implementar sus propias funcionalidades sobre
+Tremor. Esto incluye, por ejemplo, la capacidad de recibir o enviar eventos de
+un sistema interno, cuyo soporte no se podría o debería añadir públicamente en
+el código de Tremor.
+
+\textbf{Impacto demostrable hasta la actualidad (número de descargas,
+actualizaciones…)}:\\
+El prototipo funcional del sistema de plugins desarrollado no ha podido lanzarse
+aún en una nueva versión de Tremor, pero sirve de una base muy sólida a partir
+de la cual el equipo puede continuar mejorando. Además de las 13 contribuciones
+dentro de la organización de Tremor, se crearon 33 pull requests e issues a un
+total de 10 dependencias de Tremor, también ayudando al ecosistema general.
+
+Los artículos del blog personal que intentan mejorar la situación del nicho de
+sistemas de plugins en Rust han alcanzado 36.565 visitas. Las dos charlas suman
+en la actualidad más de 1.000 visualizaciones, sin incluir las del directo.
+
+\textbf{Difusión demostrable del trabajo realizado: artículo, blog, repositorio,
+tutorial,...}:\\
+Se escribieron 6 artículos en mi blog personal, bajo la licencia libre \emph{GPL
+v3}, donde entro en gran detalle sobre las decisiones tomadas y el
+funcionamiento interno. Pueden encontrarse en la siguiente página:
+\url{https://nullderef.com/series/rust-plugins/}. Cada uno es de unos 30 minutos
+de lectura.
+
+Los artículos incluyen un repositorio adicional para explicar con ejemplos
+concretos las diferentes alternativas disponibles para desarrollar un sistema de
+plugins: \url{https://github.com/marioortizmanero/pdk-experiments}. Actualmente
+cuenta con 4 forks y 20 estrellas en GitHub.
+
+Finalmente, se realizaron dos charlas, donde se cubría el trabajo realizado de
+forma más visual y amena:
+
+\begin{itemize}
+    \item TremorCon 2022 (\emph{a posteriori de entregar el TFG, recomendada
+        visualización}):\\
+        \url{https://nullderef.com/blog/tremorcon22/}\\
+        Tremor dispone de su propia conferencia anual, donde se comparten las
+        últimas actualizaciones de contribuidores y se muestran usos reales de
+        la herramienta. En esta edición, participé dando una charla de 30
+        minutos donde explicaba mi trabajo desde el punto de vista del lenguaje
+        de programación Rust, incluyendo algunos detalles técnicos.
+
+    \item LFX Mentorship Showcase 2022:\\
+        \url{https://youtu.be/htLCyqY0kt0?t=3166}\\
+        La Fundación de Linux (\emph{LFX}) cuenta con un programa de mentorías
+        llamado \emph{LFX Mentorship}, a través del cual pude contribuir a
+        Tremor. Como parte de este programa, organizan una conferencia para que
+        los participantes cuenten su experiencia, especialmente para futuros
+        interesados. Opté por participar, dando una charla más general de 15
+        minutos.
+
+\end{itemize}
+
+
+\end{document}
